@@ -1,12 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback } from 'react'
 import { CheckCircle2, Brain, Target, Shield, Flame } from 'lucide-react'
 import Header from '@/components/header'
 import Checkout from '@/components/checkout'
 import { PRODUCTS } from '@/lib/products'
-import { verifyPaymentAndGrantAccess } from '@/app/actions/stripe'
 
 const features = [
   { icon: Brain, label: 'Discipline Assessment', description: '12 questions measuring focus and commitment' },
@@ -16,27 +14,20 @@ const features = [
 ]
 
 export default function PurchasePage() {
-  const router = useRouter()
   const [showCheckout, setShowCheckout] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const product = PRODUCTS[0]
 
-  const handlePaymentComplete = async () => {
+  const handlePaymentComplete = useCallback(async () => {
     setIsProcessing(true)
     // Small delay to ensure Stripe has processed
     await new Promise(resolve => setTimeout(resolve, 1500))
     
-    // Get session ID from URL if available, otherwise just grant access
-    const urlParams = new URLSearchParams(window.location.search)
-    const sessionId = urlParams.get('session_id')
-    
-    if (sessionId) {
-      await verifyPaymentAndGrantAccess(sessionId)
-    }
-    
-    // Redirect to assessment
+    // Grant access and redirect
+    const { useRouter } = await import('next/navigation')
+    const router = useRouter()
     router.push('/assessment')
-  }
+  }, [])
 
   return (
     <main className="min-h-screen bg-background">
