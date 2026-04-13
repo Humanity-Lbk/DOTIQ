@@ -23,7 +23,7 @@ export function ResultsView() {
       {/* Overall Score */}
       <div className="text-center">
         <p className="text-sm uppercase tracking-widest text-muted-foreground mb-2">
-          Your DOT IQ Score
+          Your DOTIQ Score
         </p>
         <div className="flex items-baseline justify-center gap-2">
           <span className="text-7xl md:text-8xl font-bold text-foreground">
@@ -80,7 +80,7 @@ export function ResultsView() {
       <div className="bg-card border border-border rounded-lg p-6">
         <h3 className="text-lg font-semibold text-foreground mb-3">{"What's Next?"}</h3>
         <p className="text-muted-foreground mb-4">
-          This is your baseline DOT IQ score. To unlock detailed reports and personalized development plans, create an account and invite coaches or teammates for peer validation.
+          This is your baseline DOTIQ score. To unlock detailed reports and personalized development plans, create an account and invite coaches or teammates for peer validation.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Button className="flex-1">

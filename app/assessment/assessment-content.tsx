@@ -8,29 +8,35 @@ export function AssessmentContent() {
   const { isComplete } = useAssessmentStore()
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <main className="flex-1 py-8 md:py-12">
-        <div className="container mx-auto px-4">
+      <main className="flex-1 pt-16 py-12 md:py-16">
+        <div className="max-w-3xl mx-auto px-6">
           {!isComplete && (
-            <div className="max-w-2xl mx-auto mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                DOT IQ Assessment
+            <div className="mb-10 text-center">
+              <p className="text-primary font-medium mb-3 tracking-wide uppercase text-sm">
+                Assessment
+              </p>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-3">
+                DOTIQ Assessment
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground max-w-xl mx-auto">
                 Answer each question honestly based on how you typically behave, not how you think you should behave.
               </p>
             </div>
           )}
           
           {isComplete && (
-            <div className="max-w-2xl mx-auto mb-8 text-center">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                Your Results
+            <div className="mb-10 text-center">
+              <p className="text-primary font-medium mb-3 tracking-wide uppercase text-sm">
+                Complete
+              </p>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-3">
+                Your DOTIQ Results
               </h1>
               <p className="text-muted-foreground">
-                {"Here's your DOT IQ breakdown based on your responses."}
+                Here&apos;s your breakdown based on your responses.
               </p>
             </div>
           )}
