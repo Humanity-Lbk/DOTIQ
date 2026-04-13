@@ -21,7 +21,7 @@ export default function HomePage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="text-base">
-                  <Link href="/assessment">Take the Assessment</Link>
+                  <Link href="/purchase">Take the Assessment</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="text-base">
                   <Link href="/about">Learn More</Link>
@@ -138,10 +138,10 @@ export default function HomePage() {
                 Ready to Discover Your DOT IQ?
               </h2>
               <p className="text-muted-foreground mb-8">
-                Take the free assessment and find out where you stand. It only takes about 10 minutes.
+                Take the assessment and find out where you stand. It only takes about 10 minutes.
               </p>
               <Button asChild size="lg" className="text-base">
-                <Link href="/assessment">Start Assessment</Link>
+                <Link href="/purchase">Start Assessment</Link>
               </Button>
             </div>
           </div>
