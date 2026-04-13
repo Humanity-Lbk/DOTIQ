@@ -1,6 +1,6 @@
 "use client"
 
-import { Header } from "@/components/header"
+import Header from "@/components/header"
 import { Assessment } from "@/components/assessment/assessment"
 import { useAssessmentStore } from "@/lib/assessment-store"
 
