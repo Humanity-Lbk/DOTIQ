@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Header } from "@/components/header"
+import Header from "@/components/header"
 import { Target, Users, TrendingUp, Brain } from "lucide-react"
 
 export default function HomePage() {

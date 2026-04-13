@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Header } from "@/components/header"
+import Header from "@/components/header"
 
 export default function AboutPage() {
   return (
@@ -65,7 +65,7 @@ export default function AboutPage() {
                 Ready to find out your score?
               </h3>
               <Button asChild size="lg">
-                <Link href="/assessment">Take the Assessment</Link>
+                <Link href="/purchase">Take the Assessment</Link>
               </Button>
             </div>
           </div>
