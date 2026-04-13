@@ -18,17 +18,20 @@ export default function Checkout({
   productId: string
   onComplete?: () => void 
 }) {
-  const startCheckoutSessionForProduct = useCallback(
-    () => startCheckoutSession(productId),
-    [productId],
-  )
+  const fetchClientSecret = useCallback(async () => {
+    const clientSecret = await startCheckoutSession(productId)
+    if (!clientSecret) {
+      throw new Error('Failed to create checkout session')
+    }
+    return clientSecret
+  }, [productId])
 
   return (
     <div id="checkout" className="w-full max-w-lg mx-auto">
       <EmbeddedCheckoutProvider
         stripe={stripePromise}
         options={{ 
-          clientSecret: startCheckoutSessionForProduct,
+          fetchClientSecret,
           onComplete: onComplete
         }}
       >
