@@ -2,13 +2,16 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type AuthMethod = 'phone' | 'email' | 'google'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect') || '/dashboard'
   const [method, setMethod] = useState<AuthMethod>('phone')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -45,7 +48,7 @@ export default function LoginPage() {
           type: 'sms',
         })
         if (error) throw error
-        router.push('/dashboard')
+        router.push(redirectTo)
         router.refresh()
       }
     } catch (err) {
@@ -66,7 +69,7 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
-      router.push('/dashboard')
+      router.push(redirectTo)
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -99,9 +102,8 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-            <div className="w-2.5 h-2.5 rounded-full bg-primary group-hover:animate-glow-pulse transition-all" />
-            <span className="font-bold text-sm tracking-widest">DOTIQ</span>
+          <Link href="/" className="inline-block mb-4">
+            <Image src="/logo.png" alt="DOTIQ" width={80} height={26} className="h-5 w-auto invert brightness-0" />
           </Link>
           <div className="space-y-2">
             <p className="font-mono text-xs text-muted-foreground tracking-widest">{'>> AUTH_SYSTEM'}</p>

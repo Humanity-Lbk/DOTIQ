@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useState, useEffect } from "react"
 
 export default function Header() {
@@ -18,8 +19,14 @@ export default function Header() {
     <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-2.5 h-2.5 rounded-full bg-primary group-hover:animate-glow-pulse transition-all" />
-          <span className="font-bold text-sm tracking-widest text-foreground">DOTIQ</span>
+          <Image 
+            src="/logo.png" 
+            alt="DOTIQ" 
+            width={100} 
+            height={32} 
+            className="h-6 w-auto invert brightness-0"
+            priority
+          />
         </Link>
         
         <nav className="flex items-center gap-6">

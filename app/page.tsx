@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import Header from '@/components/header'
 
 const measurableMetrics = ['40-Yard Dash', 'Vertical Jump', 'Bat Speed', 'Spin Rate', 'Launch Angle']
@@ -314,10 +315,9 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-border py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="font-bold text-sm tracking-wider">DOTIQ</span>
-          </div>
+          <Link href="/" className="block">
+            <Image src="/logo.png" alt="DOTIQ" width={80} height={26} className="h-5 w-auto invert brightness-0" />
+          </Link>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
             <Link href="/assessment" className="hover:text-foreground transition-colors">Assessment</Link>

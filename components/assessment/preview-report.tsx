@@ -100,7 +100,7 @@ function PillarCard({ category, score, delay = 0 }: { category: Category; score:
 }
 
 export function PreviewReport() {
-  const { getScores, reset } = useAssessmentStore()
+  const { calculateScores, resetAssessment } = useAssessmentStore()
   const [showVerify, setShowVerify] = useState(false)
   const [mounted, setMounted] = useState(false)
   
@@ -108,10 +108,9 @@ export function PreviewReport() {
     setMounted(true)
   }, [])
   
-  const scores = getScores()
-  const overallScore = Math.round(
-    (scores.discipline + scores.ownership + scores.toughness + scores.sportsiq) / 4
-  )
+  const scoreData = calculateScores()
+  const scores = scoreData.categories
+  const overallScore = scoreData.total
   
   // Determine top pillar
   const sortedPillars = Object.entries(scores).sort((a, b) => b[1] - a[1])
@@ -275,7 +274,7 @@ export function PreviewReport() {
       {/* Actions */}
       <section className="max-w-4xl mx-auto px-6 py-8 flex flex-wrap gap-4 justify-center">
         <button
-          onClick={() => reset()}
+          onClick={() => resetAssessment()}
           className="px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           Retake Assessment
