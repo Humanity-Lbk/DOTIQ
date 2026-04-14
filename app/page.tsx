@@ -3,80 +3,59 @@
 import Link from 'next/link'
 import Header from '@/components/header'
 
-const SystemLabel = ({ text, color = 'text-muted-foreground' }: { text: string; color?: string }) => (
-  <p className={`text-xs uppercase tracking-widest font-mono mb-4 ${color}`}>
-    {`>> ${text}`}
-  </p>
-)
-
 export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center justify-center px-4 py-20 border-b border-border">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-widest font-mono text-muted-foreground">
-                SYS.INIT: DOTIQ_CORE | V.2026.1.0 | STATUS: ACTIVE | TARGET: ATHLETIC_INTELLIGENCE
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <p className="text-sm uppercase tracking-widest text-primary font-mono">
-                {'>> DOT IN : BE IQ'}
-              </p>
-              <h1 className="text-5xl md:text-7xl font-black leading-tight">
-                Building the Future of{' '}
-                <span className="text-primary">Athletic Performance</span>
-                <br />
-                Intelligence
-              </h1>
-            </div>
-
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              The question isn&apos;t just what athletes can do — it&apos;s who they become when the lights come on. DOTIQ measures what the scoreboard can&apos;t.
+        {/* Hero Section with Gradient */}
+        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+          {/* Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-fuchsia-800/30 to-cyan-700/20" />
+          <div className="absolute top-0 right-0 w-[60%] h-[80%] bg-gradient-to-bl from-fuchsia-600/30 via-purple-500/20 to-transparent blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[40%] h-[60%] bg-gradient-to-tr from-cyan-500/20 via-purple-500/10 to-transparent blur-3xl" />
+          
+          <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center space-y-8">
+            <p className="text-primary font-semibold text-sm tracking-wide">
+              Build better athletes
             </p>
-
-            <p className="text-sm font-mono text-red-500">
-              {'>> PREDICTIVE ACCURACY: LOW WITHOUT INTANGIBLES'}
+            
+            <h1 className="text-5xl md:text-7xl font-black leading-tight text-balance">
+              Build slick{' '}
+              <span className="text-primary">athletic performance.</span>
+            </h1>
+            
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed text-pretty">
+              DOTIQ measures what matters most: Discipline, Ownership, Toughness, and Sports IQ.{' '}
+              <span className="text-primary">Unlock the intangibles.</span>
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-              <button className="px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2 group">
-                Take the DOTIQ Assessment
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </button>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+              <Link 
+                href="/assessment"
+                className="px-8 py-4 bg-primary text-primary-foreground font-bold rounded-full hover:scale-105 transition-transform shadow-lg shadow-primary/25"
+              >
+                Get started for free
+              </Link>
             </div>
-
-            <p className="text-sm text-muted-foreground pt-2">
-              Free. Quick signup. About 10 minutes.
+            
+            <p className="text-sm text-muted-foreground">
+              DOTIQ is free to start. Join the movement.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4 text-sm">
-              <button className="px-6 py-2 border border-primary rounded-lg text-primary hover:bg-primary/10 transition-colors">
-                Coach Assessment
-              </button>
-              <span className="text-muted-foreground">or</span>
-              <button className="px-6 py-2 border border-primary rounded-lg text-primary hover:bg-primary/10 transition-colors">
-                Peer Assessment
-              </button>
-            </div>
           </div>
         </section>
 
-        {/* Process Section */}
-        <section className="py-24 px-4 border-b border-border">
-          <div className="max-w-6xl mx-auto space-y-16">
+        {/* Features Section */}
+        <section className="py-24 px-6 bg-card/50">
+          <div className="max-w-6xl mx-auto text-center space-y-16">
             <div className="space-y-4">
-              <SystemLabel text="SYSTEM_ARCH: ASSESSMENT_PROTOCOL" />
-              <h2 className="text-4xl md:text-5xl font-black">
+              <p className="text-primary font-semibold text-sm tracking-wide">The Assessment</p>
+              <h2 className="text-4xl md:text-5xl font-black text-balance">
                 Turning Intangibles Into Insight
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl">
-                The DOTIQ Assessment evaluates athletes behaviors and habits and turns them into clear, development-focused insights athletes can actually use.
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                The DOTIQ Assessment evaluates athlete behaviors and habits, turning them into clear, development-focused insights you can actually use.
               </p>
             </div>
 
@@ -84,154 +63,127 @@ export default function HomePage() {
               {[
                 {
                   num: '01',
-                  label: 'INTAKE',
-                  title: 'Complete the Assessment',
+                  title: 'Complete Assessment',
                   desc: 'Answer 50 questions on a 1-10 scale. Be honest. This is your baseline.',
                 },
                 {
                   num: '02',
-                  label: 'INTELLIGENCE',
                   title: 'Get Your Report',
-                  desc: 'Instant scoring across all four pillars with strengths, pressure points, and narratives.',
+                  desc: 'Instant scoring across all four pillars with strengths and growth areas.',
                 },
                 {
                   num: '03',
-                  label: 'EXECUTION',
-                  title: 'Take Action',
-                  desc: 'Your personalized action plan with reset scripts, weekly focus, and growth targets.',
+                  title: 'Verify Your Score',
+                  desc: 'Send to a coach, peer, and mentor for multi-perspective validation.',
                 },
                 {
                   num: '04',
-                  label: 'RESOURCES',
-                  title: 'Resources',
-                  desc: 'Additional tools and materials to support your development journey.',
+                  title: 'Take Action',
+                  desc: 'Unlock your full report and personalized development resources.',
                 },
               ].map((item) => (
                 <div
                   key={item.num}
-                  className="border border-border rounded-lg p-6 space-y-4 hover:border-primary/50 transition-colors"
+                  className="bg-card border border-border rounded-2xl p-6 space-y-4 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all text-left"
                 >
-                  <p className="text-primary font-mono text-sm font-bold">
-                    {item.num} {`// ${item.label}`}
-                  </p>
+                  <span className="text-primary font-mono text-sm font-bold">{item.num}</span>
                   <h3 className="text-xl font-bold">{item.title}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
+          </div>
+        </section>
 
-            <div className="text-center border-t border-b border-border py-12">
-              <p className="text-2xl font-black italic text-white">
-                &quot;Most training focuses on what an athlete can DO. We develop who an athlete IS.&quot;
-              </p>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mt-6">
-                {'>> JOIN THE MOVEMENT'}
-              </p>
+        {/* The Problem Section */}
+        <section className="py-24 px-6 border-t border-border">
+          <div className="max-w-6xl mx-auto space-y-16">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <p className="text-destructive font-semibold text-sm tracking-wide">The Problem</p>
+                <h2 className="text-4xl font-black">
+                  Physical metrics miss the full picture
+                </h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  40-yard dash, vertical jump, bat speed, spin rate — these are easy to measure. But what about the traits that truly define champions? The intangibles that separate good athletes from elite performers?
+                </p>
+                
+                <div className="flex flex-wrap gap-3">
+                  {['40-Yard Dash', 'Vertical Jump', 'Bat Speed', 'Spin Rate'].map((metric) => (
+                    <span key={metric} className="px-4 py-2 bg-muted rounded-full text-sm text-muted-foreground">
+                      {metric}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <p className="text-primary font-semibold text-sm tracking-wide">The Solution</p>
+                <h2 className="text-4xl font-black">
+                  &quot;IT&quot; can be measured
+                </h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  Elite performers share four measurable behavioral traits. These are not abstract concepts — they are observable, measurable, and developable.
+                </p>
+                
+                <div className="flex flex-wrap gap-3">
+                  {['Discipline', 'Ownership', 'Toughness', 'Sports IQ'].map((trait) => (
+                    <span key={trait} className="px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary font-medium">
+                      {trait}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Missing Data Section */}
-        <section className="py-24 px-4 border-b border-border">
+        {/* Four Pillars Section */}
+        <section className="py-24 px-6 bg-card/50 border-t border-border">
           <div className="max-w-6xl mx-auto space-y-16">
-            <div className="space-y-4">
-              <p className="text-red-500 font-mono text-sm font-bold">ERR: MISSING_DATA</p>
-              <p className="text-muted-foreground font-mono text-sm">CURRENT STANDARD: &quot;WHAT THEY CAN DO&quot;</p>
-            </div>
-
-            <div className="flex flex-wrap gap-3 mb-12">
-              {[
-                '40-Yard Dash',
-                'Vertical Jump',
-                'Bat Speed',
-                'Spin Rate',
-                'Launch Angle',
-              ].map((metric) => (
-                <div
-                  key={metric}
-                  className="px-4 py-2 border border-border rounded text-sm font-mono text-primary"
-                >
-                  {`[MEASURABLE] ${metric}`}
-                </div>
-              ))}
-            </div>
-
-            <p className="text-muted-foreground font-mono text-sm mb-12">
-              {'>> THE MISSING LINK: "WHO THEY ARE"'}
-            </p>
-
-            <div className="grid md:grid-cols-4 gap-6 mb-12">
-              {[
-                { label: 'Discipline' },
-                { label: 'Ownership' },
-                { label: 'Toughness' },
-                { label: 'Sports IQ' },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="px-4 py-2 border border-border rounded text-sm font-mono text-primary"
-                >
-                  {`[UNKNOWN] ${item.label}`}
-                </div>
-              ))}
-            </div>
-
-            <blockquote className="text-center text-lg italic text-muted-foreground border-l-4 border-primary pl-6 py-6">
-              &quot;Michael Jordan missed 26 game-winners. Steph Curry misses 58% of 3s. Failure is inherent. Resilience is the differentiator.&quot;
-            </blockquote>
-          </div>
-        </section>
-
-        {/* Pillars Section */}
-        <section className="py-24 px-4 border-b border-border">
-          <div className="max-w-6xl mx-auto space-y-16">
-            <div className="space-y-4">
-              <SystemLabel text="DATA_SOURCE: FOUNDER_EXPERIENCE" />
-              <h2 className="text-4xl md:text-5xl font-black">
-                &quot;IT&quot; Can Be Measured
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl">
-                Elite performers share four measurable behavioral traits. These are not abstract concepts — they are observable, measurable, and developable.
-              </p>
-              <p className="text-sm font-mono text-primary pt-4">
-                {'>> METRIC_TYPE: BEHAVIORAL • STATUS: QUANTIFIED'}
+            <div className="text-center space-y-4">
+              <p className="text-primary font-semibold text-sm tracking-wide">The Framework</p>
+              <h2 className="text-4xl md:text-5xl font-black">The Four Pillars</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Every elite performer demonstrates these four behavioral traits. DOTIQ measures each one.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 {
                   letter: 'D',
-                  title: 'DISCIPLINE',
+                  title: 'Discipline',
                   desc: 'Consistency in preparation, habits, standards, and execution when motivation fades.',
+                  color: 'from-green-500 to-emerald-600',
                 },
                 {
                   letter: 'O',
-                  title: 'OWNERSHIP',
-                  desc: 'Responsibility and accountability for actions, outcomes, and continuous improvement to become a leader.',
+                  title: 'Ownership',
+                  desc: 'Responsibility and accountability for actions, outcomes, and continuous improvement.',
+                  color: 'from-purple-500 to-violet-600',
                 },
                 {
                   letter: 'T',
-                  title: 'TOUGHNESS',
+                  title: 'Toughness',
                   desc: 'Mental, physical, and emotional resilience under pressure, adversity, and failure.',
+                  color: 'from-orange-500 to-red-600',
                 },
                 {
-                  letter: 'I',
-                  title: 'SPORTS IQ',
+                  letter: 'IQ',
+                  title: 'Sports IQ',
                   desc: 'Situational awareness, decision-making speed, and game intelligence.',
+                  color: 'from-cyan-500 to-blue-600',
                 },
               ].map((pillar) => (
                 <div
                   key={pillar.letter}
-                  className="border-l-4 border-primary border-b border-r border-border rounded-lg p-6 space-y-4"
+                  className="bg-card border border-border rounded-2xl p-6 space-y-4 hover:border-primary/50 transition-colors group"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="text-5xl font-black text-primary">{pillar.letter}</div>
-                    <div>
-                      <p className="text-xs font-mono text-muted-foreground">BEHAVIORAL METRIC</p>
-                      <h3 className="text-lg font-bold">{pillar.title}</h3>
-                    </div>
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${pillar.color} flex items-center justify-center text-white font-black text-2xl shadow-lg`}>
+                    {pillar.letter}
                   </div>
+                  <h3 className="text-xl font-bold group-hover:text-primary transition-colors">{pillar.title}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">{pillar.desc}</p>
                 </div>
               ))}
@@ -239,37 +191,57 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-24 px-4 border-b border-border text-center">
-          <div className="max-w-2xl mx-auto space-y-8">
-            <SystemLabel text="SYSTEM_STATUS: AWAITING_INPUT" />
-            <h2 className="text-4xl md:text-5xl font-black">The work starts now.</h2>
-            <button className="px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-all inline-flex items-center gap-2 group mx-auto">
-              Begin Assessment
-              <span className="group-hover:translate-x-1 transition-transform">→</span>
-            </button>
+        {/* Quote Section */}
+        <section className="py-24 px-6 border-t border-border">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <blockquote className="text-3xl md:text-4xl font-black leading-tight">
+              &quot;Most training focuses on what an athlete can DO.{' '}
+              <span className="text-primary">We develop who an athlete IS.</span>&quot;
+            </blockquote>
+            <p className="text-muted-foreground">
+              Michael Jordan missed 26 game-winners. Steph Curry misses 58% of 3s. Failure is inherent. Resilience is the differentiator.
+            </p>
           </div>
         </section>
 
-
+        {/* CTA Section */}
+        <section className="relative py-24 px-6 overflow-hidden">
+          {/* Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-fuchsia-800/20 to-cyan-700/10" />
+          
+          <div className="relative z-10 max-w-2xl mx-auto text-center space-y-8">
+            <h2 className="text-4xl md:text-5xl font-black">The work starts now.</h2>
+            <p className="text-lg text-muted-foreground">
+              Take the free assessment and discover your athletic mindset profile.
+            </p>
+            <Link 
+              href="/assessment"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-full hover:scale-105 transition-transform shadow-lg shadow-primary/25"
+            >
+              Begin Assessment
+              <span>→</span>
+            </Link>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8 text-sm">
-          <div className="flex items-center gap-2 font-mono">
-            <div className="w-2 h-2 bg-primary rounded-full" />
-            <span>DOTIQ · DOT IN · BE IQ</span>
+      <footer className="border-t border-border py-12 px-6 bg-card/30">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-black text-sm">D</span>
+            </div>
+            <span className="font-bold">DOTIQ</span>
           </div>
-          <div className="flex gap-6 text-muted-foreground">
-            <span>DISCIPLINE</span>
-            <span>·</span>
-            <span>OWNERSHIP</span>
-            <span>·</span>
-            <span>TOUGHNESS</span>
-            <span>·</span>
-            <span>IQ</span>
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link href="/assessment" className="hover:text-foreground transition-colors">Assessment</Link>
+            <Link href="/auth/login" className="hover:text-foreground transition-colors">Sign In</Link>
           </div>
+          <p className="text-sm text-muted-foreground">
+            Discipline · Ownership · Toughness · IQ
+          </p>
         </div>
       </footer>
     </div>
