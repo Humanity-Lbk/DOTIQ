@@ -7,9 +7,9 @@ export interface Product {
 
 export const PRODUCTS: Product[] = [
   {
-    id: 'dotiq-assessment',
-    name: 'DOT IQ Assessment',
-    description: 'Complete 50-question assessment measuring Discipline, Ownership, Toughness, and Sports IQ',
+    id: 'dotiq-full-report',
+    name: 'DOTIQ Full Report',
+    description: 'Unlock your complete DOTIQ analysis with detailed pillar breakdowns, personalized action plans, and development resources',
     priceInCents: 1999, // $19.99
   },
 ]

@@ -7,25 +7,12 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'DOT IQ - Measure Your Athletic Mindset',
-  description: 'Discover your DOT IQ score - measuring Discipline, Ownership, Toughness, and Sports IQ to develop elite athletic performance.',
+  title: 'DOTIQ - Building the Future of Athletic Performance Intelligence',
+  description: 'DOTIQ measures what matters most: Discipline, Ownership, Toughness, and Sports IQ. Unlock your athletic potential with data-driven performance intelligence.',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/favicon.png',
+    apple: '/favicon.png',
   },
 }
 

@@ -1,167 +1,331 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import Header from "@/components/header"
-import { Target, Users, TrendingUp, Brain } from "lucide-react"
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import Header from '@/components/header'
+
+const measurableMetrics = ['40-Yard Dash', 'Vertical Jump', 'Bat Speed', 'Spin Rate', 'Launch Angle']
+const unknownMetrics = ['Discipline', 'Ownership', 'Toughness', 'Sports IQ']
+
+const pillars = [
+  {
+    letter: 'D',
+    title: 'DISCIPLINE',
+    desc: 'Consistency in preparation, habits, standards, and execution when motivation fades.',
+  },
+  {
+    letter: 'O',
+    title: 'OWNERSHIP',
+    desc: 'Responsibility and accountability for actions, outcomes, and continuous improvement.',
+  },
+  {
+    letter: 'T',
+    title: 'TOUGHNESS',
+    desc: 'Mental, physical, and emotional resilience under pressure, adversity, and failure.',
+  },
+  {
+    letter: 'IQ',
+    title: 'SPORTS IQ',
+    desc: 'Situational awareness, decision-making speed, and game intelligence.',
+  },
+]
+
+const steps = [
+  {
+    num: '01',
+    label: 'INTAKE',
+    title: 'Complete the Assessment',
+    desc: 'Answer 50 questions on a 1-10 scale. Be honest. This is your baseline.',
+  },
+  {
+    num: '02',
+    label: 'INTELLIGENCE',
+    title: 'Get Your Report',
+    desc: 'Instant scoring across all four pillars with strengths, pressure points, and narratives.',
+  },
+  {
+    num: '03',
+    label: 'EXECUTION',
+    title: 'Take Action',
+    desc: 'Your personalized action plan with reset scripts, weekly focus, and growth targets.',
+  },
+  {
+    num: '04',
+    label: 'RESOURCES',
+    title: 'Resources',
+    desc: 'Additional tools and materials to support your development journey.',
+  },
+]
 
 export default function HomePage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background grid-pattern">
       <Header />
       
       <main className="flex-1">
+        {/* System Status Bar */}
+        <div className={`border-b border-border py-3 px-6 transition-all duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 text-xs font-mono text-muted-foreground">
+            <span>SYS.INIT: DOTIQ_CORE</span>
+            <span className="text-border">|</span>
+            <span>V.2026.1.0</span>
+            <span className="text-border">|</span>
+            <span>STATUS: <span className="text-green-500">ACTIVE</span></span>
+            <span className="text-border">|</span>
+            <span>TARGET: ATHLETIC_INTELLIGENCE</span>
+          </div>
+        </div>
+
         {/* Hero Section */}
-        <section className="py-20 md:py-32">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-6xl font-bold text-foreground tracking-tight mb-6 text-balance">
-                Measure the Mindset Behind Athletic Performance
-              </h1>
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed text-pretty">
-                Discover your DOT IQ score and unlock the intangibles that separate average players from elite competitors.
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden px-6">
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            {/* Tagline */}
+            <p className={`font-mono text-sm text-muted-foreground tracking-widest transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              {'>> DOT IN · BE IQ'}
+            </p>
+            
+            {/* Main Headline */}
+            <h1 className={`text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight transition-all duration-1000 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              Building the Future of<br />
+              <span className="text-primary animate-text-glow">Athletic Performance</span><br />
+              Intelligence
+            </h1>
+            
+            {/* Subhead */}
+            <p className={`text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              The question isn&apos;t just what athletes can do — it&apos;s who they become when the lights come on. DOTIQ measures what the scoreboard can&apos;t.
+            </p>
+            
+            {/* Predictive Accuracy Warning */}
+            <p className={`font-mono text-xs text-muted-foreground tracking-wider transition-all duration-700 delay-400 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+              {'>> PREDICTIVE_ACCURACY: '}<span className="text-destructive">LOW</span>{' WITHOUT INTANGIBLES'}
+            </p>
+            
+            {/* Primary CTA */}
+            <div className={`pt-4 transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <Link 
+                href="/assessment"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:scale-105 transition-all duration-300 animate-glow-pulse"
+              >
+                Take the DOTIQ Assessment
+                <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </Link>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Free. Quick signup. About 10 minutes.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg" className="text-base">
-                  <Link href="/purchase">Take the Assessment</Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="text-base">
-                  <Link href="/about">Learn More</Link>
-                </Button>
-              </div>
+            </div>
+            
+            {/* Secondary CTAs */}
+            <div className={`flex items-center justify-center gap-4 pt-4 transition-all duration-700 delay-600 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+              <Link 
+                href="/evaluate"
+                className="group flex items-center gap-2 px-5 py-2.5 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all"
+              >
+                Coach Assessment
+                <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+              </Link>
+              <span className="text-muted-foreground text-sm">or</span>
+              <Link 
+                href="/evaluate"
+                className="group flex items-center gap-2 px-5 py-2.5 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all"
+              >
+                Peer Assessment
+                <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* What is DOT IQ */}
-        <section className="py-16 md:py-24 bg-card">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-4">
-                What is DOT IQ?
-              </h2>
-              <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-                DOT IQ measures the four pillars of athletic character that coaches and scouts value most.
+        {/* Missing Data Section */}
+        <section className="py-24 px-6 border-t border-border">
+          <div className="max-w-6xl mx-auto space-y-16">
+            {/* Error Header */}
+            <div className="space-y-8">
+              <p className="font-mono text-sm text-destructive tracking-wider animate-fade-in">
+                ERR: MISSING_DATA
               </p>
               
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-background border border-border rounded-lg p-6">
-                  <div className="w-12 h-12 rounded-lg bg-chart-1/20 flex items-center justify-center mb-4">
-                    <Target className="w-6 h-6 text-chart-1" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Discipline</h3>
-                  <p className="text-muted-foreground">
-                    Consistency, preparation, and unwavering commitment to the process of improvement.
-                  </p>
-                </div>
-                
-                <div className="bg-background border border-border rounded-lg p-6">
-                  <div className="w-12 h-12 rounded-lg bg-chart-2/20 flex items-center justify-center mb-4">
-                    <Users className="w-6 h-6 text-chart-2" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Ownership</h3>
-                  <p className="text-muted-foreground">
-                    Accountability, leadership, and taking full responsibility for your actions and outcomes.
-                  </p>
-                </div>
-                
-                <div className="bg-background border border-border rounded-lg p-6">
-                  <div className="w-12 h-12 rounded-lg bg-chart-3/20 flex items-center justify-center mb-4">
-                    <TrendingUp className="w-6 h-6 text-chart-3" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Toughness</h3>
-                  <p className="text-muted-foreground">
-                    Mental resilience, grit, and the ability to maintain composure under pressure.
-                  </p>
-                </div>
-                
-                <div className="bg-background border border-border rounded-lg p-6">
-                  <div className="w-12 h-12 rounded-lg bg-chart-4/20 flex items-center justify-center mb-4">
-                    <Brain className="w-6 h-6 text-chart-4" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Sports IQ</h3>
-                  <p className="text-muted-foreground">
-                    Game awareness, quick decision-making, and the ability to adapt to any situation.
-                  </p>
+              {/* Current Standard */}
+              <div className="space-y-4">
+                <p className="font-mono text-xs text-muted-foreground tracking-widest">
+                  CURRENT STANDARD: &quot;WHAT THEY CAN DO&quot;
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {measurableMetrics.map((metric, i) => (
+                    <div 
+                      key={metric}
+                      className="px-4 py-2.5 border border-border rounded-lg text-sm animate-fade-in-up"
+                      style={{ animationDelay: `${i * 100}ms` }}
+                    >
+                      <span className="font-mono text-xs text-muted-foreground mr-2">[MEASURABLE]</span>
+                      <span className="text-foreground">{metric}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section className="py-16 md:py-24">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-12">
-                How It Works
-              </h2>
               
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground font-bold text-xl flex items-center justify-center mx-auto mb-4">
-                    1
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Take the Assessment</h3>
-                  <p className="text-muted-foreground">
-                    Complete our 50-question assessment that evaluates your athletic mindset across four key areas.
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground font-bold text-xl flex items-center justify-center mx-auto mb-4">
-                    2
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Get Your Score</h3>
-                  <p className="text-muted-foreground">
-                    Receive your personalized DOT IQ score with detailed breakdowns for each category.
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground font-bold text-xl flex items-center justify-center mx-auto mb-4">
-                    3
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Develop Your Game</h3>
-                  <p className="text-muted-foreground">
-                    Access tailored development resources to strengthen your weakest areas and elevate your game.
-                  </p>
+              {/* The Missing Link */}
+              <div className="space-y-4 pt-8">
+                <p className="font-mono text-xs text-primary tracking-widest">
+                  {'>> THE MISSING LINK: "WHO THEY ARE"'}
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {unknownMetrics.map((metric, i) => (
+                    <div 
+                      key={metric}
+                      className="px-4 py-3 bg-primary/10 border border-primary/30 rounded-lg animate-fade-in-up animate-border-glow"
+                      style={{ animationDelay: `${(i + 5) * 100}ms` }}
+                    >
+                      <span className="font-mono text-xs text-primary mr-2">[UNKNOWN]</span>
+                      <span className="text-foreground font-medium">{metric}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
+            </div>
+            
+            {/* Quote */}
+            <blockquote className="text-lg md:text-xl text-muted-foreground italic text-center max-w-4xl mx-auto leading-relaxed">
+              &quot;Michael Jordan missed 26 game-winners. Steph Curry misses 58% of 3s. Failure is inherent. <span className="text-foreground font-medium">Resilience is the differentiator.</span>&quot;
+            </blockquote>
+          </div>
+        </section>
+
+        {/* "IT" Can Be Measured Section */}
+        <section className="py-24 px-6 bg-card/30 border-t border-border">
+          <div className="max-w-6xl mx-auto space-y-16">
+            <div className="max-w-3xl space-y-4">
+              <p className="font-mono text-xs text-muted-foreground tracking-widest">
+                DATA_SOURCE: FOUNDER_EXPERIENCE
+              </p>
+              <h2 className="text-4xl md:text-5xl font-black leading-tight">
+                &quot;IT&quot; Can Be Measured
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Elite performers share four measurable behavioral traits. These are not abstract concepts — they are observable, measurable, and developable.
+              </p>
+            </div>
+
+            {/* Metric Type Header */}
+            <div className="font-mono text-xs text-muted-foreground tracking-widest">
+              {'>> METRIC_TYPE: BEHAVIORAL · STATUS: '}<span className="text-primary">QUANTIFIED</span>
+            </div>
+
+            {/* Four Pillars Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {pillars.map((pillar, i) => (
+                <div
+                  key={pillar.letter}
+                  className="card-premium bg-card border border-border rounded-lg p-6 space-y-4 animate-fade-in-up"
+                  style={{ animationDelay: `${i * 150}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center border-l-2 border-primary">
+                      <span className="font-black text-lg text-foreground">{pillar.letter}</span>
+                    </div>
+                    <div>
+                      <p className="font-mono text-[10px] text-muted-foreground">BEHAVIORAL</p>
+                      <h3 className="font-bold text-sm">{pillar.title}</h3>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{pillar.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-card">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Ready to Discover Your DOT IQ?
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                Take the assessment and find out where you stand. It only takes about 10 minutes.
+        {/* Assessment Protocol Section */}
+        <section className="py-24 px-6 border-t border-border">
+          <div className="max-w-6xl mx-auto space-y-16">
+            <div className="max-w-3xl space-y-4">
+              <p className="font-mono text-xs text-muted-foreground tracking-widest">
+                SYSTEM_ARCH: ASSESSMENT_PROTOCOL
               </p>
-              <Button asChild size="lg" className="text-base">
-                <Link href="/purchase">Start Assessment</Link>
-              </Button>
+              <h2 className="text-4xl md:text-5xl font-black leading-tight">
+                Turning Intangibles Into Insight
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                The DOTIQ Assessment evaluates athletes behaviors and habits and turns them into clear, development-focused insights athletes can actually use.
+              </p>
             </div>
+
+            {/* Process Steps */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {steps.map((step, i) => (
+                <div
+                  key={step.num}
+                  className="card-premium bg-card border border-border rounded-lg p-6 space-y-4 animate-fade-in-up"
+                  style={{ animationDelay: `${i * 150}ms` }}
+                >
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-primary">{step.num}</span>
+                    <span className="font-mono text-xs text-muted-foreground">// {step.label}</span>
+                  </div>
+                  <h3 className="font-bold text-lg">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Quote Section */}
+        <section className="py-32 px-6 border-t border-border relative overflow-hidden">
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
+          
+          <div className="relative max-w-4xl mx-auto text-center space-y-8">
+            <blockquote className="text-2xl md:text-4xl font-black leading-tight italic">
+              &quot;Most training focuses on what an athlete can DO. <span className="text-primary">We develop who an athlete IS.</span>&quot;
+            </blockquote>
+            <p className="font-mono text-xs text-muted-foreground tracking-widest">
+              {'>> JOIN THE MOVEMENT'}
+            </p>
+          </div>
+        </section>
+
+        {/* Final CTA Section */}
+        <section className="py-24 px-6 border-t border-border">
+          <div className="max-w-2xl mx-auto text-center space-y-8">
+            <p className="font-mono text-xs text-muted-foreground tracking-widest">
+              {'>> SYSTEM_STATUS: AWAITING_INPUT'}
+            </p>
+            <h2 className="text-4xl md:text-5xl font-black">
+              The work starts now.
+            </h2>
+            <Link 
+              href="/assessment"
+              className="group inline-flex items-center gap-3 px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:scale-105 transition-all duration-300 animate-glow-pulse"
+            >
+              Begin Assessment
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xs">D</span>
-              </div>
-              <span className="font-semibold text-foreground">DOT IQ</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Measuring the mindset behind athletic performance.
-            </p>
+      <footer className="border-t border-border py-8 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <Link href="/" className="block">
+            <Image src="/logo.png" alt="DOTIQ" width={80} height={26} className="h-5 w-auto invert brightness-0" />
+          </Link>
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link href="/assessment" className="hover:text-foreground transition-colors">Assessment</Link>
+            <Link href="/auth/login" className="hover:text-foreground transition-colors">Sign In</Link>
           </div>
+          <p className="font-mono text-xs text-muted-foreground">
+            D · O · T · IQ
+          </p>
         </div>
       </footer>
     </div>
