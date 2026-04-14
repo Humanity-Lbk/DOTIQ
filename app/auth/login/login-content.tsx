@@ -12,7 +12,7 @@ export default function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
-  const [method, setMethod] = useState<AuthMethod>('phone')
+  const [method, setMethod] = useState<AuthMethod>('email')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [otpSent, setOtpSent] = useState(false)
