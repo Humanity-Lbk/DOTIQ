@@ -107,15 +107,14 @@ export default function SignUpPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="fixed inset-0 bg-gradient-to-br from-purple-900/20 via-fuchsia-800/10 to-cyan-700/5 pointer-events-none" />
-        
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 grid-pattern">
         <div className="relative z-10 w-full max-w-md text-center space-y-6">
-          <div className="w-16 h-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
+          <p className="font-mono text-xs text-muted-foreground tracking-widest">{'>> EMAIL_SENT'}</p>
           <h1 className="text-3xl font-black">Check your email</h1>
           <p className="text-muted-foreground">
             We&apos;ve sent a confirmation link to <span className="text-foreground font-medium">{email}</span>
@@ -132,25 +131,23 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-900/20 via-fuchsia-800/10 to-cyan-700/5 pointer-events-none" />
-      
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 grid-pattern">
       <div className="relative z-10 w-full max-w-md space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-lg">D</span>
-            </div>
-            <span className="font-bold text-xl">DOTIQ</span>
+        <div className="text-center space-y-4">
+          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
+            <div className="w-2.5 h-2.5 rounded-full bg-primary group-hover:animate-glow-pulse transition-all" />
+            <span className="font-bold text-sm tracking-widest">DOTIQ</span>
           </Link>
-          <h1 className="text-3xl font-black">Create your account</h1>
-          <p className="text-muted-foreground">Start your athletic journey today</p>
+          <div className="space-y-2">
+            <p className="font-mono text-xs text-muted-foreground tracking-widest">{'>> NEW_USER_REGISTRATION'}</p>
+            <h1 className="text-3xl font-black">Create your account</h1>
+            <p className="text-muted-foreground text-sm">Start your athletic journey today</p>
+          </div>
         </div>
 
         {/* Auth Method Tabs */}
-        <div className="flex bg-muted rounded-full p-1">
+        <div className="flex bg-card border border-border rounded-lg p-1">
           {[
             { id: 'phone', label: 'Phone' },
             { id: 'email', label: 'Email' },
@@ -163,9 +160,9 @@ export default function SignUpPage() {
                 setError(null)
                 setOtpSent(false)
               }}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-full transition-all ${
+              className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${
                 method === tab.id
-                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -176,7 +173,7 @@ export default function SignUpPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm">
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
             {error}
           </div>
         )}
@@ -193,7 +190,7 @@ export default function SignUpPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     required
                   />
                 </div>
@@ -204,7 +201,7 @@ export default function SignUpPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+1 (555) 000-0000"
-                    className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                     required
                   />
                   <p className="text-xs text-muted-foreground">We&apos;ll send you a verification code</p>
@@ -219,7 +216,7 @@ export default function SignUpPage() {
                   onChange={(e) => setOtp(e.target.value)}
                   placeholder="123456"
                   maxLength={6}
-                  className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-center text-2xl tracking-widest font-mono"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-center text-2xl tracking-widest font-mono"
                   required
                 />
                 <button
@@ -234,7 +231,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all"
+              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-all"
             >
               {loading ? 'Loading...' : otpSent ? 'Verify Code' : 'Send Code'}
             </button>
@@ -251,7 +248,7 @@ export default function SignUpPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 required
               />
             </div>
@@ -262,7 +259,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 required
               />
             </div>
@@ -274,7 +271,7 @@ export default function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 minLength={8}
-                className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 required
               />
               <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
@@ -282,7 +279,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all"
+              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-all"
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
@@ -295,7 +292,7 @@ export default function SignUpPage() {
             <button
               onClick={handleGoogleSignUp}
               disabled={loading}
-              className="w-full py-3 bg-card border border-border text-foreground font-semibold rounded-xl hover:bg-muted disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+              className="w-full py-3 bg-card border border-border text-foreground font-semibold rounded-lg hover:bg-muted disabled:opacity-50 transition-all flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path

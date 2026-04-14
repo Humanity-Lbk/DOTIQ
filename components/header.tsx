@@ -1,28 +1,28 @@
 "use client"
 
 import Link from "next/link"
+import { useState, useEffect } from "react"
 
 export default function Header() {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
-    <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-black text-sm">D</span>
-          </div>
-          <span className="font-bold text-foreground">DOTIQ</span>
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="w-2.5 h-2.5 rounded-full bg-primary group-hover:animate-glow-pulse transition-all" />
+          <span className="font-bold text-sm tracking-widest text-foreground">DOTIQ</span>
         </Link>
         
-        <nav className="hidden md:flex items-center gap-8">
-          <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            About
-          </Link>
-          <Link href="/assessment" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Assessment
-          </Link>
-        </nav>
-
-        <div className="flex items-center gap-4">
+        <nav className="flex items-center gap-6">
           <Link 
             href="/auth/login" 
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -30,12 +30,19 @@ export default function Header() {
             Sign In
           </Link>
           <Link 
-            href="/assessment" 
-            className="px-5 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-full hover:bg-primary/90 transition-colors"
+            href="/auth/sign-up" 
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Get Started
+            Sign Up
           </Link>
-        </div>
+          <Link 
+            href="/assessment"
+            className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Assessment
+            <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+          </Link>
+        </nav>
       </div>
     </header>
   )

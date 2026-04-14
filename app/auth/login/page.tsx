@@ -95,25 +95,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-900/20 via-fuchsia-800/10 to-cyan-700/5 pointer-events-none" />
-      
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 grid-pattern">
       <div className="relative z-10 w-full max-w-md space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-lg">D</span>
-            </div>
-            <span className="font-bold text-xl">DOTIQ</span>
+        <div className="text-center space-y-4">
+          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
+            <div className="w-2.5 h-2.5 rounded-full bg-primary group-hover:animate-glow-pulse transition-all" />
+            <span className="font-bold text-sm tracking-widest">DOTIQ</span>
           </Link>
-          <h1 className="text-3xl font-black">Welcome back</h1>
-          <p className="text-muted-foreground">Sign in to continue your journey</p>
+          <div className="space-y-2">
+            <p className="font-mono text-xs text-muted-foreground tracking-widest">{'>> AUTH_SYSTEM'}</p>
+            <h1 className="text-3xl font-black">Welcome back</h1>
+            <p className="text-muted-foreground text-sm">Sign in to continue your journey</p>
+          </div>
         </div>
 
         {/* Auth Method Tabs */}
-        <div className="flex bg-muted rounded-full p-1">
+        <div className="flex bg-card border border-border rounded-lg p-1">
           {[
             { id: 'phone', label: 'Phone' },
             { id: 'email', label: 'Email' },
@@ -126,9 +124,9 @@ export default function LoginPage() {
                 setError(null)
                 setOtpSent(false)
               }}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-full transition-all ${
+              className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${
                 method === tab.id
-                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -139,7 +137,7 @@ export default function LoginPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm">
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
             {error}
           </div>
         )}
@@ -155,7 +153,7 @@ export default function LoginPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 (555) 000-0000"
-                  className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   required
                 />
                 <p className="text-xs text-muted-foreground">We&apos;ll send you a verification code</p>
@@ -169,7 +167,7 @@ export default function LoginPage() {
                   onChange={(e) => setOtp(e.target.value)}
                   placeholder="123456"
                   maxLength={6}
-                  className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-center text-2xl tracking-widest font-mono"
+                  className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-center text-2xl tracking-widest font-mono"
                   required
                 />
                 <button
@@ -184,7 +182,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all"
+              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-all"
             >
               {loading ? 'Loading...' : otpSent ? 'Verify Code' : 'Send Code'}
             </button>
@@ -201,7 +199,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 required
               />
             </div>
@@ -212,14 +210,14 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-input border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 required
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all"
+              className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-all"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -232,7 +230,7 @@ export default function LoginPage() {
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="w-full py-3 bg-card border border-border text-foreground font-semibold rounded-xl hover:bg-muted disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+              className="w-full py-3 bg-card border border-border text-foreground font-semibold rounded-lg hover:bg-muted disabled:opacity-50 transition-all flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
