@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 
 interface Profile {
   full_name: string | null
+  role: 'user' | 'admin' | 'super_admin'
 }
 
 export default function Header() {
@@ -47,7 +48,7 @@ export default function Header() {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('full_name, role')
           .eq('id', user.id)
           .single()
         setProfile(profile)
@@ -137,6 +138,44 @@ export default function Header() {
                       >
                         Take Assessment
                       </Link>
+                      {/* Admin/Super Admin section */}
+                      {(profile?.role === 'admin' || profile?.role === 'super_admin') && (
+                        <>
+                          <div className="border-t border-border my-1" />
+                          <p className="px-4 py-1 text-[10px] font-mono text-muted-foreground/60">ADMIN</p>
+                          
+                          {/* Requests - visible to both admin and super_admin */}
+                          <Link
+                            href="/requests"
+                            onClick={() => setDropdownOpen(false)}
+                            className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                          >
+                            Requests & Tickets
+                          </Link>
+                          
+                          {/* Change Log (external) - visible to both */}
+                          <Link
+                            href="/client-updates"
+                            onClick={() => setDropdownOpen(false)}
+                            className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                          >
+                            Change Log
+                          </Link>
+                          
+                          {/* Internal Change Log - super_admin only */}
+                          {profile?.role === 'super_admin' && (
+                            <Link
+                              href="/client-updates?view=internal"
+                              onClick={() => setDropdownOpen(false)}
+                              className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                            >
+                              Change Log
+                              <span className="ml-2 text-[10px] text-neon-gold font-mono">INTERNAL</span>
+                            </Link>
+                          )}
+                        </>
+                      )}
+                      <div className="border-t border-border my-1" />
                       <button
                         onClick={handleSignOut}
                         className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted/50 transition-colors"

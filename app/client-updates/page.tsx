@@ -1,6 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
+import Header from '@/components/header'
+import { Suspense } from 'react'
 
 interface Commit {
   sha: string
@@ -19,13 +24,7 @@ interface TimeEntry {
   commitSha?: string
 }
 
-// Two roles: 'client' (read-only) and 'internal' (can add time)
-type Role = 'client' | 'internal'
-
-const CREDENTIALS: Record<string, { password: string; role: Role }> = {
-  'updates@dotiq.com': { password: 'progress', role: 'client' },
-  'internal@dotiq.com': { password: 'dotiq-internal-2026', role: 'internal' },
-}
+type Role = 'user' | 'admin' | 'super_admin'
 
 const CATEGORY_STYLES = {
   Feature:  { bg: 'bg-[var(--neon-gold)]/10',  text: 'text-neon-gold' },
@@ -34,11 +33,18 @@ const CATEGORY_STYLES = {
   Refactor: { bg: 'bg-[var(--neon-cyan)]/10',  text: 'text-neon-cyan' },
 }
 
-export default function ClientUpdatesPage() {
+function ClientUpdatesContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const supabase = createClient()
+
+  // viewMode: 'internal' for super_admin internal view, 'external' for client/admin view
+  const requestedView = searchParams.get('view')
+
+  const [user, setUser] = useState<User | null>(null)
   const [role, setRole] = useState<Role | null>(null)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loginError, setLoginError] = useState('')
+  const [viewMode, setViewMode] = useState<'internal' | 'external'>('external')
+  const [authLoading, setAuthLoading] = useState(true)
 
   const [commits, setCommits] = useState<Commit[]>([])
   const [timeLog, setTimeLog] = useState<TimeEntry[]>([])
@@ -46,7 +52,7 @@ export default function ClientUpdatesPage() {
   const [loading, setLoading] = useState(false)
   const [lastSync, setLastSync] = useState<Date | null>(null)
 
-  // Manual entry state (internal only)
+  // Manual entry state (super_admin only)
   const [manualDesc, setManualDesc] = useState('')
   const [manualHours, setManualHours] = useState('')
   const [manualDate, setManualDate] = useState(new Date().toISOString().slice(0, 10))
@@ -54,7 +60,7 @@ export default function ClientUpdatesPage() {
   const [manualSuccess, setManualSuccess] = useState(false)
   const [manualLoading, setManualLoading] = useState(false)
 
-  // Seed state (internal only)
+  // Seed state (super_admin only)
   const [seedLoading, setSeedLoading] = useState(false)
   const [seedResult, setSeedResult] = useState<string | null>(null)
 
@@ -64,13 +70,49 @@ export default function ClientUpdatesPage() {
   const [activeTab, setActiveTab] = useState<'commits' | 'timelog'>('commits')
   const [stats, setStats] = useState({ feature: 0, bugFix: 0, style: 0, refactor: 0 })
 
+  // Check auth and role
   useEffect(() => {
-    const stored = localStorage.getItem('clientUpdatesRole') as Role | null
-    if (stored) {
-      setRole(stored)
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        router.push('/auth/login?redirect=/client-updates')
+        return
+      }
+
+      setUser(user)
+
+      // Get profile with role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      const userRole = profile?.role as Role || 'user'
+      
+      // Only admin and super_admin can access
+      if (userRole !== 'admin' && userRole !== 'super_admin') {
+        router.push('/dashboard')
+        return
+      }
+
+      setRole(userRole)
+      
+      // Determine view mode based on role and requested view
+      // Super admins can access internal view if requested, admins always see external
+      if (userRole === 'super_admin' && requestedView === 'internal') {
+        setViewMode('internal')
+      } else {
+        setViewMode('external')
+      }
+
+      setAuthLoading(false)
       fetchData()
     }
-  }, [])
+
+    checkAuth()
+  }, [supabase, router, requestedView])
 
   async function fetchData() {
     setLoading(true)
@@ -96,30 +138,6 @@ export default function ClientUpdatesPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setLoginError('')
-    const cred = CREDENTIALS[email]
-    if (cred && cred.password === password) {
-      localStorage.setItem('clientUpdatesRole', cred.role)
-      setRole(cred.role)
-      setEmail('')
-      setPassword('')
-      fetchData()
-    } else {
-      setLoginError('Invalid email or password.')
-      setPassword('')
-    }
-  }
-
-  function handleLogout() {
-    localStorage.removeItem('clientUpdatesRole')
-    setRole(null)
-    setCommits([])
-    setTimeLog([])
-    setTotalHours(0)
   }
 
   async function handleSeedFromGitHub() {
@@ -180,7 +198,6 @@ export default function ClientUpdatesPage() {
         setManualDesc('')
         setManualHours('')
         setManualDate(new Date().toISOString().slice(0, 10))
-        // Refresh data to show new entry and updated total
         await fetchData()
         setTimeout(() => setManualSuccess(false), 3000)
       }
@@ -191,85 +208,39 @@ export default function ClientUpdatesPage() {
     }
   }
 
-  // ---------- LOGIN ----------
-  if (!role) {
+  // Loading state
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-6">
-        <div className="w-full max-w-sm space-y-8">
-          <div className="text-center space-y-1">
-            <div className="font-mono text-[10px] text-muted-foreground tracking-widest mb-4">DOTIQ</div>
-            <h1 className="text-3xl font-black">Progress Portal</h1>
-            <p className="text-sm text-muted-foreground">Client updates &amp; development log</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold font-mono text-muted-foreground">EMAIL</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold font-mono text-muted-foreground">PASSWORD</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                required
-              />
-            </div>
-
-            {loginError && (
-              <p className="text-sm text-destructive">{loginError}</p>
-            )}
-
-            <button
-              type="submit"
-              className="w-full py-3 animate-shimmer-sweep text-primary-foreground font-bold rounded-lg transition-transform hover:scale-[1.02] text-sm"
-            >
-              Sign In
-            </button>
-          </form>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
   }
 
-  // ---------- DASHBOARD ----------
+  // Determine view mode based on role
+  const isInternal = role === 'super_admin' && viewMode === 'internal'
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <h1 className="text-xl font-black leading-none">DOTIQ Progress</h1>
-              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                {role === 'internal' ? 'INTERNAL VIEW' : 'CLIENT VIEW'}
-                {lastSync && ` · Synced ${lastSync.toLocaleTimeString()}`}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-          >
-            SIGN OUT
-          </button>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-5xl mx-auto px-6 py-10 space-y-10">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-black">Development Progress</h1>
+            <p className="text-sm text-muted-foreground font-mono mt-1">
+              {isInternal ? 'INTERNAL VIEW' : 'CLIENT VIEW'}
+              {lastSync && ` · Synced ${lastSync.toLocaleTimeString()}`}
+            </p>
+          </div>
+        </div>
 
         {/* GitHub API Error Banner */}
-        {githubError && (
+        {githubError && isInternal && (
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
             <p className="font-mono text-xs text-destructive font-semibold mb-1">GITHUB API ERROR</p>
             <p className="text-sm text-destructive/80 break-all">{githubError}</p>
@@ -315,12 +286,12 @@ export default function ClientUpdatesPage() {
           ))}
         </div>
 
-        {/* Internal: Seed + Manual Time Entry */}
-        {role === 'internal' && (
+        {/* Internal: Seed + Manual Time Entry (super_admin only) */}
+        {isInternal && (
           <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <p className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">INTERNAL ONLY</p>
+                <p className="font-mono text-[10px] text-neon-gold tracking-widest mb-1">SUPER ADMIN ONLY</p>
                 <h2 className="text-lg font-bold">Time Management</h2>
               </div>
               <button
@@ -332,52 +303,54 @@ export default function ClientUpdatesPage() {
               </button>
             </div>
             {seedResult && (
-              <p className="text-sm text-neon-lime font-mono">{seedResult}</p>
+              <p className={`text-sm font-mono ${seedResult.startsWith('ERROR') ? 'text-destructive' : 'text-neon-lime'}`}>
+                {seedResult}
+              </p>
             )}
 
             <div className="border-t border-border pt-6">
               <p className="font-mono text-[10px] text-muted-foreground tracking-widest mb-3">ADD MANUAL ENTRY</p>
-            <form onSubmit={handleManualEntry} className="grid sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end">
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-muted-foreground">DESCRIPTION</label>
-                <input
-                  value={manualDesc}
-                  onChange={e => setManualDesc(e.target.value)}
-                  placeholder="e.g. Design review session"
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-muted-foreground">HOURS</label>
-                <input
-                  type="number"
-                  min="0.25"
-                  step="0.25"
-                  value={manualHours}
-                  onChange={e => setManualHours(e.target.value)}
-                  placeholder="2.0"
-                  className="w-24 px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono text-muted-foreground">DATE</label>
-                <input
-                  type="date"
-                  value={manualDate}
-                  onChange={e => setManualDate(e.target.value)}
-                  className="px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={manualLoading}
-                className="px-4 py-2 animate-shimmer-sweep text-primary-foreground font-bold rounded-lg text-sm disabled:opacity-50 transition-transform hover:scale-[1.02]"
-              >
-                {manualLoading ? 'Adding...' : 'Add Entry'}
-              </button>
-            </form>
-            {manualError && <p className="text-sm text-destructive">{manualError}</p>}
-            {manualSuccess && <p className="text-sm text-neon-lime font-mono">Entry added successfully.</p>}
+              <form onSubmit={handleManualEntry} className="grid sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono text-muted-foreground">DESCRIPTION</label>
+                  <input
+                    value={manualDesc}
+                    onChange={e => setManualDesc(e.target.value)}
+                    placeholder="e.g. Design review session"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono text-muted-foreground">HOURS</label>
+                  <input
+                    type="number"
+                    min="0.25"
+                    step="0.25"
+                    value={manualHours}
+                    onChange={e => setManualHours(e.target.value)}
+                    placeholder="2.0"
+                    className="w-24 px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono text-muted-foreground">DATE</label>
+                  <input
+                    type="date"
+                    value={manualDate}
+                    onChange={e => setManualDate(e.target.value)}
+                    className="px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={manualLoading}
+                  className="px-4 py-2 animate-shimmer-sweep text-primary-foreground font-bold rounded-lg text-sm disabled:opacity-50 transition-transform hover:scale-[1.02]"
+                >
+                  {manualLoading ? 'Adding...' : 'Add Entry'}
+                </button>
+              </form>
+              {manualError && <p className="text-sm text-destructive mt-2">{manualError}</p>}
+              {manualSuccess && <p className="text-sm text-neon-lime font-mono mt-2">Entry added successfully.</p>}
             </div>
           </div>
         )}
@@ -439,8 +412,8 @@ export default function ClientUpdatesPage() {
                 </p>
               ) : (
                 timeLog.map(entry => (
-                  <div key={entry.id} className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-4 hover:border-primary/30 transition-colors">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div key={entry.id} className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
+                    <div className="flex items-start gap-3 mb-2">
                       <span className={`shrink-0 text-[10px] font-mono px-2 py-1 rounded-full mt-0.5 ${
                         entry.type === 'manual'
                           ? 'bg-[var(--neon-cyan)]/10 text-neon-cyan'
@@ -449,16 +422,24 @@ export default function ClientUpdatesPage() {
                         {entry.type === 'manual' ? 'MANUAL' : 'COMMIT'}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground leading-snug">{entry.description}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono mt-1">
-                          {new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          {entry.commitSha && ` · ${entry.commitSha}`}
-                        </p>
+                        <p className="text-sm font-semibold text-foreground">{entry.title || entry.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{entry.description}</p>
                       </div>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <span className="text-lg font-black text-foreground">{entry.hours.toFixed(1)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">hr</span>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] text-muted-foreground font-mono">
+                        {new Date(entry.date).toLocaleString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                      <div className="text-right">
+                        <span className="text-base font-black text-foreground">{Number(entry.hours).toFixed(2)}</span>
+                        <span className="text-xs text-muted-foreground ml-1">hr</span>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -468,5 +449,17 @@ export default function ClientUpdatesPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function ClientUpdatesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground font-mono text-sm">Loading...</div>
+      </div>
+    }>
+      <ClientUpdatesContent />
+    </Suspense>
   )
 }

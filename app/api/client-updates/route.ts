@@ -31,9 +31,46 @@ interface TimeEntry {
   id: string
   type: 'commit' | 'manual'
   description: string
+  title: string
   hours: number
   date: string
   commit_sha?: string
+}
+
+function generateUserFriendlyTitle(message: string): string {
+  // Clean up the commit message
+  let title = message.split('\n')[0].trim()
+  
+  // Remove common prefixes like "feat:", "fix:", etc.
+  title = title.replace(/^(feat|fix|chore|docs|style|refactor|test|perf|ci):\s*/i, '')
+  
+  // Capitalize first letter
+  title = title.charAt(0).toUpperCase() + title.slice(1)
+  
+  return title
+}
+
+function generateUserFriendlyDescription(message: string, category: string): string {
+  const lines = message.split('\n').filter(l => l.trim())
+  let description = lines.slice(1).join(' ').trim()
+  
+  if (!description) {
+    // Generate description from category and title
+    const title = generateUserFriendlyTitle(message)
+    switch (category) {
+      case 'Bug Fix':
+        return `Fixed an issue: ${title}`
+      case 'UI/Style':
+        return `Updated the interface and visual design: ${title}`
+      case 'Refactor':
+        return `Improved the codebase structure and efficiency: ${title}`
+      case 'Feature':
+      default:
+        return `Added new functionality: ${title}`
+    }
+  }
+  
+  return description
 }
 
 function categorizeCommit(message: string): Commit['category'] {
@@ -46,34 +83,26 @@ function categorizeCommit(message: string): Commit['category'] {
 
 async function fetchCommitsFromGitHub(): Promise<{ commits: Commit[], error?: string }> {
   if (!GITHUB_TOKEN) {
-    console.error('[v0] GITHUB_TOKEN is not set')
     return { commits: [], error: 'GITHUB_TOKEN not configured' }
   }
 
-  console.log('[v0] Fetching commits from GitHub...')
-  console.log('[v0] Token prefix:', GITHUB_TOKEN.slice(0, 10) + '...')
-
   try {
     const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=100`
-    console.log('[v0] GitHub API URL:', url)
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        'Authorization': `token ${GITHUB_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'DOTIQ-Client',
       },
     })
 
-    console.log('[v0] GitHub response status:', response.status)
-
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[v0] GitHub API error:', errorText)
       return { commits: [], error: `GitHub API returned ${response.status}: ${errorText}` }
     }
 
     const data = await response.json()
-    console.log('[v0] Fetched commits count:', data.length)
 
     const commits: Commit[] = data.map((item: any) => ({
       sha: item.sha.slice(0, 7),
@@ -86,8 +115,7 @@ async function fetchCommitsFromGitHub(): Promise<{ commits: Commit[], error?: st
 
     return { commits }
   } catch (err) {
-    console.error('[v0] Error fetching commits:', err)
-    return { commits: [], error: String(err) }
+    return { commits: [], error: `Exception: ${String(err)}` }
   }
 }
 
@@ -111,6 +139,7 @@ async function addTimeEntry(entry: TimeEntry): Promise<boolean> {
     .upsert({
       id: entry.id,
       type: entry.type,
+      title: entry.title,
       description: entry.description,
       hours: entry.hours,
       date: entry.date,
@@ -159,6 +188,7 @@ export async function POST(request: NextRequest) {
     }
 
     // SEED: Bulk add all existing GitHub commits as time entries
+    // Time is calculated as delta between consecutive commits, capped at 3 hours max
     if (action === 'seed') {
       const result = await fetchCommitsFromGitHub()
       if (result.error) {
@@ -168,14 +198,33 @@ export async function POST(request: NextRequest) {
       const existingLog = await getTimeLog()
       const existingShas = new Set(existingLog.filter(e => e.commit_sha).map(e => e.commit_sha))
 
+      // Sort commits by date ascending (oldest first) for delta calculation
+      const sortedCommits = [...commits].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      )
+
       let added = 0
-      for (const commit of commits) {
+      for (let i = 0; i < sortedCommits.length; i++) {
+        const commit = sortedCommits[i]
         if (!existingShas.has(commit.fullSha)) {
+          // Calculate hours based on delta from previous commit
+          let hours = 1 // Default 1 hour for first commit or fallback
+          if (i > 0) {
+            const prevTime = new Date(sortedCommits[i - 1].date).getTime()
+            const currTime = new Date(commit.date).getTime()
+            const deltaHours = (currTime - prevTime) / (1000 * 60 * 60)
+            // Cap at 3 hours max (avoid overnight gaps)
+            hours = Math.min(Math.max(deltaHours, 0.25), 3)
+            // Round to nearest 0.25
+            hours = Math.round(hours * 4) / 4
+          }
+
           const success = await addTimeEntry({
             id: `commit-${commit.fullSha}`,
             type: 'commit',
-            description: commit.message,
-            hours: 1,
+            title: generateUserFriendlyTitle(commit.message),
+            description: generateUserFriendlyDescription(commit.message, commit.category),
+            hours,
             date: commit.date,
             commit_sha: commit.fullSha,
           })
