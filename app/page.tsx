@@ -50,9 +50,16 @@ export default function HomePage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative py-32 md:py-44 flex items-center justify-center px-6 grid-subtle overflow-hidden">
-          {/* Ambient glow */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/8 rounded-full blur-[120px] pointer-events-none" />
-          
+          {/* Layered ambient glows — gold center, neon flanks */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-primary/10 rounded-full blur-[140px] pointer-events-none" />
+          <div className="absolute top-1/3 left-[10%] w-[320px] h-[320px] bg-[var(--neon-lime)]/6 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-1/4 right-[8%] w-[280px] h-[280px] bg-[var(--neon-pink)]/6 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-[15%] right-[15%] w-[180px] h-[180px] bg-[var(--neon-cyan)]/5 rounded-full blur-[80px] pointer-events-none" />
+
+          {/* Decorative pillar letters — large, faded, positioned */}
+          <span aria-hidden="true" className="absolute left-[4%] top-1/2 -translate-y-1/2 text-[180px] font-black text-neon-gold opacity-[0.04] select-none pointer-events-none leading-none">D</span>
+          <span aria-hidden="true" className="absolute right-[3%] top-[30%] text-[140px] font-black text-neon-lime opacity-[0.04] select-none pointer-events-none leading-none">IQ</span>
+
           <div className="max-w-4xl mx-auto text-center relative z-10">
             {/* System Status Bar */}
             <div className={`mb-8 transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
@@ -77,6 +84,20 @@ export default function HomePage() {
               </h1>
             </div>
             
+            {/* Pillar color chips */}
+            <div className={`flex flex-wrap justify-center gap-2 mb-6 transition-all duration-700 delay-200 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+              {[
+                { label: 'DISCIPLINE', cls: 'text-neon-gold border-[var(--neon-gold)]/30 bg-[var(--neon-gold)]/5' },
+                { label: 'OWNERSHIP',  cls: 'text-neon-lime  border-[var(--neon-lime)]/30  bg-[var(--neon-lime)]/5'  },
+                { label: 'TOUGHNESS', cls: 'text-neon-pink  border-[var(--neon-pink)]/30  bg-[var(--neon-pink)]/5'  },
+                { label: 'SPORTS IQ', cls: 'text-neon-cyan  border-[var(--neon-cyan)]/30  bg-[var(--neon-cyan)]/5'  },
+              ].map(({ label, cls }) => (
+                <span key={label} className={`font-mono text-[10px] tracking-widest px-3 py-1 rounded-full border ${cls}`}>
+                  {label}
+                </span>
+              ))}
+            </div>
+
             {/* Subhead */}
             <p className={`text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
               The question isn&apos;t just what athletes can do — it&apos;s who they become when the lights come on. DOTIQ measures what the scoreboard can&apos;t.
