@@ -49,7 +49,7 @@ export default function HomePage() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative py-20 md:py-32 flex items-center justify-center px-6 grid-subtle overflow-hidden">
+        <section className="relative py-10 md:py-16 flex items-center justify-center px-6 grid-subtle overflow-hidden min-h-[90vh]">
           {/* Layered ambient glows — gold center, neon flanks */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-primary/10 rounded-full blur-[140px] pointer-events-none" />
           <div className="absolute top-1/3 left-[10%] w-[320px] h-[320px] bg-[var(--neon-lime)]/6 rounded-full blur-[100px] pointer-events-none" />
