@@ -37,9 +37,9 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
 
   if (isProtectedRoute && !user) {
-    const signUpUrl = new URL('/auth/sign-up', request.url)
-    signUpUrl.searchParams.set('redirect', path)
-    const redirectResponse = NextResponse.redirect(signUpUrl)
+    const loginUrl = new URL('/auth/login', request.url)
+    loginUrl.searchParams.set('redirect', path)
+    const redirectResponse = NextResponse.redirect(loginUrl)
     // Copy over any refreshed cookies so the session stays intact
     supabaseResponse.cookies.getAll().forEach(cookie => {
       redirectResponse.cookies.set(cookie.name, cookie.value)
