@@ -7,10 +7,10 @@ import Header from '@/components/header'
 import { TypewriterText } from '@/components/ui/typewriter-text'
 
 const pillars = [
-  { letter: 'D', title: 'Discipline', desc: 'Consistency when motivation fades' },
-  { letter: 'O', title: 'Ownership', desc: 'Accountability for outcomes' },
-  { letter: 'T', title: 'Toughness', desc: 'Resilience under pressure' },
-  { letter: 'IQ', title: 'Sports IQ', desc: 'Decision-making speed' },
+  { letter: 'D', title: 'Discipline', desc: 'Consistency when motivation fades', color: 'text-neon-gold' },
+  { letter: 'O', title: 'Ownership', desc: 'Accountability for outcomes', color: 'text-neon-lime' },
+  { letter: 'T', title: 'Toughness', desc: 'Resilience under pressure', color: 'text-neon-pink' },
+  { letter: 'IQ', title: 'Sports IQ', desc: 'Decision-making speed', color: 'text-neon-cyan' },
 ]
 
 const steps = [
@@ -18,6 +18,22 @@ const steps = [
   { num: '02', title: 'Score', desc: 'Instant results across all four pillars.' },
   { num: '03', title: 'Verify', desc: 'Get scored by coach, peer, mentor.' },
   { num: '04', title: 'Develop', desc: 'Personalized action plan.' },
+]
+
+const apparel = [
+  { id: 1, name: 'Elite Cap', price: '$42', image: '/images/apparel/hat-gold.jpg', tag: 'NEW' },
+  { id: 2, name: 'Neon Hoodie', price: '$85', image: '/images/apparel/hoodie-neon.jpg', tag: 'HOT' },
+  { id: 3, name: 'Graphic Tee', price: '$38', image: '/images/apparel/tshirt-pattern.jpg', tag: null },
+  { id: 4, name: 'Performance Socks', price: '$18', image: '/images/apparel/socks-bright.jpg', tag: null },
+  { id: 5, name: 'Elite Joggers', price: '$72', image: '/images/apparel/joggers-elite.jpg', tag: 'NEW' },
+  { id: 6, name: 'Varsity Jacket', price: '$145', image: '/images/apparel/jacket-varsity.jpg', tag: 'LIMITED' },
+]
+
+const videos = [
+  { id: 1, title: 'The Discipline Code', speaker: 'Marcus Thompson', role: 'Former MLB Player', duration: '18:42', image: '/images/videos/discipline-ep.jpg', pillar: 'discipline', color: 'border-neon-gold' },
+  { id: 2, title: 'Own Your Game', speaker: 'Coach Sarah Chen', role: 'D1 Head Coach', duration: '24:15', image: '/images/videos/ownership-ep.jpg', pillar: 'ownership', color: 'border-neon-lime' },
+  { id: 3, title: 'Built Different', speaker: 'Derek Williams', role: 'Sports Psychologist', duration: '21:08', image: '/images/videos/toughness-ep.jpg', pillar: 'toughness', color: 'border-neon-pink' },
+  { id: 4, title: 'Read The Game', speaker: 'Tony Reyes', role: 'Hitting Coach, MLB', duration: '19:33', image: '/images/videos/sportsiq-ep.jpg', pillar: 'sportsiq', color: 'border-neon-cyan' },
 ]
 
 export default function HomePage() {
@@ -33,117 +49,347 @@ export default function HomePage() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative min-h-[80vh] flex items-center justify-center px-6 grid-subtle">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            {/* Status Line */}
+        <section className="relative min-h-[85vh] flex items-center justify-center px-6 grid-subtle overflow-hidden">
+          {/* Ambient glow effects */}
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="max-w-4xl mx-auto text-center space-y-8 relative z-10">
+            {/* System Status Bar */}
             <div className={`transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-              <p className="font-mono text-xs text-muted-foreground tracking-wider inline-flex items-center gap-2">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-card/50 border border-border rounded-full backdrop-blur-sm">
                 <span className="status-dot status-active" />
-                <TypewriterText text="SYSTEM ACTIVE" delay={300} speed={40} showCursor={false} />
-              </p>
+                <TypewriterText 
+                  text="SYS.INIT: DOTIQ_CORE  V.2026.1.0  STATUS: ACTIVE" 
+                  className="font-mono text-[10px] text-muted-foreground tracking-wider"
+                  delay={200} 
+                  speed={25} 
+                  showCursor={false} 
+                />
+              </div>
             </div>
             
             {/* Main Headline */}
-            <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-              Measure What the<br />
-              <span className="text-primary animate-text-glow">Scoreboard Can&apos;t</span>
-            </h1>
+            <div className={`space-y-2 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight">
+                Building the Future of
+              </h1>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight">
+                <span className="gradient-text-gold animate-text-glow">Athletic Performance</span>
+              </h1>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight">
+                Intelligence
+              </h1>
+            </div>
             
             {/* Subhead */}
-            <p className={`text-base sm:text-lg text-muted-foreground max-w-xl mx-auto transition-all duration-700 delay-200 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-              The DOTIQ Assessment quantifies the intangibles that separate good athletes from great ones.
+            <p className={`text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+              The question isn&apos;t just what athletes can do — it&apos;s who they become when the lights come on. DOTIQ measures what the scoreboard can&apos;t.
             </p>
             
-            {/* CTA */}
-            <div className={`pt-4 transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            {/* System Message */}
+            <div className={`transition-all duration-700 delay-400 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+              <TypewriterText 
+                text=">> PREDICTIVE_ACCURACY: LOW WITHOUT INTANGIBLES" 
+                className="font-mono text-xs text-muted-foreground"
+                delay={1500} 
+                speed={20} 
+                showCursor={false} 
+              />
+            </div>
+            
+            {/* CTA Buttons */}
+            <div className={`flex flex-col sm:flex-row gap-4 justify-center pt-4 transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <Link 
                 href="/assessment"
-                className="group inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:scale-105 transition-all duration-300 animate-glow-pulse"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-lg hover:scale-105 transition-all duration-300 animate-glow-pulse text-lg"
               >
-                Take the Assessment
+                Take the DOTIQ Assessment
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
               </Link>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Free · 10 minutes · Instant results
-              </p>
             </div>
+            <p className={`text-sm text-muted-foreground transition-all duration-700 delay-600 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+              Free. Quick signup. About 10 minutes.
+            </p>
           </div>
         </section>
 
-        {/* The Four Pillars - Compact */}
-        <section className="py-16 px-6 border-t border-border">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-10">
-              <p className="font-mono text-xs text-primary mb-2">
-                <TypewriterText text=">> FOUR PILLARS" delay={800} speed={30} showCursor={false} />
+        {/* Missing Data Section */}
+        <section className="py-20 px-6 border-t border-border bg-card/30">
+          <div className="max-w-5xl mx-auto">
+            <div className={`text-center mb-12 transition-all duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+              <TypewriterText 
+                text="ERR: MISSING_DATA" 
+                className="font-mono text-xs text-destructive mb-3 block"
+                delay={2000} 
+                speed={30} 
+                showCursor={false} 
+              />
+              <p className="font-mono text-sm text-muted-foreground mb-8">
+                CURRENT STANDARD: &quot;WHAT THEY CAN DO&quot;
               </p>
-              <h2 className="text-2xl sm:text-3xl font-black">What We Measure</h2>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {pillars.map((pillar, i) => (
-                <div
-                  key={pillar.letter}
-                  className={`card-hover bg-card border border-border rounded-lg p-4 text-center transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                  style={{ transitionDelay: `${400 + i * 100}ms` }}
-                >
-                  <div className="w-10 h-10 mx-auto mb-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                    <span className="font-black text-primary text-sm">{pillar.letter}</span>
+              
+              {/* Measurable Pills */}
+              <div className="flex flex-wrap justify-center gap-2 mb-10">
+                {['40-Yard Dash', 'Vertical Jump', 'Bat Speed', 'Spin Rate', 'Launch Angle'].map((item) => (
+                  <span key={item} className="px-4 py-2 border border-border rounded-lg text-sm text-muted-foreground">
+                    <span className="font-mono text-[10px] text-muted-foreground mr-2">[MEASURABLE]</span>
+                    {item}
+                  </span>
+                ))}
+              </div>
+              
+              <TypewriterText 
+                text=">> THE MISSING LINK: &quot;WHO THEY ARE&quot;" 
+                className="font-mono text-xs text-accent mb-6 block"
+                delay={2500} 
+                speed={25} 
+                showCursor={false} 
+              />
+              
+              {/* Unknown Pills - The Four Pillars */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
+                {pillars.map((pillar, i) => (
+                  <div 
+                    key={pillar.letter}
+                    className={`px-4 py-3 bg-card border border-border rounded-lg text-left transition-all duration-500 card-hover ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                    style={{ transitionDelay: `${2600 + i * 100}ms` }}
+                  >
+                    <span className={`font-mono text-[10px] ${pillar.color}`}>[UNKNOWN]</span>
+                    <span className="block font-bold mt-1">{pillar.title}</span>
                   </div>
-                  <h3 className="font-bold text-sm mb-1">{pillar.title}</h3>
-                  <p className="text-xs text-muted-foreground">{pillar.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Process - Compact */}
-        <section className="py-16 px-6 bg-card/30 border-t border-border">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-10">
-              <p className="font-mono text-xs text-primary mb-2">
-                <TypewriterText text=">> HOW IT WORKS" delay={1200} speed={30} showCursor={false} />
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-black">Simple Process</h2>
+                ))}
+              </div>
             </div>
             
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {steps.map((step, i) => (
-                <div
-                  key={step.num}
-                  className={`relative p-4 transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                  style={{ transitionDelay: `${600 + i * 100}ms` }}
-                >
-                  <span className="text-3xl font-black text-primary/20">{step.num}</span>
-                  <h3 className="font-bold mt-1">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{step.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Quote - Minimal */}
-        <section className="py-20 px-6 border-t border-border">
-          <div className="max-w-2xl mx-auto text-center">
-            <blockquote className="text-xl sm:text-2xl font-bold leading-relaxed">
-              &quot;Most training focuses on what athletes can do.
-              <span className="text-primary"> We measure who they are.</span>&quot;
+            {/* Quote */}
+            <blockquote className="text-center text-lg sm:text-xl italic text-muted-foreground max-w-3xl mx-auto">
+              &quot;Michael Jordan missed 26 game-winners. Steph Curry misses 58% of 3s. 
+              <span className="text-primary not-italic font-semibold"> Failure is inherent. Resilience is the differentiator.</span>&quot;
             </blockquote>
           </div>
         </section>
 
-        {/* Final CTA - Compact */}
-        <section className="py-16 px-6 border-t border-border bg-card/30">
-          <div className="max-w-xl mx-auto text-center space-y-6">
-            <p className="font-mono text-xs text-muted-foreground">
-              <TypewriterText text=">> READY TO START" delay={1600} speed={30} showCursor={false} />
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-black">Discover Your Score</h2>
+        {/* IT Can Be Measured */}
+        <section className="py-20 px-6 border-t border-border">
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-12">
+              <TypewriterText 
+                text="DATA_SOURCE: FOUNDER_EXPERIENCE" 
+                className="font-mono text-xs text-muted-foreground mb-2 block"
+                delay={3000} 
+                speed={25} 
+                showCursor={false} 
+              />
+              <h2 className="text-4xl sm:text-5xl font-black mb-4">&quot;IT&quot; Can Be Measured</h2>
+              <p className="text-muted-foreground max-w-2xl">
+                Elite performers share four measurable behavioral traits. These are not abstract concepts — they are observable, measurable, and developable.
+              </p>
+            </div>
+            
+            <TypewriterText 
+              text=">> METRIC_TYPE: BEHAVIORAL · STATUS: QUANTIFIED" 
+              className="font-mono text-xs text-primary mb-6 block"
+              delay={3500} 
+              speed={20} 
+              showCursor={false} 
+            />
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {pillars.map((pillar, i) => (
+                <div
+                  key={pillar.letter}
+                  className={`card-hover bg-card border border-border rounded-xl p-5 space-y-3 transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                  style={{ transitionDelay: `${3600 + i * 150}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-lg bg-muted border-l-4 ${pillar.color.replace('text-', 'border-')} flex items-center justify-center`}>
+                      <span className={`font-black ${pillar.color}`}>{pillar.letter}</span>
+                    </div>
+                    <h3 className="font-bold text-lg">{pillar.title}</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{pillar.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Process Section */}
+        <section className="py-20 px-6 bg-card/30 border-t border-border">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <TypewriterText 
+                text="SYSTEM_ARCH: ASSESSMENT_PROTOCOL" 
+                className="font-mono text-xs text-muted-foreground mb-2 block"
+                delay={4000} 
+                speed={25} 
+                showCursor={false} 
+              />
+              <h2 className="text-3xl sm:text-4xl font-black mb-2">Turning Intangibles Into Insight</h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                The DOTIQ Assessment evaluates athletes&apos; behaviors and habits and turns them into clear, development-focused insights.
+              </p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {steps.map((step, i) => (
+                <div
+                  key={step.num}
+                  className={`relative transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                  style={{ transitionDelay: `${4100 + i * 100}ms` }}
+                >
+                  <div className="bg-card border border-border rounded-xl p-5 h-full space-y-3">
+                    <span className={`text-3xl font-black ${['text-neon-gold', 'text-neon-lime', 'text-neon-pink', 'text-neon-cyan'][i]}`}>{step.num}</span>
+                    <span className="font-mono text-[10px] text-muted-foreground ml-2">// {['INTAKE', 'INTELLIGENCE', 'EXECUTION', 'RESOURCES'][i]}</span>
+                    <h3 className="font-bold text-lg">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Quote Section */}
+        <section className="py-24 px-6 border-t border-border relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+          <div className="max-w-3xl mx-auto text-center relative z-10">
+            <blockquote className="text-2xl sm:text-3xl md:text-4xl font-bold leading-snug italic">
+              &quot;Most training focuses on what an athlete can DO. <span className="text-primary not-italic">We develop who an athlete IS.</span>&quot;
+            </blockquote>
+            <TypewriterText 
+              text=">> JOIN_THE_MOVEMENT" 
+              className="font-mono text-xs text-muted-foreground mt-8 block"
+              delay={4500} 
+              speed={30} 
+              showCursor={false} 
+            />
+          </div>
+        </section>
+
+        {/* DOTIQ TV - Netflix Style Video Section */}
+        <section className="py-20 px-6 border-t border-border bg-card/30">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <TypewriterText 
+                  text=">> DOTIQ_MEDIA : STREAM_AVAILABLE" 
+                  className="font-mono text-xs text-muted-foreground mb-2 block"
+                  delay={5000} 
+                  speed={20} 
+                  showCursor={false} 
+                />
+                <h2 className="text-3xl sm:text-4xl font-black">DOTIQ TV</h2>
+                <p className="text-muted-foreground mt-1">Learn from the minds who&apos;ve mastered the intangibles.</p>
+              </div>
+              <Link href="#" className="hidden sm:flex items-center gap-2 text-sm text-primary hover:underline">
+                Browse All <span>→</span>
+              </Link>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {videos.map((video, i) => (
+                <div 
+                  key={video.id}
+                  className={`group cursor-pointer transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                  style={{ transitionDelay: `${5100 + i * 100}ms` }}
+                >
+                  <div className={`relative aspect-video rounded-lg overflow-hidden border-2 ${video.color} mb-3`}>
+                    <Image 
+                      src={video.image} 
+                      alt={video.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <span className="font-mono text-[10px] text-white/70">{video.duration}</span>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-primary-foreground ml-1" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <h3 className="font-bold group-hover:text-primary transition-colors">{video.title}</h3>
+                  <p className="text-sm text-muted-foreground">{video.speaker}</p>
+                  <p className="text-xs text-muted-foreground">{video.role}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Apparel Drops Section */}
+        <section className="py-20 px-6 border-t border-border">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <TypewriterText 
+                  text=">> APPAREL_DROP : NEW_COLLECTION" 
+                  className="font-mono text-xs text-accent mb-2 block"
+                  delay={5500} 
+                  speed={20} 
+                  showCursor={false} 
+                />
+                <h2 className="text-3xl sm:text-4xl font-black">Apparel Drops</h2>
+                <p className="text-muted-foreground mt-1">Wear the mindset. Rep the movement.</p>
+              </div>
+              <Link href="#" className="hidden sm:flex items-center gap-2 text-sm text-primary hover:underline">
+                Shop All <span>→</span>
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {apparel.map((item, i) => (
+                <div 
+                  key={item.id}
+                  className={`group cursor-pointer transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                  style={{ transitionDelay: `${5600 + i * 80}ms` }}
+                >
+                  <div className="relative aspect-square rounded-lg overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-colors mb-2">
+                    <Image 
+                      src={item.image} 
+                      alt={item.name}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    {item.tag && (
+                      <span className={`absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold rounded ${
+                        item.tag === 'NEW' ? 'bg-accent text-accent-foreground' :
+                        item.tag === 'HOT' ? 'bg-destructive text-destructive-foreground' :
+                        'bg-primary text-primary-foreground'
+                      }`}>
+                        {item.tag}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{item.name}</h3>
+                  <p className="text-sm text-muted-foreground">{item.price}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-24 px-6 border-t border-border bg-card/30 relative overflow-hidden">
+          <div className="absolute inset-0 grid-subtle opacity-50" />
+          <div className="max-w-xl mx-auto text-center space-y-6 relative z-10">
+            <TypewriterText 
+              text=">> SYSTEM_STATUS: AWAITING_INPUT" 
+              className="font-mono text-xs text-muted-foreground block"
+              delay={6000} 
+              speed={25} 
+              showCursor 
+            />
+            <h2 className="text-3xl sm:text-4xl font-black">The work starts now.</h2>
             <Link 
               href="/assessment"
-              className="group inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:scale-105 transition-all duration-300"
+              className="group inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-lg hover:scale-105 transition-all duration-300 animate-glow-pulse"
             >
               Begin Assessment
               <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -152,15 +398,20 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Footer - Minimal */}
-      <footer className="border-t border-border py-6 px-6">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      {/* Footer */}
+      <footer className="border-t border-border py-8 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-6">
           <Link href="/">
-            <Image src="/logo.png" alt="DOTIQ" width={100} height={32} className="h-6 w-auto invert brightness-0" />
+            <Image src="/logo.png" alt="DOTIQ" width={140} height={40} className="h-8 w-auto invert brightness-0" />
           </Link>
           <p className="font-mono text-xs text-muted-foreground">
-            D · O · T · IQ
+            Discipline · Ownership · Toughness · IQ
           </p>
+          <div className="flex gap-6">
+            <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About</Link>
+            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Shop</Link>
+            <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
+          </div>
         </div>
       </footer>
     </div>

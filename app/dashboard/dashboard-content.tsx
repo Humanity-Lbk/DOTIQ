@@ -78,8 +78,8 @@ function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size
         />
         <defs>
           <linearGradient id="dashboardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#DAA520" />
-            <stop offset="100%" stopColor="#F0C050" />
+            <stop offset="0%" stopColor="#CD9B32" />
+            <stop offset="100%" stopColor="#E8B95A" />
           </linearGradient>
         </defs>
       </svg>

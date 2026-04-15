@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useAssessmentStore } from '@/lib/assessment-store'
 import { categories, questions, type Category } from '@/lib/assessment-data'
@@ -45,8 +45,8 @@ function ScoreRing({ score, size = 200, strokeWidth = 8 }: { score: number; size
         />
         <defs>
           <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#DAA520" />
-            <stop offset="100%" stopColor="#F0C050" />
+            <stop offset="0%" stopColor="#CD9B32" />
+            <stop offset="100%" stopColor="#E8B95A" />
           </linearGradient>
         </defs>
       </svg>
@@ -148,14 +148,52 @@ export function PreviewReport() {
   const { calculateScores, resetAssessment, answers } = useAssessmentStore()
   const [showVerify, setShowVerify] = useState(false)
   const [mounted, setMounted] = useState(false)
-  
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const [assessmentId, setAssessmentId] = useState<string | null>(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const hasSaved = useRef(false)
   
   const scoreData = calculateScores()
   const scores = scoreData.categories
   const overallScore = scoreData.total
+  
+  useEffect(() => {
+    setMounted(true)
+    
+    // Save assessment to database (only once)
+    async function saveAssessment() {
+      if (hasSaved.current) return
+      hasSaved.current = true
+      
+      setSaveStatus('saving')
+      try {
+        const response = await fetch('/api/assessment/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            answers,
+            scores,
+            overall_score: overallScore,
+          }),
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setAssessmentId(data.assessment_id)
+          setSaveStatus('saved')
+        } else {
+          setSaveStatus('error')
+        }
+      } catch {
+        setSaveStatus('error')
+      }
+    }
+    
+    // Only save if there are answers
+    if (Object.keys(answers).length > 0) {
+      saveAssessment()
+    }
+  }, [answers, scores, overallScore])
+  
   const insights = generateInsights(scores, overallScore, answers)
   
   return (
@@ -166,7 +204,7 @@ export function PreviewReport() {
           {/* System Status */}
           <div className={`space-y-3 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <TypewriterText 
-              text=">> ASSESSMENT_COMPLETE : SCORE_CALCULATED" 
+              text={`>> ASSESSMENT_COMPLETE : ${saveStatus === 'saved' ? 'DATA_SAVED' : saveStatus === 'saving' ? 'SAVING...' : 'SCORE_CALCULATED'}`}
               className="font-mono text-xs text-primary"
               speed={30}
             />

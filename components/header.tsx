@@ -69,9 +69,9 @@ export default function Header() {
           <Image 
             src="/logo.png" 
             alt="DOTIQ" 
-            width={140} 
-            height={40} 
-            className="h-8 w-auto invert brightness-0"
+            width={160} 
+            height={48} 
+            className="h-10 w-auto invert brightness-0"
             priority
           />
         </Link>
