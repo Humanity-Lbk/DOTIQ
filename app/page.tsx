@@ -6,24 +6,24 @@ import Image from 'next/image'
 import Header from '@/components/header'
 
 const pillars = [
-  { letter: 'D', title: 'Discipline', desc: 'Consistency when motivation fades', color: 'text-primary', bg: 'bg-primary/10' },
-  { letter: 'O', title: 'Ownership', desc: 'Accountability for outcomes', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-  { letter: 'T', title: 'Toughness', desc: 'Resilience under pressure', color: 'text-rose-400', bg: 'bg-rose-400/10' },
-  { letter: 'IQ', title: 'Sports IQ', desc: 'Decision-making speed', color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
+  { letter: 'D', title: 'Discipline', desc: 'Consistency when motivation fades', color: 'text-primary', bg: 'bg-primary/15', border: 'border-primary/40' },
+  { letter: 'O', title: 'Ownership', desc: 'Accountability for outcomes', color: 'text-emerald-400', bg: 'bg-emerald-400/15', border: 'border-emerald-400/40' },
+  { letter: 'T', title: 'Toughness', desc: 'Resilience under pressure', color: 'text-rose-400', bg: 'bg-rose-400/15', border: 'border-rose-400/40' },
+  { letter: 'IQ', title: 'Sports IQ', desc: 'Decision-making speed', color: 'text-cyan-400', bg: 'bg-cyan-400/15', border: 'border-cyan-400/40' },
 ]
 
 const steps = [
-  { num: '01', title: 'Assess', desc: '50 questions. 10 minutes. Be honest.' },
-  { num: '02', title: 'Score', desc: 'Instant results across all four pillars.' },
-  { num: '03', title: 'Verify', desc: 'Get scored by coach, peer, mentor.' },
-  { num: '04', title: 'Develop', desc: 'Personalized action plan.' },
+  { num: '01', title: 'Assess', desc: '50 questions. 10 minutes. Be honest.', color: 'text-primary', border: 'border-primary/30' },
+  { num: '02', title: 'Score', desc: 'Instant results across all four pillars.', color: 'text-emerald-400', border: 'border-emerald-400/30' },
+  { num: '03', title: 'Verify', desc: 'Get scored by coach, peer, mentor.', color: 'text-rose-400', border: 'border-rose-400/30' },
+  { num: '04', title: 'Develop', desc: 'Personalized action plan.', color: 'text-cyan-400', border: 'border-cyan-400/30' },
 ]
 
 const videos = [
-  { id: 1, title: 'The Discipline Code', speaker: 'Marcus Thompson', duration: '18:42', image: '/images/videos/discipline-ep.jpg', color: 'border-primary/40' },
-  { id: 2, title: 'Own Your Game', speaker: 'Coach Sarah Chen', duration: '24:15', image: '/images/videos/ownership-ep.jpg', color: 'border-emerald-400/40' },
-  { id: 3, title: 'Built Different', speaker: 'Derek Williams', duration: '21:08', image: '/images/videos/toughness-ep.jpg', color: 'border-rose-400/40' },
-  { id: 4, title: 'Read The Game', speaker: 'Tony Reyes', duration: '19:33', image: '/images/videos/sportsiq-ep.jpg', color: 'border-cyan-400/40' },
+  { id: 1, title: 'The Discipline Code', speaker: 'Marcus Thompson', duration: '18:42', image: '/images/videos/discipline-ep.jpg', border: 'border-primary/50', accent: 'text-primary' },
+  { id: 2, title: 'Own Your Game', speaker: 'Coach Sarah Chen', duration: '24:15', image: '/images/videos/ownership-ep.jpg', border: 'border-emerald-400/50', accent: 'text-emerald-400' },
+  { id: 3, title: 'Built Different', speaker: 'Derek Williams', duration: '21:08', image: '/images/videos/toughness-ep.jpg', border: 'border-rose-400/50', accent: 'text-rose-400' },
+  { id: 4, title: 'Read The Game', speaker: 'Tony Reyes', duration: '19:33', image: '/images/videos/sportsiq-ep.jpg', border: 'border-cyan-400/50', accent: 'text-cyan-400' },
 ]
 
 const apparel = [
@@ -116,13 +116,13 @@ export default function HomePage() {
               {pillars.map((pillar, i) => (
                 <div
                   key={pillar.letter}
-                  className={`p-5 bg-card/50 backdrop-blur-sm border border-border rounded-xl hover:border-primary/30 transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                  className={`p-5 ${pillar.bg} border-2 ${pillar.border} rounded-xl hover:scale-[1.02] transition-all duration-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                   style={{ transitionDelay: `${400 + i * 100}ms` }}
                 >
-                  <div className={`w-10 h-10 rounded-lg ${pillar.bg} flex items-center justify-center mb-3`}>
+                  <div className={`w-10 h-10 rounded-lg bg-background/50 flex items-center justify-center mb-3`}>
                     <span className={`font-bold text-sm ${pillar.color}`}>{pillar.letter}</span>
                   </div>
-                  <h3 className="font-semibold mb-1">{pillar.title}</h3>
+                  <h3 className={`font-semibold mb-1 ${pillar.color}`}>{pillar.title}</h3>
                   <p className="text-sm text-muted-foreground">{pillar.desc}</p>
                 </div>
               ))}
@@ -157,10 +157,10 @@ export default function HomePage() {
               {steps.map((step, i) => (
                 <div
                   key={step.num}
-                  className={`p-5 bg-card/50 backdrop-blur-sm border border-border rounded-xl transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                  className={`p-5 bg-card/50 backdrop-blur-sm border-2 ${step.border} rounded-xl hover:scale-[1.02] transition-all duration-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                   style={{ transitionDelay: `${600 + i * 100}ms` }}
                 >
-                  <span className="text-3xl font-black text-primary">{step.num}</span>
+                  <span className={`text-3xl font-black ${step.color}`}>{step.num}</span>
                   <h3 className="font-semibold mt-3 mb-1">{step.title}</h3>
                   <p className="text-sm text-muted-foreground">{step.desc}</p>
                 </div>
@@ -200,7 +200,7 @@ export default function HomePage() {
                   className={`group cursor-pointer transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                   style={{ transitionDelay: `${800 + i * 100}ms` }}
                 >
-                  <div className={`relative aspect-video rounded-lg overflow-hidden border ${video.color} mb-3`}>
+                  <div className={`relative aspect-video rounded-lg overflow-hidden border-2 ${video.border} mb-3`}>
                     <Image 
                       src={video.image} 
                       alt={video.title}
@@ -219,7 +219,7 @@ export default function HomePage() {
                       <p className="text-xs font-semibold text-primary">DOTIQ+</p>
                     </div>
                   </div>
-                  <h3 className="font-semibold group-hover:text-primary transition-colors">{video.title}</h3>
+                  <h3 className={`font-semibold ${video.accent}`}>{video.title}</h3>
                   <p className="text-sm text-muted-foreground">{video.speaker}</p>
                 </div>
               ))}

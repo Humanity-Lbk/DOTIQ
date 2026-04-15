@@ -310,36 +310,51 @@ function ClientUpdatesContent() {
               <p className="text-muted-foreground">No updates yet</p>
             </div>
           ) : (
-            timeLog.map(entry => (
-              <div
-                key={entry.id}
-                className="group p-5 bg-card/50 backdrop-blur-sm border border-border hover:border-primary/30 rounded-xl transition-all duration-200"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                      {entry.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {entry.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground/60 mt-3">
-                      {new Date(entry.date).toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                  {isInternal && (
-                    <div className="text-right shrink-0">
-                      <span className="text-lg font-bold text-foreground">{Number(entry.hours).toFixed(1)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">hr</span>
+            timeLog.map(entry => {
+              const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
+                'Feature': { bg: 'bg-primary/15', text: 'text-primary', border: 'border-primary/40' },
+                'Bug Fix': { bg: 'bg-rose-400/15', text: 'text-rose-400', border: 'border-rose-400/40' },
+                'UI/Style': { bg: 'bg-cyan-400/15', text: 'text-cyan-400', border: 'border-cyan-400/40' },
+                'Refactor': { bg: 'bg-emerald-400/15', text: 'text-emerald-400', border: 'border-emerald-400/40' },
+              }
+              const colors = categoryColors[entry.category] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' }
+              
+              return (
+                <div
+                  key={entry.id}
+                  className={`group p-5 bg-card/50 backdrop-blur-sm border-2 ${colors.border} hover:scale-[1.01] rounded-xl transition-all duration-200`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full ${colors.bg} ${colors.text}`}>
+                          {entry.category}
+                        </span>
+                      </div>
+                      <h3 className={`font-semibold mb-1 ${colors.text}`}>
+                        {entry.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {entry.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground/60 mt-3">
+                        {new Date(entry.date).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
                     </div>
-                  )}
+                    {isInternal && (
+                      <div className="text-right shrink-0">
+                        <span className="text-lg font-bold text-foreground">{Number(entry.hours).toFixed(1)}</span>
+                        <span className="text-xs text-muted-foreground ml-1">hr</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </main>

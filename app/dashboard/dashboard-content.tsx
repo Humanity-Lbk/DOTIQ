@@ -41,11 +41,11 @@ interface DashboardContentProps {
   verifications: Verification[]
 }
 
-const pillarConfig: Record<Category, { letter: string; color: string; bg: string }> = {
-  discipline: { letter: 'D', color: 'text-primary', bg: 'bg-primary/10' },
-  ownership: { letter: 'O', color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-  toughness: { letter: 'T', color: 'text-rose-400', bg: 'bg-rose-400/10' },
-  sportsiq: { letter: 'IQ', color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
+const pillarConfig: Record<Category, { letter: string; color: string; bg: string; border: string; glow: string }> = {
+  discipline: { letter: 'D', color: 'text-primary', bg: 'bg-primary/15', border: 'border-primary/50', glow: 'shadow-primary/20' },
+  ownership: { letter: 'O', color: 'text-emerald-400', bg: 'bg-emerald-400/15', border: 'border-emerald-400/50', glow: 'shadow-emerald-400/20' },
+  toughness: { letter: 'T', color: 'text-rose-400', bg: 'bg-rose-400/15', border: 'border-rose-400/50', glow: 'shadow-rose-400/20' },
+  sportsiq: { letter: 'IQ', color: 'text-cyan-400', bg: 'bg-cyan-400/15', border: 'border-cyan-400/50', glow: 'shadow-cyan-400/20' },
 }
 
 const premiumVideos = [
@@ -56,10 +56,17 @@ const premiumVideos = [
 ]
 
 const programs = [
-  { pillar: 'discipline', name: 'Discipline', desc: 'Build habits that outlast motivation', price: '$149', color: 'border-primary/40', bg: 'bg-primary/5' },
-  { pillar: 'ownership', name: 'Ownership', desc: 'Take full accountability for outcomes', price: '$149', color: 'border-emerald-400/40', bg: 'bg-emerald-400/5' },
-  { pillar: 'toughness', name: 'Toughness', desc: 'Develop mental resilience', price: '$149', color: 'border-rose-400/40', bg: 'bg-rose-400/5' },
-  { pillar: 'sportsiq', name: 'Sports IQ', desc: 'Sharpen decision-making speed', price: '$149', color: 'border-cyan-400/40', bg: 'bg-cyan-400/5' },
+  { pillar: 'discipline', name: 'Discipline', desc: 'Build habits that outlast motivation', price: '$149', color: 'border-primary/50', bg: 'bg-primary/10', accent: 'text-primary' },
+  { pillar: 'ownership', name: 'Ownership', desc: 'Take full accountability for outcomes', price: '$149', color: 'border-emerald-400/50', bg: 'bg-emerald-400/10', accent: 'text-emerald-400' },
+  { pillar: 'toughness', name: 'Toughness', desc: 'Develop mental resilience', price: '$149', color: 'border-rose-400/50', bg: 'bg-rose-400/10', accent: 'text-rose-400' },
+  { pillar: 'sportsiq', name: 'Sports IQ', desc: 'Sharpen decision-making speed', price: '$149', color: 'border-cyan-400/50', bg: 'bg-cyan-400/10', accent: 'text-cyan-400' },
+]
+
+const premiumApparel = [
+  { id: 1, name: 'Elite Cap', price: '$42', image: '/images/apparel/hat-gold.jpg', tag: 'NEW', tagColor: 'bg-primary text-primary-foreground' },
+  { id: 2, name: 'Neon Hoodie', price: '$85', image: '/images/apparel/hoodie-neon.jpg', tag: 'HOT', tagColor: 'bg-rose-500 text-white' },
+  { id: 3, name: 'Graphic Tee', price: '$38', image: '/images/apparel/tshirt-pattern.jpg', tag: null, tagColor: '' },
+  { id: 4, name: 'Performance Socks', price: '$18', image: '/images/apparel/socks-bright.jpg', tag: null, tagColor: '' },
 ]
 
 function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size?: number; strokeWidth?: number }) {
@@ -203,19 +210,23 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
                   const percentage = (score / 10) * 100
                   
                   return (
-                    <div key={category} className="p-5 bg-card/50 backdrop-blur-sm border border-border hover:border-primary/30 rounded-xl transition-colors">
+                    <div key={category} className={`p-5 ${config.bg} border ${config.border} hover:shadow-lg ${config.glow} rounded-xl transition-all duration-300`}>
                       <div className="flex items-center gap-3 mb-3">
-                        <div className={`w-10 h-10 rounded-lg ${config.bg} flex items-center justify-center`}>
+                        <div className={`w-10 h-10 rounded-lg bg-background/50 flex items-center justify-center`}>
                           <span className={`font-bold text-sm ${config.color}`}>{config.letter}</span>
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{categories[category].name}</p>
+                          <p className={`text-sm font-medium ${config.color}`}>{categories[category].name}</p>
                           <p className="text-xl font-black">{score.toFixed(1)}</p>
                         </div>
                       </div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="h-2 bg-background/30 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-primary rounded-full transition-all duration-500"
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            category === 'discipline' ? 'bg-primary' :
+                            category === 'ownership' ? 'bg-emerald-400' :
+                            category === 'toughness' ? 'bg-rose-400' : 'bg-cyan-400'
+                          }`}
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -357,10 +368,9 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
           </section>
         )}
 
-        {/* Premium Content (admin/super_admin only) */}
-        {(profile?.role === 'admin' || profile?.role === 'super_admin') && (
-          <>
-            {/* Programs */}
+        {/* Premium Content - Available to ALL users */}
+        <>
+          {/* Programs */}
             <section className="mb-10">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -370,12 +380,17 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {programs.map((program) => (
-                  <div key={program.pillar} className={`p-5 ${program.bg} border ${program.color} rounded-xl hover:scale-[1.02] transition-transform cursor-pointer`}>
-                    <p className="text-sm font-semibold mb-1">{program.name}</p>
+                  <div key={program.pillar} className={`p-5 ${program.bg} border-2 ${program.color} rounded-xl hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer group`}>
+                    <div className={`w-8 h-8 rounded-lg bg-background/50 flex items-center justify-center mb-3`}>
+                      <span className={`font-bold text-xs ${program.accent}`}>
+                        {program.pillar === 'sportsiq' ? 'IQ' : program.name.charAt(0)}
+                      </span>
+                    </div>
+                    <p className={`text-sm font-semibold mb-1 ${program.accent}`}>{program.name}</p>
                     <p className="text-xs text-muted-foreground mb-3">{program.desc}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">8 weeks</span>
-                      <span className="font-bold text-primary">{program.price}</span>
+                      <span className={`font-bold ${program.accent}`}>{program.price}</span>
                     </div>
                   </div>
                 ))}
@@ -417,8 +432,39 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
                 ))}
               </div>
             </section>
-          </>
-        )}
+
+            {/* Apparel */}
+            <section className="mb-10">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <span className="text-xs text-rose-400 font-medium">SHOP</span>
+                  <h2 className="text-lg font-semibold">DOTIQ Apparel</h2>
+                </div>
+                <Link href="#" className="text-sm text-primary hover:underline">Shop All →</Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {premiumApparel.map((item) => (
+                  <div key={item.id} className="group cursor-pointer">
+                    <div className="relative aspect-square rounded-lg overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-colors mb-2">
+                      <Image 
+                        src={item.image} 
+                        alt={item.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {item.tag && (
+                        <span className={`absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold rounded ${item.tagColor}`}>
+                          {item.tag}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-medium text-sm group-hover:text-primary transition-colors">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">{item.price}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+        </>
       </main>
     </div>
   )

@@ -25,9 +25,9 @@ interface Request {
 }
 
 const typeConfig: Record<RequestType, { label: string; color: string }> = {
-  feature: { label: 'Feature', color: 'bg-primary/10 text-primary border-primary/20' },
-  change: { label: 'Change', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  bug: { label: 'Bug', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  feature: { label: 'Feature', color: 'bg-primary/20 text-primary border-primary/40' },
+  change: { label: 'Change', color: 'bg-cyan-400/20 text-cyan-400 border-cyan-400/40' },
+  bug: { label: 'Bug', color: 'bg-rose-400/20 text-rose-400 border-rose-400/40' },
   error: { label: 'Error', color: 'bg-destructive/10 text-destructive border-destructive/20' },
 }
 
