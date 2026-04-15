@@ -11,10 +11,10 @@ export default async function DashboardPage() {
     redirect('/auth/login')
   }
   
-  // Get user profile
+  // Get user profile including role
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('*, role')
     .eq('id', user.id)
     .single()
   

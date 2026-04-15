@@ -100,12 +100,6 @@ export default function Header() {
               >
                 Dashboard
               </Link>
-              <Link 
-                href="/assessment"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Assessment
-              </Link>
               {/* Avatar dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button

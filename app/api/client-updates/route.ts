@@ -38,36 +38,65 @@ interface TimeEntry {
 }
 
 function generateUserFriendlyTitle(message: string): string {
-  // Clean up the commit message
   let title = message.split('\n')[0].trim()
   
-  // Remove common prefixes like "feat:", "fix:", etc.
-  title = title.replace(/^(feat|fix|chore|docs|style|refactor|test|perf|ci):\s*/i, '')
+  // Remove common commit prefixes (feat:, fix:, chore:, etc.)
+  title = title.replace(/^(feat|fix|chore|docs|style|refactor|test|perf|ci|build):\s*/i, '')
+  
+  // Remove common technical jargon and make it readable
+  title = title
+    .replace(/UI\s*\/\s*[Ss]tyle/, 'Interface')
+    .replace(/bug\s*[Ff]ix/i, 'Fixed')
+    .replace(/implement/i, 'Added')
+    .replace(/update/i, 'Updated')
+    .replace(/enhance/i, 'Improved')
+    .replace(/refactor/i, 'Optimized')
+    .replace(/add\s+support\s+for/i, 'Added support for')
   
   // Capitalize first letter
   title = title.charAt(0).toUpperCase() + title.slice(1)
+  
+  // Limit to 60 characters for readability
+  if (title.length > 60) {
+    title = title.substring(0, 57) + '...'
+  }
   
   return title
 }
 
 function generateUserFriendlyDescription(message: string, category: string): string {
   const lines = message.split('\n').filter(l => l.trim())
+  let title = generateUserFriendlyTitle(message)
+  
+  // Try to get description from commit body (lines after first line)
   let description = lines.slice(1).join(' ').trim()
   
+  // If no body, generate based on category and title
   if (!description) {
-    // Generate description from category and title
-    const title = generateUserFriendlyTitle(message)
     switch (category) {
       case 'Bug Fix':
         return `Fixed an issue: ${title}`
       case 'UI/Style':
-        return `Updated the interface and visual design: ${title}`
+        return `Updated the interface and visual design. ${title}`
       case 'Refactor':
-        return `Improved the codebase structure and efficiency: ${title}`
+        return `Improved performance and code quality. ${title}`
       case 'Feature':
+        return `Added new functionality. ${title}`
       default:
-        return `Added new functionality: ${title}`
+        return `Development update: ${title}`
     }
+  }
+  
+  // Clean up description
+  description = description
+    .replace(/feat:/i, '')
+    .replace(/fix:/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  
+  // Limit description to 200 characters
+  if (description.length > 200) {
+    description = description.substring(0, 197) + '...'
   }
   
   return description

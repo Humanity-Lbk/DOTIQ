@@ -328,11 +328,16 @@ export default function HomePage() {
                     <div className="absolute bottom-3 left-3 right-3">
                       <span className="font-mono text-[10px] text-white/70">{video.duration}</span>
                     </div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
-                        <svg className="w-6 h-6 text-primary-foreground ml-1" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
+                    {/* Premium Content Overlay - shows on hover */}
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                      <div className="text-center px-4">
+                        <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <p className="text-xs font-bold text-primary mb-1">DOTIQ+ PREMIUM</p>
+                        <p className="text-[10px] text-white/70">Upgrade to unlock</p>
                       </div>
                     </div>
                   </div>
@@ -388,6 +393,18 @@ export default function HomePage() {
                         {item.tag}
                       </span>
                     )}
+                    {/* Premium Content Overlay - shows on hover */}
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                      <div className="text-center px-2">
+                        <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <p className="text-[10px] font-bold text-primary">DOTIQ+</p>
+                        <p className="text-[9px] text-white/70">Members Only</p>
+                      </div>
+                    </div>
                   </div>
                   <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{item.name}</h3>
                   <p className="text-sm text-muted-foreground">{item.price}</p>
