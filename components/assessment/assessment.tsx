@@ -16,20 +16,23 @@ export function Assessment() {
   const { currentQuestion, isComplete, completeAssessment, nextQuestion } = useAssessmentStore()
   const [phase, setPhase] = useState<Phase>("idle")
   const [displayedQuestion, setDisplayedQuestion] = useState(currentQuestion)
+  const [glowValue, setGlowValue] = useState<number | null>(null)
 
-  const handleAnswerSelected = useCallback(() => {
+  const handleAnswerSelected = useCallback((value: number) => {
     if (phase !== "idle") return
     const isLast = displayedQuestion === questions.length - 1
 
-    // Phase 1: neon glow blooms around the card (600ms)
+    // Phase 1: glow blooms on the selected option only (900ms)
+    setGlowValue(value)
     setPhase("glow")
     setTimeout(() => {
+      setGlowValue(null)
 
-      // Phase 2: card fades + slides up (300ms)
+      // Phase 2: card fades out (300ms)
       setPhase("exit")
       setTimeout(() => {
 
-        // Swap the actual question data
+        // Swap question
         if (isLast) {
           completeAssessment()
         } else {
@@ -44,7 +47,7 @@ export function Assessment() {
         }, 400)
 
       }, 300)
-    }, 600)
+    }, 900)
   }, [phase, displayedQuestion, completeAssessment, nextQuestion])
 
   if (isComplete) {
@@ -61,28 +64,21 @@ export function Assessment() {
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-8">
       <ProgressBar />
 
-      {/* Glow wrapper — neon bloom fires on "glow" phase */}
+      {/* Question fade in/out wrapper */}
       <div
         className={cn(
-          "rounded-2xl transition-shadow duration-300",
-          phase === "glow" && "animate-neon-glow"
+          phase === "enter" && "animate-question-in",
+          phase === "exit" && "animate-question-out",
+          (phase === "idle" || phase === "glow") && "opacity-100"
         )}
       >
-        {/* Question card fade in/out */}
-        <div
-          className={cn(
-            phase === "enter" && "animate-question-in",
-            phase === "exit" && "animate-question-out",
-            phase === "idle" || phase === "glow" ? "opacity-100" : ""
-          )}
-        >
-          <QuestionCard
-            key={displayedQuestion}
-            question={question}
-            onAnswerSelected={handleAnswerSelected}
-            transitioning={phase !== "idle"}
-          />
-        </div>
+        <QuestionCard
+          key={displayedQuestion}
+          question={question}
+          onAnswerSelected={handleAnswerSelected}
+          transitioning={phase !== "idle"}
+          glowValue={glowValue}
+        />
       </div>
 
       <NavigationControls onComplete={completeAssessment} />

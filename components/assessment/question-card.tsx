@@ -7,19 +7,19 @@ import { Check } from "lucide-react"
 
 interface QuestionCardProps {
   question: Question
-  onAnswerSelected: () => void
+  onAnswerSelected: (value: number) => void
   transitioning: boolean
+  glowValue: number | null
 }
 
-export function QuestionCard({ question, onAnswerSelected, transitioning }: QuestionCardProps) {
+export function QuestionCard({ question, onAnswerSelected, transitioning, glowValue }: QuestionCardProps) {
   const { answers, setAnswer, currentQuestion } = useAssessmentStore()
   const currentAnswer = answers[question.id]
 
   const handleSelect = (value: number) => {
     if (transitioning) return
     setAnswer(question.id, value)
-    // Let the parent (Assessment) drive the timing
-    onAnswerSelected()
+    onAnswerSelected(value)
   }
 
   return (
@@ -51,7 +51,8 @@ export function QuestionCard({ question, onAnswerSelected, transitioning }: Ques
                 isSelected
                   ? "border-primary bg-primary/10"
                   : "border-border/40 bg-card/30 hover:border-border hover:bg-card/50",
-                transitioning && "cursor-default"
+                transitioning && "cursor-default",
+                glowValue === option.value && "animate-neon-glow"
               )}
             >
               <div className="flex items-center justify-between gap-4">
