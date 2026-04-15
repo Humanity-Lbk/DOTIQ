@@ -1,5 +1,53 @@
-import { AssessmentContent } from "./assessment-content"
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { AssessmentContent } from './assessment-content'
 
-export default function AssessmentPage() {
-  return <AssessmentContent />
+export default async function AssessmentPage() {
+  const supabase = await createClient()
+
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) {
+    redirect('/auth/login')
+  }
+
+  // Fetch the most recent completed assessment
+  const { data: latestAssessment } = await supabase
+    .from('assessments')
+    .select('id, created_at, overall_score')
+    .eq('user_id', user.id)
+    .eq('is_complete', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  const THREE_MONTHS_MS = 1000 * 60 * 60 * 24 * 90
+
+  let canTake = true
+  let nextEligibleDate: string | null = null
+  let daysTilEligible: number | null = null
+
+  if (latestAssessment) {
+    const lastTaken = new Date(latestAssessment.created_at).getTime()
+    const now = Date.now()
+    const elapsed = now - lastTaken
+
+    if (elapsed < THREE_MONTHS_MS) {
+      canTake = false
+      const eligibleAt = new Date(lastTaken + THREE_MONTHS_MS)
+      nextEligibleDate = eligibleAt.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+      daysTilEligible = Math.ceil((eligibleAt.getTime() - now) / (1000 * 60 * 60 * 24))
+    }
+  }
+
+  return (
+    <AssessmentContent
+      canTake={canTake}
+      nextEligibleDate={nextEligibleDate}
+      daysTilEligible={daysTilEligible}
+    />
+  )
 }

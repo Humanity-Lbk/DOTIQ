@@ -150,199 +150,180 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
 
         {hasAssessments ? (
           <>
-            {/* Score Card */}
+            {/* Assessment History — all assessments as cards */}
             <section className="mb-10">
-              <div className="p-8 bg-card/50 backdrop-blur-sm border border-border rounded-2xl">
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  <ScoreRing score={latestAssessment.is_verified ? (latestAssessment.verified_score || latestAssessment.overall_score) : latestAssessment.overall_score} />
-                  
-                  <div className="flex-1 text-center md:text-left">
-                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
-                      <h2 className="text-2xl font-black">Your DOTIQ Score</h2>
-                      {latestAssessment.is_verified && (
-                        <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full flex items-center gap-1.5">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          Verified
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Assessed on {new Date(latestAssessment.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                      {latestAssessment.purchased_at ? (
-                        <Link
-                          href={`/report/${latestAssessment.id}`}
-                          className="px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                          View Full Report
-                        </Link>
-                      ) : (
-                        <Link
-                          href="/purchase"
-                          className="px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                          Unlock Full Report
-                        </Link>
-                      )}
-                      <Link
-                        href="/assessment"
-                        className="px-5 py-2.5 bg-muted hover:bg-muted/80 font-medium rounded-lg transition-colors"
-                      >
-                        Retake Assessment
-                      </Link>
-                    </div>
-                  </div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <span className="text-xs text-primary font-medium tracking-wider">ASSESSMENTS</span>
+                  <h2 className="text-lg font-semibold">Your History</h2>
                 </div>
+                {(() => {
+                  const THREE_MONTHS_MS = 1000 * 60 * 60 * 24 * 90
+                  const lastDate = new Date(latestAssessment.created_at).getTime()
+                  const canRetake = Date.now() - lastDate >= THREE_MONTHS_MS
+                  const nextEligible = new Date(lastDate + THREE_MONTHS_MS)
+                  return canRetake ? (
+                    <Link
+                      href="/assessment"
+                      className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Take New Assessment
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
+                      <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10M8 11V7a4 4 0 018 0v4M5 11h14a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7a2 2 0 012-2z" />
+                      </svg>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        Unlocks {nextEligible.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                  )
+                })()}
               </div>
-            </section>
 
-            {/* Pillar Breakdown */}
-            <section className="mb-10">
-              <h2 className="text-lg font-semibold mb-4">Pillar Breakdown</h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {(Object.keys(latestAssessment.scores || {}) as Category[]).map((category) => {
-                  const score = latestAssessment.scores[category]
-                  const config = pillarConfig[category]
-                  const percentage = (score / 10) * 100
-                  
+              <div className="space-y-4">
+                {assessments.map((assessment, index) => {
+                  const isLatest = index === 0
+                  const assessmentVerifications = getVerificationsForAssessment(assessment.id)
+                  const completedVerifications = assessmentVerifications.filter(v => v.status === 'completed').length
+                  const displayScore = assessment.is_verified
+                    ? (assessment.verified_score ?? assessment.overall_score)
+                    : assessment.overall_score
+
                   return (
-                    <div key={category} className={`p-5 ${config.bg} border ${config.border} hover:shadow-lg ${config.glow} rounded-xl transition-all duration-300`}>
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`w-10 h-10 rounded-lg bg-background/50 flex items-center justify-center`}>
-                          <span className={`font-bold text-sm ${config.color}`}>{config.letter}</span>
+                    <div
+                      key={assessment.id}
+                      className={`p-6 bg-card/50 backdrop-blur-sm border-2 rounded-2xl transition-all duration-200 ${
+                        isLatest ? 'border-primary/40' : 'border-border hover:border-border/80'
+                      }`}
+                    >
+                      {/* Card header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                        {/* Score ring */}
+                        <div className="shrink-0">
+                          <ScoreRing score={displayScore} size={96} strokeWidth={7} />
                         </div>
-                        <div>
-                          <p className={`text-sm font-medium ${config.color}`}>{categories[category].name}</p>
-                          <p className="text-xl font-black">{score.toFixed(1)}</p>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            {isLatest && (
+                              <span className="px-2.5 py-1 bg-primary/15 text-primary text-[11px] font-bold rounded-full">
+                                LATEST
+                              </span>
+                            )}
+                            {assessment.is_verified && (
+                              <span className="px-2.5 py-1 bg-emerald-400/15 text-emerald-400 text-[11px] font-bold rounded-full flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                                VERIFIED
+                              </span>
+                            )}
+                            {!assessment.purchased_at && (
+                              <span className="px-2.5 py-1 bg-muted text-muted-foreground text-[11px] font-bold rounded-full">
+                                PREVIEW
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="font-semibold text-foreground">
+                            {new Date(assessment.created_at).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {new Date(assessment.created_at).toLocaleTimeString('en-US', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </p>
+
+                          {/* Pillar mini bars */}
+                          {assessment.scores && (
+                            <div className="grid grid-cols-4 gap-2 mt-4">
+                              {(Object.keys(assessment.scores) as Category[]).map((cat) => {
+                                const cfg = pillarConfig[cat]
+                                return (
+                                  <div key={cat}>
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className={`text-[10px] font-bold ${cfg.color}`}>{cfg.letter}</span>
+                                      <span className="text-[10px] text-muted-foreground">{assessment.scores[cat].toFixed(1)}</span>
+                                    </div>
+                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${
+                                          cat === 'discipline' ? 'bg-primary' :
+                                          cat === 'ownership' ? 'bg-emerald-400' :
+                                          cat === 'toughness' ? 'bg-rose-400' : 'bg-cyan-400'
+                                        }`}
+                                        style={{ width: `${(assessment.scores[cat] / 10) * 100}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex sm:flex-col gap-2 shrink-0">
+                          {assessment.purchased_at ? (
+                            <Link
+                              href={`/report/${assessment.id}`}
+                              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+                            >
+                              View Report
+                            </Link>
+                          ) : (
+                            <Link
+                              href="/purchase"
+                              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+                            >
+                              Unlock Report
+                            </Link>
+                          )}
+                          {!assessment.is_verified && (
+                            <button className="px-4 py-2 bg-muted hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
+                              Get Verified
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="h-2 bg-background/30 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            category === 'discipline' ? 'bg-primary' :
-                            category === 'ownership' ? 'bg-emerald-400' :
-                            category === 'toughness' ? 'bg-rose-400' : 'bg-cyan-400'
-                          }`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
+
+                      {/* Verification bar (if in progress) */}
+                      {assessmentVerifications.length > 0 && !assessment.is_verified && (
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground font-medium">Verification progress</span>
+                            <span className="text-xs font-bold text-primary">{completedVerifications}/3</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {['coach', 'peer', 'mentor'].map((type) => {
+                              const v = assessmentVerifications.find(v => v.evaluator_type === type)
+                              const done = v?.status === 'completed'
+                              return (
+                                <div key={type} className={`p-2 rounded-lg text-center text-xs font-medium ${done ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                  <span className="capitalize">{type}</span>
+                                  <p className="text-[10px] font-normal mt-0.5 opacity-70">
+                                    {done ? 'Done' : v ? 'Pending' : 'Not sent'}
+                                  </p>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
               </div>
             </section>
-
-            {/* Verification Status */}
-            <section className="mb-10">
-              <h2 className="text-lg font-semibold mb-4">Verification</h2>
-              <div className="p-6 bg-card/50 backdrop-blur-sm border border-border rounded-xl">
-                {(() => {
-                  const latestVerifications = getVerificationsForAssessment(latestAssessment.id)
-                  const completedCount = latestVerifications.filter(v => v.status === 'completed').length
-                  
-                  if (latestAssessment.is_verified) {
-                    return (
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="font-semibold">Score Verified</p>
-                          <p className="text-sm text-muted-foreground">
-                            All 3 evaluations complete. Verified score: {latestAssessment.verified_score?.toFixed(1)}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  }
-                  
-                  if (latestVerifications.length === 0) {
-                    return (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                            <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-semibold">Not Started</p>
-                            <p className="text-sm text-muted-foreground">
-                              Get your score verified by 3 people who know you well.
-                            </p>
-                          </div>
-                        </div>
-                        <button className="px-5 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors">
-                          Start Verification
-                        </button>
-                      </div>
-                    )
-                  }
-                  
-                  return (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold">In Progress</p>
-                          <p className="text-sm text-muted-foreground">{completedCount} of 3 evaluations completed</p>
-                        </div>
-                        <span className="text-2xl font-black text-primary">{completedCount}/3</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        {['coach', 'peer', 'mentor'].map((type) => {
-                          const verification = latestVerifications.find(v => v.evaluator_type === type)
-                          const isComplete = verification?.status === 'completed'
-                          
-                          return (
-                            <div key={type} className={`p-3 rounded-lg text-center ${isComplete ? 'bg-primary/10' : 'bg-muted'}`}>
-                              <p className="font-medium capitalize text-sm">{type}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {isComplete ? 'Complete' : verification ? 'Pending' : 'Not sent'}
-                              </p>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
-            </section>
-
-            {/* Assessment History */}
-            {assessments.length > 1 && (
-              <section className="mb-10">
-                <h2 className="text-lg font-semibold mb-4">History</h2>
-                <div className="space-y-2">
-                  {assessments.slice(1).map((assessment) => (
-                    <div key={assessment.id} className="p-4 bg-card/50 backdrop-blur-sm border border-border rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center font-black">
-                          {assessment.overall_score.toFixed(1)}
-                        </div>
-                        <div>
-                          <p className="font-medium">{new Date(assessment.created_at).toLocaleDateString()}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {assessment.purchased_at ? 'Full report unlocked' : 'Preview only'}
-                          </p>
-                        </div>
-                      </div>
-                      {assessment.purchased_at && (
-                        <Link href={`/report/${assessment.id}`} className="text-sm text-primary hover:underline">
-                          View Report
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
           </>
         ) : (
           /* Empty State */
