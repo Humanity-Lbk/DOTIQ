@@ -368,7 +368,6 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
             </div>
           </section>
         )}
-      </main>
 
         {/* Premium Content Section - visible to admin and super_admin */}
         {(profile?.role === 'admin' || profile?.role === 'super_admin') && (
