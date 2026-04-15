@@ -7,18 +7,12 @@ import type { User } from '@supabase/supabase-js'
 import Header from '@/components/header'
 import { Suspense } from 'react'
 
-interface Commit {
-  sha: string
-  message: string
-  author: string
-  date: string
-  category: 'Feature' | 'Bug Fix' | 'UI/Style' | 'Refactor'
-}
-
 interface TimeEntry {
   id: string
   type: 'commit' | 'manual'
+  title: string
   description: string
+  category: string
   hours: number
   date: string
   commitSha?: string
@@ -26,19 +20,11 @@ interface TimeEntry {
 
 type Role = 'user' | 'admin' | 'super_admin'
 
-const CATEGORY_STYLES = {
-  Feature:  { bg: 'bg-[var(--neon-gold)]/10',  text: 'text-neon-gold' },
-  'Bug Fix':{ bg: 'bg-[var(--neon-lime)]/10',  text: 'text-neon-lime' },
-  'UI/Style':{ bg: 'bg-[var(--neon-pink)]/10', text: 'text-neon-pink' },
-  Refactor: { bg: 'bg-[var(--neon-cyan)]/10',  text: 'text-neon-cyan' },
-}
-
 function ClientUpdatesContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  // viewMode: 'internal' for super_admin internal view, 'external' for client/admin view
   const requestedView = searchParams.get('view')
 
   const [user, setUser] = useState<User | null>(null)
@@ -46,11 +32,9 @@ function ClientUpdatesContent() {
   const [viewMode, setViewMode] = useState<'internal' | 'external'>('external')
   const [authLoading, setAuthLoading] = useState(true)
 
-  const [commits, setCommits] = useState<Commit[]>([])
   const [timeLog, setTimeLog] = useState<TimeEntry[]>([])
   const [totalHours, setTotalHours] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [lastSync, setLastSync] = useState<Date | null>(null)
 
   // Manual entry state (super_admin only)
   const [manualDesc, setManualDesc] = useState('')
@@ -67,10 +51,6 @@ function ClientUpdatesContent() {
   // GitHub error state
   const [githubError, setGithubError] = useState<string | null>(null)
 
-  const [activeTab, setActiveTab] = useState<'commits' | 'timelog'>('commits')
-  const [stats, setStats] = useState({ feature: 0, bugFix: 0, style: 0, refactor: 0 })
-
-  // Check auth and role
   useEffect(() => {
     async function checkAuth() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -82,7 +62,6 @@ function ClientUpdatesContent() {
 
       setUser(user)
 
-      // Get profile with role
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -91,7 +70,6 @@ function ClientUpdatesContent() {
 
       const userRole = profile?.role as Role || 'user'
       
-      // Only admin and super_admin can access
       if (userRole !== 'admin' && userRole !== 'super_admin') {
         router.push('/dashboard')
         return
@@ -99,8 +77,6 @@ function ClientUpdatesContent() {
 
       setRole(userRole)
       
-      // Determine view mode based on role and requested view
-      // Super admins can access internal view if requested, admins always see external
       if (userRole === 'super_admin' && requestedView === 'internal') {
         setViewMode('internal')
       } else {
@@ -119,20 +95,9 @@ function ClientUpdatesContent() {
     try {
       const res = await fetch('/api/client-updates')
       const data = await res.json()
-      setCommits(data.commits || [])
       setTimeLog(data.timeLog || [])
       setTotalHours(data.totalHours || 0)
-      setLastSync(new Date())
       setGithubError(data.githubError || null)
-
-      const s = { feature: 0, bugFix: 0, style: 0, refactor: 0 }
-      data.commits?.forEach((c: Commit) => {
-        if (c.category === 'Feature') s.feature++
-        else if (c.category === 'Bug Fix') s.bugFix++
-        else if (c.category === 'UI/Style') s.style++
-        else if (c.category === 'Refactor') s.refactor++
-      })
-      setStats(s)
     } catch {
       // silent
     } finally {
@@ -154,16 +119,16 @@ function ClientUpdatesContent() {
       })
       const data = await res.json()
       if (res.ok && !data.error) {
-        setSeedResult(`Seeded ${data.added} new commits. Total: ${data.totalHours?.toFixed(1) || 0} hrs`)
+        setSeedResult(`Imported ${data.added} updates`)
         await fetchData()
       } else {
-        setSeedResult(`ERROR: ${data.error || 'Failed to seed'}`)
+        setSeedResult(`Error: ${data.error || 'Failed'}`)
       }
     } catch (err) {
-      setSeedResult(`Network error: ${String(err)}`)
+      setSeedResult(`Error: ${String(err)}`)
     } finally {
       setSeedLoading(false)
-      setTimeout(() => setSeedResult(null), 10000)
+      setTimeout(() => setSeedResult(null), 5000)
     }
   }
 
@@ -208,243 +173,188 @@ function ClientUpdatesContent() {
     }
   }
 
-  // Loading state
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-muted-foreground">Loading...</span>
         </div>
       </div>
     )
   }
 
-  // Determine view mode based on role
   const isInternal = role === 'super_admin' && viewMode === 'internal'
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="max-w-5xl mx-auto px-6 py-10 space-y-10">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black">Development Progress</h1>
-            <p className="text-sm text-muted-foreground font-mono mt-1">
-              {isInternal ? 'INTERNAL VIEW' : 'CLIENT VIEW'}
-              {lastSync && ` · Synced ${lastSync.toLocaleTimeString()}`}
-            </p>
+      {/* Grid background */}
+      <div className="fixed inset-0 grid-subtle pointer-events-none" />
+
+      <main className="relative max-w-4xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-full">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs text-muted-foreground font-medium">Live Updates</span>
+            </div>
+            {isInternal && (
+              <span className="px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-medium rounded-full">
+                Internal View
+              </span>
+            )}
           </div>
+          <h1 className="text-4xl font-black tracking-tight mb-2">What we&apos;ve been building</h1>
+          <p className="text-muted-foreground text-lg">
+            Real-time development progress. Every feature, fix, and improvement.
+          </p>
         </div>
 
-        {/* GitHub API Error Banner */}
+        {/* GitHub Error */}
         {githubError && isInternal && (
-          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
-            <p className="font-mono text-xs text-destructive font-semibold mb-1">GITHUB API ERROR</p>
-            <p className="text-sm text-destructive/80 break-all">{githubError}</p>
+          <div className="mb-8 p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
+            <p className="text-sm text-destructive">{githubError}</p>
           </div>
         )}
 
-        {/* Total Hours Banner */}
-        <div className="relative bg-card border border-primary/30 rounded-2xl p-8 overflow-hidden">
-          <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
-          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Stats Card */}
+        <div className="mb-10 p-8 bg-card/50 backdrop-blur-sm border border-border rounded-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
             <div>
-              <p className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">TOTAL DEVELOPMENT TIME</p>
+              <p className="text-sm text-muted-foreground mb-1">Total Development Time</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-6xl font-black text-neon-gold">{totalHours.toFixed(1)}</span>
-                <span className="text-xl text-muted-foreground font-semibold">hrs</span>
+                <span className="text-5xl font-black text-primary">{totalHours.toFixed(0)}</span>
+                <span className="text-xl text-muted-foreground">hours</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {commits.length} commits · {timeLog.filter(e => e.type === 'manual').length} manual entries
+              <p className="text-sm text-muted-foreground mt-2">
+                {timeLog.length} updates shipped
               </p>
             </div>
             <button
               onClick={fetchData}
               disabled={loading}
-              className="self-start sm:self-auto px-4 py-2 bg-muted border border-border rounded-lg text-xs font-mono hover:border-primary/50 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
-              {loading ? 'SYNCING...' : 'SYNC NOW'}
+              {loading ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: 'FEATURES',  value: stats.feature,  cls: 'text-neon-gold' },
-            { label: 'BUG FIXES', value: stats.bugFix,   cls: 'text-neon-lime' },
-            { label: 'UI / STYLE',value: stats.style,    cls: 'text-neon-pink' },
-            { label: 'REFACTOR',  value: stats.refactor, cls: 'text-neon-cyan' },
-          ].map(({ label, value, cls }) => (
-            <div key={label} className="bg-card border border-border rounded-xl p-5">
-              <div className={`text-3xl font-black ${cls}`}>{value}</div>
-              <p className="text-[10px] text-muted-foreground mt-2 font-mono">{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Internal: Seed + Manual Time Entry (super_admin only) */}
+        {/* Internal Tools */}
         {isInternal && (
-          <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="mb-10 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-2xl space-y-6">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="font-mono text-[10px] text-neon-gold tracking-widest mb-1">SUPER ADMIN ONLY</p>
-                <h2 className="text-lg font-bold">Time Management</h2>
+                <p className="text-xs text-primary font-medium mb-1">Admin Tools</p>
+                <h3 className="font-semibold">Manage Updates</h3>
               </div>
               <button
                 onClick={handleSeedFromGitHub}
                 disabled={seedLoading}
-                className="px-4 py-2 bg-[var(--neon-lime)]/10 border border-[var(--neon-lime)]/30 text-neon-lime font-bold rounded-lg text-xs font-mono hover:bg-[var(--neon-lime)]/20 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
-                {seedLoading ? 'SEEDING...' : 'SEED FROM GITHUB'}
+                {seedLoading ? 'Importing...' : 'Import from GitHub'}
               </button>
             </div>
             {seedResult && (
-              <p className={`text-sm font-mono ${seedResult.startsWith('ERROR') ? 'text-destructive' : 'text-neon-lime'}`}>
+              <p className={`text-sm ${seedResult.startsWith('Error') ? 'text-destructive' : 'text-primary'}`}>
                 {seedResult}
               </p>
             )}
 
-            <div className="border-t border-border pt-6">
-              <p className="font-mono text-[10px] text-muted-foreground tracking-widest mb-3">ADD MANUAL ENTRY</p>
-              <form onSubmit={handleManualEntry} className="grid sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-mono text-muted-foreground">DESCRIPTION</label>
-                  <input
-                    value={manualDesc}
-                    onChange={e => setManualDesc(e.target.value)}
-                    placeholder="e.g. Design review session"
-                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-mono text-muted-foreground">HOURS</label>
-                  <input
-                    type="number"
-                    min="0.25"
-                    step="0.25"
-                    value={manualHours}
-                    onChange={e => setManualHours(e.target.value)}
-                    placeholder="2.0"
-                    className="w-24 px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-mono text-muted-foreground">DATE</label>
-                  <input
-                    type="date"
-                    value={manualDate}
-                    onChange={e => setManualDate(e.target.value)}
-                    className="px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
+            <div className="pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-3">Add Manual Entry</p>
+              <form onSubmit={handleManualEntry} className="flex flex-wrap gap-3">
+                <input
+                  value={manualDesc}
+                  onChange={e => setManualDesc(e.target.value)}
+                  placeholder="Description"
+                  className="flex-1 min-w-[200px] px-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <input
+                  type="number"
+                  min="0.25"
+                  step="0.25"
+                  value={manualHours}
+                  onChange={e => setManualHours(e.target.value)}
+                  placeholder="Hours"
+                  className="w-24 px-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <input
+                  type="date"
+                  value={manualDate}
+                  onChange={e => setManualDate(e.target.value)}
+                  className="px-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
                 <button
                   type="submit"
                   disabled={manualLoading}
-                  className="px-4 py-2 animate-shimmer-sweep text-primary-foreground font-bold rounded-lg text-sm disabled:opacity-50 transition-transform hover:scale-[1.02]"
+                  className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg text-sm disabled:opacity-50"
                 >
-                  {manualLoading ? 'Adding...' : 'Add Entry'}
+                  {manualLoading ? 'Adding...' : 'Add'}
                 </button>
               </form>
               {manualError && <p className="text-sm text-destructive mt-2">{manualError}</p>}
-              {manualSuccess && <p className="text-sm text-neon-lime font-mono mt-2">Entry added successfully.</p>}
+              {manualSuccess && <p className="text-sm text-primary mt-2">Entry added</p>}
             </div>
           </div>
         )}
 
-        {/* Tab Nav */}
-        <div>
-          <div className="flex gap-1 border-b border-border mb-6">
-            {(['commits', 'timelog'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-semibold font-mono tracking-wide transition-colors border-b-2 -mb-px ${
-                  activeTab === tab
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab === 'commits' ? 'COMMITS' : 'TIME LOG'}
-              </button>
-            ))}
-          </div>
-
-          {/* Commits Tab */}
-          {activeTab === 'commits' && (
-            <div className="space-y-2">
-              {commits.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12 text-sm">
-                  {loading ? 'Loading commits...' : 'No commits found.'}
-                </p>
-              ) : (
-                commits.map(commit => {
-                  const style = CATEGORY_STYLES[commit.category]
-                  return (
-                    <div key={commit.sha} className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
-                      <div className="flex items-start gap-3">
-                        <span className={`shrink-0 text-[10px] font-mono px-2 py-1 rounded-full ${style.bg} ${style.text} mt-0.5`}>
-                          {commit.category}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground leading-snug">{commit.message}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono mt-1">
-                            {commit.sha} · {commit.author} · {new Date(commit.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
+        {/* Updates List */}
+        <div className="space-y-3">
+          {timeLog.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground">No updates yet</p>
             </div>
-          )}
-
-          {/* Time Log Tab */}
-          {activeTab === 'timelog' && (
-            <div className="space-y-2">
-              {timeLog.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12 text-sm">
-                  No time entries yet.
-                </p>
-              ) : (
-                timeLog.map(entry => (
-                  <div key={entry.id} className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
-                    <div className="flex items-start gap-3 mb-2">
-                      <span className={`shrink-0 text-[10px] font-mono px-2 py-1 rounded-full mt-0.5 ${
-                        entry.type === 'manual'
-                          ? 'bg-[var(--neon-cyan)]/10 text-neon-cyan'
-                          : 'bg-[var(--neon-gold)]/10 text-neon-gold'
-                      }`}>
-                        {entry.type === 'manual' ? 'MANUAL' : 'COMMIT'}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{entry.title || entry.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{entry.description}</p>
+          ) : (
+            timeLog.map(entry => {
+              const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
+                'Feature': { bg: 'bg-primary/15', text: 'text-primary', border: 'border-primary/40' },
+                'Bug Fix': { bg: 'bg-rose-400/15', text: 'text-rose-400', border: 'border-rose-400/40' },
+                'UI/Style': { bg: 'bg-cyan-400/15', text: 'text-cyan-400', border: 'border-cyan-400/40' },
+                'Refactor': { bg: 'bg-emerald-400/15', text: 'text-emerald-400', border: 'border-emerald-400/40' },
+              }
+              const colors = categoryColors[entry.category] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' }
+              
+              return (
+                <div
+                  key={entry.id}
+                  className={`group p-5 bg-card/50 backdrop-blur-sm border-2 ${colors.border} hover:scale-[1.01] rounded-xl transition-all duration-200`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full ${colors.bg} ${colors.text}`}>
+                          {entry.category}
+                        </span>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] text-muted-foreground font-mono">
-                        {new Date(entry.date).toLocaleString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
+                      <h3 className={`font-semibold mb-1 ${colors.text}`}>
+                        {entry.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {entry.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground/60 mt-3">
+                        {new Date(entry.date).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric'
                         })}
                       </p>
-                      <div className="text-right">
-                        <span className="text-base font-black text-foreground">{Number(entry.hours).toFixed(2)}</span>
+                    </div>
+                    {isInternal && (
+                      <div className="text-right shrink-0">
+                        <span className="text-lg font-bold text-foreground">{Number(entry.hours).toFixed(1)}</span>
                         <span className="text-xs text-muted-foreground ml-1">hr</span>
                       </div>
-                    </div>
+                    )}
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+              )
+            })
           )}
         </div>
       </main>
@@ -456,7 +366,7 @@ export default function ClientUpdatesPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground font-mono text-sm">Loading...</div>
+        <div className="text-muted-foreground text-sm">Loading...</div>
       </div>
     }>
       <ClientUpdatesContent />

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import Header from '@/components/header'
 
 type RequestType = 'feature' | 'change' | 'bug' | 'error'
 type RequestStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
@@ -23,32 +24,18 @@ interface Request {
   } | null
 }
 
-const typeLabels: Record<RequestType, string> = {
-  feature: 'Feature Request',
-  change: 'Change Request',
-  bug: 'Bug Report',
-  error: 'Error Ticket',
+const typeConfig: Record<RequestType, { label: string; color: string }> = {
+  feature: { label: 'Feature', color: 'bg-primary/20 text-primary border-primary/40' },
+  change: { label: 'Change', color: 'bg-cyan-400/20 text-cyan-400 border-cyan-400/40' },
+  bug: { label: 'Bug', color: 'bg-rose-400/20 text-rose-400 border-rose-400/40' },
+  error: { label: 'Error', color: 'bg-destructive/10 text-destructive border-destructive/20' },
 }
 
-const typeColors: Record<RequestType, string> = {
-  feature: 'bg-[var(--neon-lime)]/10 text-neon-lime border-[var(--neon-lime)]/30',
-  change: 'bg-[var(--neon-cyan)]/10 text-neon-cyan border-[var(--neon-cyan)]/30',
-  bug: 'bg-[var(--neon-gold)]/10 text-neon-gold border-[var(--neon-gold)]/30',
-  error: 'bg-destructive/10 text-destructive border-destructive/30',
-}
-
-const statusLabels: Record<RequestStatus, string> = {
-  pending: 'Pending',
-  in_progress: 'In Progress',
-  resolved: 'Resolved',
-  closed: 'Closed',
-}
-
-const statusColors: Record<RequestStatus, string> = {
-  pending: 'bg-muted text-muted-foreground',
-  in_progress: 'bg-[var(--neon-cyan)]/10 text-neon-cyan',
-  resolved: 'bg-[var(--neon-lime)]/10 text-neon-lime',
-  closed: 'bg-muted/50 text-muted-foreground',
+const statusConfig: Record<RequestStatus, { label: string; color: string }> = {
+  pending: { label: 'Pending', color: 'bg-muted text-muted-foreground' },
+  in_progress: { label: 'In Progress', color: 'bg-blue-500/10 text-blue-400' },
+  resolved: { label: 'Resolved', color: 'bg-primary/10 text-primary' },
+  closed: { label: 'Closed', color: 'bg-muted/50 text-muted-foreground/60' },
 }
 
 export default function RequestsPage() {
@@ -60,7 +47,6 @@ export default function RequestsPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   
-  // Form state
   const [type, setType] = useState<RequestType>('feature')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -154,17 +140,12 @@ export default function RequestsPage() {
       const res = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type,
-          title,
-          description,
-          attachments,
-        }),
+        body: JSON.stringify({ type, title, description, attachments }),
       })
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Failed to submit request')
+        throw new Error(data.error || 'Failed to submit')
       }
 
       setSuccess(true)
@@ -198,88 +179,86 @@ export default function RequestsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground font-mono text-sm">Loading...</div>
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-muted-foreground">Loading...</span>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <Link href="/dashboard" className="text-xl font-black tracking-tight">
-              DOTIQ
-            </Link>
-            <p className="text-[10px] text-muted-foreground font-mono mt-0.5">REQUESTS & TICKETS</p>
-          </div>
-          <Link 
-            href="/dashboard"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Back to Dashboard
-          </Link>
-        </div>
-      </header>
+      <Header />
 
-      <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
-        {/* Success message */}
+      {/* Grid background */}
+      <div className="fixed inset-0 grid-subtle pointer-events-none" />
+
+      <main className="relative max-w-4xl mx-auto px-6 py-12">
+        {/* Success Toast */}
         {success && (
-          <div className="bg-[var(--neon-lime)]/10 border border-[var(--neon-lime)]/30 rounded-xl p-4">
-            <p className="text-sm text-neon-lime font-medium">Request submitted successfully! Our team has been notified.</p>
+          <div className="fixed top-6 right-6 z-50 px-4 py-3 bg-primary text-primary-foreground rounded-lg shadow-lg animate-slide-up">
+            Request submitted successfully
           </div>
         )}
 
-        {/* Header row */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black">
-              {role === 'super_admin' ? 'All Requests' : 'My Requests'}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {role === 'super_admin' 
-                ? 'View and manage all submitted requests'
-                : 'Submit feature requests, report bugs, or request changes'
-              }
-            </p>
+        {/* Header */}
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-full">
+              <span className="w-2 h-2 rounded-full bg-primary" />
+              <span className="text-xs text-muted-foreground font-medium">Feedback Portal</span>
+            </div>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-lg text-sm hover:bg-primary/90 transition-colors"
-          >
-            {showForm ? 'Cancel' : 'New Request'}
-          </button>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-black tracking-tight mb-2">
+                {role === 'super_admin' ? 'All Requests' : 'Submit Feedback'}
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                {role === 'super_admin' 
+                  ? 'Review and manage incoming requests from the team.'
+                  : 'Help us improve. Report bugs, request features, or suggest changes.'
+                }
+              </p>
+            </div>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="shrink-0 px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              {showForm ? 'Cancel' : 'New Request'}
+            </button>
+          </div>
         </div>
 
-        {/* New request form */}
+        {/* New Request Form */}
         {showForm && (
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-lg font-bold mb-4">Submit a Request</h2>
+          <div className="mb-10 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-2xl">
+            <h2 className="text-lg font-semibold mb-6">What would you like to share?</h2>
             
             {error && (
-              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 mb-4">
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Type selector */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Type Selector */}
               <div>
-                <label className="block text-xs font-mono text-muted-foreground mb-2">REQUEST TYPE</label>
+                <label className="block text-sm text-muted-foreground mb-2">Type</label>
                 <div className="flex flex-wrap gap-2">
-                  {(Object.keys(typeLabels) as RequestType[]).map(t => (
+                  {(Object.keys(typeConfig) as RequestType[]).map(t => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setType(t)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
                         type === t 
-                          ? typeColors[t] + ' border-current'
+                          ? typeConfig[t].color
                           : 'bg-muted/30 text-muted-foreground border-transparent hover:bg-muted/50'
                       }`}
                     >
-                      {typeLabels[t]}
+                      {typeConfig[t].label}
                     </button>
                   ))}
                 </div>
@@ -287,73 +266,71 @@ export default function RequestsPage() {
 
               {/* Title */}
               <div>
-                <label className="block text-xs font-mono text-muted-foreground mb-2">TITLE</label>
+                <label className="block text-sm text-muted-foreground mb-2">Title</label>
                 <input
                   type="text"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   required
-                  placeholder="Brief summary of your request"
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Brief summary"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-mono text-muted-foreground mb-2">DESCRIPTION</label>
+                <label className="block text-sm text-muted-foreground mb-2">Description</label>
                 <textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   required
                   rows={4}
-                  placeholder="Provide details about what you need or the issue you're experiencing..."
-                  className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="Provide as much detail as possible..."
+                  className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
                 />
               </div>
 
               {/* Attachments */}
               <div>
-                <label className="block text-xs font-mono text-muted-foreground mb-2">ATTACHMENTS (OPTIONAL)</label>
-                <div className="space-y-3">
-                  {attachments.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {attachments.map((url, idx) => (
-                        <div key={idx} className="relative group">
-                          <Image
-                            src={url}
-                            alt={`Attachment ${idx + 1}`}
-                            width={80}
-                            height={80}
-                            className="rounded-lg object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeAttachment(url)}
-                            className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            x
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="px-4 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                  >
-                    {uploading ? 'Uploading...' : 'Add Screenshot'}
-                  </button>
-                </div>
+                <label className="block text-sm text-muted-foreground mb-2">Screenshots (optional)</label>
+                {attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {attachments.map((url, idx) => (
+                      <div key={idx} className="relative group">
+                        <Image
+                          src={url}
+                          alt={`Attachment ${idx + 1}`}
+                          width={80}
+                          height={80}
+                          className="rounded-lg object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(url)}
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="px-4 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                >
+                  {uploading ? 'Uploading...' : 'Add Screenshot'}
+                </button>
               </div>
 
               {/* Submit */}
@@ -361,7 +338,7 @@ export default function RequestsPage() {
                 <button
                   type="submit"
                   disabled={submitting || !title || !description}
-                  className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-lg text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {submitting ? 'Submitting...' : 'Submit Request'}
                 </button>
@@ -370,37 +347,43 @@ export default function RequestsPage() {
           </div>
         )}
 
-        {/* Requests list */}
-        <div className="space-y-4">
+        {/* Requests List */}
+        <div className="space-y-3">
           {requests.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>No requests yet.</p>
+            <div className="text-center py-16">
+              <p className="text-muted-foreground mb-2">No requests yet</p>
               <button
                 onClick={() => setShowForm(true)}
-                className="mt-2 text-primary hover:underline text-sm"
+                className="text-primary hover:underline text-sm"
               >
                 Submit your first request
               </button>
             </div>
           ) : (
             requests.map(req => (
-              <div key={req.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary/30 transition-colors">
+              <div
+                key={req.id}
+                className="group p-5 bg-card/50 backdrop-blur-sm border border-border hover:border-primary/30 rounded-xl transition-all duration-200"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${typeColors[req.type]}`}>
-                        {typeLabels[req.type].toUpperCase()}
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${typeConfig[req.type].color}`}>
+                        {typeConfig[req.type].label}
                       </span>
-                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${statusColors[req.status]}`}>
-                        {statusLabels[req.status]}
+                      <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${statusConfig[req.status].color}`}>
+                        {statusConfig[req.status].label}
                       </span>
                     </div>
-                    <h3 className="font-semibold text-foreground">{req.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{req.description}</p>
+                    <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+                      {req.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      {req.description}
+                    </p>
                     
-                    {/* Attachments preview */}
                     {req.attachments && req.attachments.length > 0 && (
-                      <div className="flex gap-2 mt-3">
+                      <div className="flex gap-2 mb-3">
                         {req.attachments.map((url, idx) => (
                           <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
                             <Image
@@ -415,35 +398,28 @@ export default function RequestsPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3 mt-3 text-[10px] text-muted-foreground font-mono">
-                      <span>
-                        {new Date(req.created_at).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                      {role === 'super_admin' && req.profiles && (
-                        <span>by {req.profiles.full_name || 'Unknown'}</span>
+                    <p className="text-xs text-muted-foreground/60">
+                      {new Date(req.created_at).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                      {role === 'super_admin' && req.profiles?.full_name && (
+                        <span> · {req.profiles.full_name}</span>
                       )}
-                    </div>
+                    </p>
                   </div>
 
-                  {/* Super admin controls */}
                   {role === 'super_admin' && (
-                    <div className="shrink-0">
-                      <select
-                        value={req.status}
-                        onChange={e => updateStatus(req.id, e.target.value as RequestStatus)}
-                        className="px-3 py-1.5 bg-muted/30 border border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      >
-                        {(Object.keys(statusLabels) as RequestStatus[]).map(s => (
-                          <option key={s} value={s}>{statusLabels[s]}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <select
+                      value={req.status}
+                      onChange={e => updateStatus(req.id, e.target.value as RequestStatus)}
+                      className="shrink-0 px-3 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      {(Object.keys(statusConfig) as RequestStatus[]).map(s => (
+                        <option key={s} value={s}>{statusConfig[s].label}</option>
+                      ))}
+                    </select>
                   )}
                 </div>
               </div>

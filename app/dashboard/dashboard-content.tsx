@@ -1,9 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
 import Header from '@/components/header'
+import { RequestVerificationModal } from '@/components/verification/request-verification-modal'
+import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import type { User } from '@supabase/supabase-js'
 
 interface Profile {
@@ -34,46 +37,56 @@ interface Verification {
   overall_score: number | null
 }
 
+interface SubmittedEvaluation {
+  id: string
+  assessment_id: string
+  evaluator_type: string
+  athlete_name: string | null
+  status: string
+  overall_score: number | null
+  completed_at: string | null
+  scores: Record<string, number> | null
+}
+
 interface DashboardContentProps {
   user: User
   profile: Profile | null
   assessments: Assessment[]
   verifications: Verification[]
+  submittedEvaluations: SubmittedEvaluation[]
 }
 
-const pillarColors: Record<Category, string> = {
-  discipline: 'from-primary to-yellow-600',
-  ownership: 'from-accent to-green-600',
-  toughness: 'from-chart-3 to-red-600',
-  sportsiq: 'from-chart-4 to-blue-600',
+const pillarConfig: Record<Category, { letter: string; color: string; bg: string; border: string; glow: string }> = {
+  discipline: { letter: 'D', color: 'text-primary', bg: 'bg-primary/15', border: 'border-primary/50', glow: 'shadow-primary/20' },
+  ownership: { letter: 'O', color: 'text-emerald-400', bg: 'bg-emerald-400/15', border: 'border-emerald-400/50', glow: 'shadow-emerald-400/20' },
+  toughness: { letter: 'T', color: 'text-rose-400', bg: 'bg-rose-400/15', border: 'border-rose-400/50', glow: 'shadow-rose-400/20' },
+  sportsiq: { letter: 'IQ', color: 'text-cyan-400', bg: 'bg-cyan-400/15', border: 'border-cyan-400/50', glow: 'shadow-cyan-400/20' },
 }
 
-// Premium content data
 const premiumVideos = [
-  { id: 1, title: 'The Discipline Code', speaker: 'Marcus Thompson', role: 'Former MLB Player', duration: '18:42', image: '/images/videos/discipline-ep.jpg', pillar: 'discipline', color: 'border-neon-gold' },
-  { id: 2, title: 'Own Your Game', speaker: 'Coach Sarah Chen', role: 'D1 Head Coach', duration: '24:15', image: '/images/videos/ownership-ep.jpg', pillar: 'ownership', color: 'border-neon-lime' },
-  { id: 3, title: 'Built Different', speaker: 'Derek Williams', role: 'Sports Psychologist', duration: '21:08', image: '/images/videos/toughness-ep.jpg', pillar: 'toughness', color: 'border-neon-pink' },
-  { id: 4, title: 'Read The Game', speaker: 'Tony Reyes', role: 'Hitting Coach, MLB', duration: '19:33', image: '/images/videos/sportsiq-ep.jpg', pillar: 'sportsiq', color: 'border-neon-cyan' },
+  { id: 1, title: 'The Discipline Code', speaker: 'Marcus Thompson', duration: '18:42', image: '/images/videos/discipline-ep.jpg', color: 'border-primary/40' },
+  { id: 2, title: 'Own Your Game', speaker: 'Coach Sarah Chen', duration: '24:15', image: '/images/videos/ownership-ep.jpg', color: 'border-emerald-400/40' },
+  { id: 3, title: 'Built Different', speaker: 'Derek Williams', duration: '21:08', image: '/images/videos/toughness-ep.jpg', color: 'border-rose-400/40' },
+  { id: 4, title: 'Read The Game', speaker: 'Tony Reyes', duration: '19:33', image: '/images/videos/sportsiq-ep.jpg', color: 'border-cyan-400/40' },
+]
+
+const programs = [
+  { pillar: 'discipline', name: 'Discipline', desc: 'Build habits that outlast motivation', price: '$149', color: 'border-primary/50', bg: 'bg-primary/10', accent: 'text-primary' },
+  { pillar: 'ownership', name: 'Ownership', desc: 'Take full accountability for outcomes', price: '$149', color: 'border-emerald-400/50', bg: 'bg-emerald-400/10', accent: 'text-emerald-400' },
+  { pillar: 'toughness', name: 'Toughness', desc: 'Develop mental resilience', price: '$149', color: 'border-rose-400/50', bg: 'bg-rose-400/10', accent: 'text-rose-400' },
+  { pillar: 'sportsiq', name: 'Sports IQ', desc: 'Sharpen decision-making speed', price: '$149', color: 'border-cyan-400/50', bg: 'bg-cyan-400/10', accent: 'text-cyan-400' },
 ]
 
 const premiumApparel = [
-  { id: 1, name: 'Elite Cap', price: '$42', image: '/images/apparel/hat-gold.jpg', tag: 'NEW' },
-  { id: 2, name: 'Neon Hoodie', price: '$85', image: '/images/apparel/hoodie-neon.jpg', tag: 'HOT' },
-  { id: 3, name: 'Graphic Tee', price: '$38', image: '/images/apparel/tshirt-pattern.jpg', tag: null },
-  { id: 4, name: 'Performance Socks', price: '$18', image: '/images/apparel/socks-bright.jpg', tag: null },
-]
-
-const eightWeekPrograms = [
-  { pillar: 'discipline', name: 'Discipline', desc: 'Build habits that outlast motivation', price: '$149', color: 'border-neon-gold', bgColor: 'bg-[var(--neon-gold)]/10' },
-  { pillar: 'ownership', name: 'Ownership', desc: 'Take full accountability for outcomes', price: '$149', color: 'border-neon-lime', bgColor: 'bg-[var(--neon-lime)]/10' },
-  { pillar: 'toughness', name: 'Toughness', desc: 'Develop mental resilience under pressure', price: '$149', color: 'border-neon-pink', bgColor: 'bg-[var(--neon-pink)]/10' },
-  { pillar: 'sportsiq', name: 'Sports IQ', desc: 'Sharpen decision-making speed', price: '$149', color: 'border-neon-cyan', bgColor: 'bg-[var(--neon-cyan)]/10' },
+  { id: 1, name: 'Elite Cap', price: '$42', image: '/images/apparel/hat-gold.jpg', tag: 'NEW', tagColor: 'bg-primary text-primary-foreground' },
+  { id: 2, name: 'Neon Hoodie', price: '$85', image: '/images/apparel/hoodie-neon.jpg', tag: 'HOT', tagColor: 'bg-rose-500 text-white' },
+  { id: 3, name: 'Graphic Tee', price: '$38', image: '/images/apparel/tshirt-pattern.jpg', tag: null, tagColor: '' },
+  { id: 4, name: 'Performance Socks', price: '$18', image: '/images/apparel/socks-bright.jpg', tag: null, tagColor: '' },
 ]
 
 function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
-  // Score is now 1-10 scale
   const percentage = (score / 10) * 100
   const offset = circumference - (percentage / 100) * circumference
   
@@ -93,7 +106,7 @@ function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="url(#dashboardGradient)"
+          stroke="url(#scoreGradient)"
           strokeWidth={strokeWidth}
           fill="none"
           strokeLinecap="round"
@@ -101,266 +114,268 @@ function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size
           strokeDashoffset={offset}
         />
         <defs>
-          <linearGradient id="dashboardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#CD9B32" />
-            <stop offset="100%" stopColor="#E8B95A" />
+          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" />
+            <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
           </linearGradient>
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-3xl font-black">{score.toFixed(1)}</span>
-        <span className="text-[9px] text-muted-foreground font-mono">/ 10</span>
+        <span className="text-xs text-muted-foreground">/ 10</span>
       </div>
     </div>
   )
 }
 
-export function DashboardContent({ user, profile, assessments, verifications }: DashboardContentProps) {
+export function DashboardContent({ user, profile, assessments, verifications, submittedEvaluations }: DashboardContentProps) {
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false)
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
+  const [selectedAssessmentScore, setSelectedAssessmentScore] = useState<number>(0)
+  
   const latestAssessment = assessments[0]
   const hasAssessments = assessments.length > 0
+  const hasSubmittedEvaluations = submittedEvaluations.length > 0
   
   const getVerificationsForAssessment = (assessmentId: string) => {
     return verifications.filter(v => v.assessment_id === assessmentId)
+  }
+  
+  const openVerificationModal = (assessmentId: string) => {
+    setSelectedAssessmentId(assessmentId)
+    setVerificationModalOpen(true)
+  }
+  
+  const openPurchaseModal = (assessmentId: string, score: number) => {
+    setSelectedAssessmentId(assessmentId)
+    setSelectedAssessmentScore(score)
+    setPurchaseModalOpen(true)
   }
   
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="max-w-5xl mx-auto px-6 py-12">
-        {/* Welcome Section */}
-        <section className="mb-12">
-          <h1 className="text-3xl md:text-4xl font-black mb-2">
+      {/* Grid background */}
+      <div className="fixed inset-0 grid-subtle pointer-events-none" />
+
+      <main className="relative max-w-5xl mx-auto px-6 py-12">
+        {/* Welcome */}
+        <section className="mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-full">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs text-muted-foreground font-medium">Dashboard</span>
+            </div>
+          </div>
+          <h1 className="text-4xl font-black tracking-tight mb-2">
             Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-lg text-muted-foreground">
             {hasAssessments 
-              ? 'Track your progress and view your DOTIQ scores'
-              : 'Start your journey by taking the DOTIQ Assessment'
+              ? 'Your athletic intelligence at a glance.'
+              : 'Begin your journey to understanding what sets you apart.'
             }
           </p>
         </section>
 
         {hasAssessments ? (
           <>
-            {/* Latest Assessment Summary */}
-            <section className="mb-12">
-              <div className="bg-gradient-to-br from-purple-900/30 via-fuchsia-800/20 to-cyan-700/10 border border-border rounded-2xl p-8">
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  <ScoreRing score={latestAssessment.is_verified ? (latestAssessment.verified_score || latestAssessment.overall_score) : latestAssessment.overall_score} />
-                  
-                  <div className="flex-1 text-center md:text-left space-y-4">
-                    <div>
-                      <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-                        <h2 className="text-2xl font-black">Latest DOTIQ Score</h2>
-                        {latestAssessment.is_verified && (
-                          <span className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-full text-xs text-primary font-bold flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground text-sm">
-                        Taken on {new Date(latestAssessment.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                      {latestAssessment.purchased_at ? (
-                        <Link
-                          href={`/report/${latestAssessment.id}`}
-                          className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-full hover:scale-105 transition-transform"
-                        >
-                          View Full Report
-                        </Link>
-                      ) : (
-                        <Link
-                          href="/purchase"
-                          className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-full hover:scale-105 transition-transform"
-                        >
-                          Unlock Full Report
-                        </Link>
-                      )}
-                      <Link
-                        href="/assessment"
-                        className="px-6 py-3 bg-card border border-border font-medium rounded-full hover:bg-muted transition-colors"
-                      >
-                        Retake Assessment
-                      </Link>
-                    </div>
-                  </div>
+            {/* Assessment History — all assessments as cards */}
+            <section className="mb-10">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <span className="text-xs text-primary font-medium tracking-wider">ASSESSMENTS</span>
+                  <h2 className="text-lg font-semibold">Your History</h2>
                 </div>
+                {(() => {
+                  const THREE_MONTHS_MS = 1000 * 60 * 60 * 24 * 90
+                  const lastDate = new Date(latestAssessment.created_at).getTime()
+                  const canRetake = Date.now() - lastDate >= THREE_MONTHS_MS
+                  const nextEligible = new Date(lastDate + THREE_MONTHS_MS)
+                  return canRetake ? (
+                    <Link
+                      href="/assessment"
+                      className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Take New Assessment
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
+                      <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10M8 11V7a4 4 0 018 0v4M5 11h14a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7a2 2 0 012-2z" />
+                      </svg>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        Unlocks {nextEligible.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                  )
+                })()}
               </div>
-            </section>
 
-            {/* Pillar Scores */}
-            <section className="mb-12">
-              <h2 className="text-xl font-black mb-6">Pillar Breakdown</h2>
-              <div className="grid md:grid-cols-4 gap-4">
-                {(Object.keys(latestAssessment.scores || {}) as Category[]).map((category) => {
-                  const score = latestAssessment.scores[category]
-                  const letter = category === 'sportsiq' ? 'IQ' : category.charAt(0).toUpperCase()
-                  
-                  const percentage = (score / 10) * 100
+              <div className="space-y-4">
+                {assessments.map((assessment, index) => {
+                  const isLatest = index === 0
+                  const assessmentVerifications = getVerificationsForAssessment(assessment.id)
+                  const completedVerifications = assessmentVerifications.filter(v => v.status === 'completed').length
+                  const displayScore = assessment.is_verified
+                    ? (assessment.verified_score ?? assessment.overall_score)
+                    : assessment.overall_score
+
                   return (
-                    <div key={category} className="bg-card border border-border rounded-2xl p-6 space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-bold text-sm`}>
-                          {letter}
+                    <div
+                      key={assessment.id}
+                      className={`p-6 bg-card/50 backdrop-blur-sm border-2 rounded-2xl transition-all duration-200 ${
+                        isLatest ? 'border-primary/40' : 'border-border hover:border-border/80'
+                      }`}
+                    >
+                      {/* Card header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                        {/* Score ring */}
+                        <div className="shrink-0">
+                          <ScoreRing score={displayScore} size={96} strokeWidth={7} />
                         </div>
-                        <div>
-                          <h3 className="font-bold text-sm">{categories[category].name}</h3>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-black">{score.toFixed(1)}</span>
-                            <span className="text-xs text-muted-foreground">/ 10</span>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            {isLatest && (
+                              <span className="px-2.5 py-1 bg-primary/15 text-primary text-[11px] font-bold rounded-full">
+                                LATEST
+                              </span>
+                            )}
+                            {assessment.is_verified && (
+                              <span className="px-2.5 py-1 bg-emerald-400/15 text-emerald-400 text-[11px] font-bold rounded-full flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                                VERIFIED
+                              </span>
+                            )}
+                            {!assessment.purchased_at && (
+                              <span className="px-2.5 py-1 bg-muted text-muted-foreground text-[11px] font-bold rounded-full">
+                                PREVIEW
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="font-semibold text-foreground">
+                            {new Date(assessment.created_at).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {new Date(assessment.created_at).toLocaleTimeString('en-US', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </p>
+
+                          {/* Pillar mini bars */}
+                          {assessment.scores && (
+                            <div className="grid grid-cols-4 gap-2 mt-4">
+                              {(Object.keys(assessment.scores) as Category[]).map((cat) => {
+                                const cfg = pillarConfig[cat]
+                                return (
+                                  <div key={cat}>
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className={`text-[10px] font-bold ${cfg.color}`}>{cfg.letter}</span>
+                                      <span className="text-[10px] text-muted-foreground">{assessment.scores[cat].toFixed(1)}</span>
+                                    </div>
+                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${
+                                          cat === 'discipline' ? 'bg-primary' :
+                                          cat === 'ownership' ? 'bg-emerald-400' :
+                                          cat === 'toughness' ? 'bg-rose-400' : 'bg-cyan-400'
+                                        }`}
+                                        style={{ width: `${(assessment.scores[cat] / 10) * 100}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex sm:flex-col gap-2 shrink-0">
+                          {assessment.purchased_at ? (
+                            <Link
+                              href={`/report/${assessment.id}`}
+                              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+                            >
+                              View Report
+                            </Link>
+                          ) : (
+                            <button
+                              onClick={() => openPurchaseModal(assessment.id, displayScore)}
+                              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+                            >
+                              Unlock Report
+                            </button>
+                          )}
+                          {!assessment.is_verified && (
+                            <button 
+                              onClick={() => openVerificationModal(assessment.id)}
+                              className="px-4 py-2 bg-muted hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                            >
+                              Get Verified
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Verification bar (if in progress) */}
+                      {assessmentVerifications.length > 0 && !assessment.is_verified && (
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground font-medium">Verification progress</span>
+                            <span className="text-xs font-bold text-primary">{completedVerifications}/3</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {['coach', 'peer', 'mentor'].map((type) => {
+                              const v = assessmentVerifications.find(v => v.evaluator_type === type)
+                              const done = v?.status === 'completed'
+                              return (
+                                <div key={type} className={`p-2 rounded-lg text-center text-xs font-medium ${done ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                  <span className="capitalize">{type}</span>
+                                  <p className="text-[10px] font-normal mt-0.5 opacity-70">
+                                    {done ? 'Done' : v ? 'Pending' : 'Not sent'}
+                                  </p>
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full bg-gradient-to-r ${pillarColors[category]}`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
+                      )}
                     </div>
                   )
                 })}
               </div>
             </section>
-
-            {/* Verification Status */}
-            <section className="mb-12">
-              <h2 className="text-xl font-black mb-6">Verification Status</h2>
-              <div className="bg-card border border-border rounded-2xl p-6">
-                {(() => {
-                  const latestVerifications = getVerificationsForAssessment(latestAssessment.id)
-                  const completedCount = latestVerifications.filter(v => v.status === 'completed').length
-                  
-                  if (latestAssessment.is_verified) {
-                    return (
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="font-bold">Score Verified</h3>
-                          <p className="text-sm text-muted-foreground">
-                            All 3 evaluations completed. Your verified score is {latestAssessment.verified_score?.toFixed(1)}.
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  }
-                  
-                  if (latestVerifications.length === 0) {
-                    return (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                            <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="font-bold">Not Started</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Get your score verified by 3 people who know you well.
-                            </p>
-                          </div>
-                        </div>
-                        <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-full hover:bg-primary/90 transition-colors">
-                          Start Verification
-                        </button>
-                      </div>
-                    )
-                  }
-                  
-                  return (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-bold">In Progress</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {completedCount} of 3 evaluations completed
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-black text-primary">{completedCount}/3</div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        {['coach', 'peer', 'mentor'].map((type) => {
-                          const verification = latestVerifications.find(v => v.evaluator_type === type)
-                          const isComplete = verification?.status === 'completed'
-                          
-                          return (
-                            <div key={type} className={`p-4 rounded-xl text-center ${isComplete ? 'bg-primary/10' : 'bg-muted'}`}>
-                              <p className="font-bold capitalize text-sm">{type}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {isComplete ? 'Complete' : verification ? 'Pending' : 'Not sent'}
-                              </p>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
-            </section>
-
-            {/* Assessment History */}
-            {assessments.length > 1 && (
-              <section>
-                <h2 className="text-xl font-black mb-6">Assessment History</h2>
-                <div className="space-y-4">
-                  {assessments.slice(1).map((assessment) => (
-                    <div key={assessment.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center font-black text-lg">
-                          {assessment.overall_score.toFixed(1)}
-                        </div>
-                        <div>
-                          <p className="font-medium">{new Date(assessment.created_at).toLocaleDateString()}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {assessment.purchased_at ? 'Full report unlocked' : 'Preview only'}
-                          </p>
-                        </div>
-                      </div>
-                      {assessment.purchased_at && (
-                        <Link
-                          href={`/report/${assessment.id}`}
-                          className="text-sm text-primary hover:underline"
-                        >
-                          View Report
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
           </>
         ) : (
-          /* No Assessments State */
-          <section className="text-center py-16">
-            <div className="max-w-md mx-auto space-y-6">
-              <div className="w-20 h-20 mx-auto rounded-2xl bg-primary/20 flex items-center justify-center">
+          /* Empty State */
+          <section className="text-center py-20">
+            <div className="max-w-md mx-auto">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
                 <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-black">Take Your First Assessment</h2>
-              <p className="text-muted-foreground">
-                Discover your DOTIQ score and unlock insights into your athletic mindset across all four pillars.
+              <h2 className="text-2xl font-black mb-3">Take Your First Assessment</h2>
+              <p className="text-muted-foreground mb-6">
+                Discover your DOTIQ score and unlock insights into your athletic mindset.
               </p>
               <Link
                 href="/assessment"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-full hover:scale-105 transition-transform"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors"
               >
                 Start Assessment
                 <span>→</span>
@@ -369,91 +384,81 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
           </section>
         )}
 
-        {/* Premium Content Section - visible to admin and super_admin */}
-        {(profile?.role === 'admin' || profile?.role === 'super_admin') && (
-          <>
-            {/* 8-Week Programs */}
-            <section className="mb-12">
-              <div className="flex items-center justify-between mb-6">
+        {/* Premium Content - Available to ALL users */}
+        <>
+          {/* Programs */}
+            <section className="mb-10">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="font-mono text-[10px] text-muted-foreground mb-1">PREMIUM PROGRAMS</p>
-                  <h2 className="text-xl font-black">8-Week Development Programs</h2>
+                  <span className="text-xs text-primary font-medium">DOTIQ+</span>
+                  <h2 className="text-lg font-semibold">8-Week Programs</h2>
                 </div>
-                <span className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-full text-xs text-primary font-bold">
-                  DOTIQ+
-                </span>
               </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {eightWeekPrograms.map((program) => (
-                  <div key={program.pillar} className={`bg-card border-2 ${program.color} rounded-xl p-5 space-y-3 hover:scale-[1.02] transition-transform cursor-pointer`}>
-                    <div className={`w-12 h-12 rounded-lg ${program.bgColor} flex items-center justify-center`}>
-                      <span className="font-black text-lg">{program.pillar === 'sportsiq' ? 'IQ' : program.name.charAt(0)}</span>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {programs.map((program) => (
+                  <div key={program.pillar} className={`p-5 ${program.bg} border-2 ${program.color} rounded-xl hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer group`}>
+                    <div className={`w-8 h-8 rounded-lg bg-background/50 flex items-center justify-center mb-3`}>
+                      <span className={`font-bold text-xs ${program.accent}`}>
+                        {program.pillar === 'sportsiq' ? 'IQ' : program.name.charAt(0)}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-lg">{program.name}</h3>
-                      <p className="text-sm text-muted-foreground">{program.desc}</p>
+                    <p className={`text-sm font-semibold mb-1 ${program.accent}`}>{program.name}</p>
+                    <p className="text-xs text-muted-foreground mb-3">{program.desc}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">8 weeks</span>
+                      <span className={`font-bold ${program.accent}`}>{program.price}</span>
                     </div>
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="font-mono text-xs text-muted-foreground">8 WEEKS</span>
-                      <span className="font-bold text-primary">{program.price}</span>
-                    </div>
-                    <button className="w-full py-2 bg-primary text-primary-foreground font-bold text-sm rounded-lg hover:bg-primary/90 transition-colors">
-                      Enroll Now
-                    </button>
                   </div>
                 ))}
               </div>
             </section>
 
-            {/* Premium Videos */}
-            <section className="mb-12">
-              <div className="flex items-center justify-between mb-6">
+            {/* Videos */}
+            <section className="mb-10">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="font-mono text-[10px] text-muted-foreground mb-1">DOTIQ TV</p>
-                  <h2 className="text-xl font-black">Premium Video Content</h2>
+                  <span className="text-xs text-muted-foreground font-medium">DOTIQ TV</span>
+                  <h2 className="text-lg font-semibold">Premium Content</h2>
                 </div>
                 <Link href="#" className="text-sm text-primary hover:underline">Browse All →</Link>
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {premiumVideos.map((video) => (
                   <div key={video.id} className="group cursor-pointer">
-                    <div className={`relative aspect-video rounded-lg overflow-hidden border-2 ${video.color} mb-3`}>
+                    <div className={`relative aspect-video rounded-lg overflow-hidden border ${video.color} mb-2`}>
                       <Image 
                         src={video.image} 
                         alt={video.title}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                      <div className="absolute bottom-3 left-3">
-                        <span className="font-mono text-[10px] text-white/70">{video.duration}</span>
-                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                      <span className="absolute bottom-2 left-2 text-xs text-white/80">{video.duration}</span>
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-primary-foreground ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-primary-foreground ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z"/>
                           </svg>
                         </div>
                       </div>
                     </div>
-                    <h3 className="font-bold group-hover:text-primary transition-colors">{video.title}</h3>
-                    <p className="text-sm text-muted-foreground">{video.speaker}</p>
-                    <p className="text-xs text-muted-foreground">{video.role}</p>
+                    <p className="font-medium text-sm group-hover:text-primary transition-colors">{video.title}</p>
+                    <p className="text-xs text-muted-foreground">{video.speaker}</p>
                   </div>
                 ))}
               </div>
             </section>
 
-            {/* Premium Apparel */}
-            <section className="mb-12">
-              <div className="flex items-center justify-between mb-6">
+            {/* Apparel */}
+            <section className="mb-10">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="font-mono text-[10px] text-accent mb-1">MEMBER EXCLUSIVE</p>
-                  <h2 className="text-xl font-black">DOTIQ Apparel</h2>
+                  <span className="text-xs text-rose-400 font-medium">SHOP</span>
+                  <h2 className="text-lg font-semibold">DOTIQ Apparel</h2>
                 </div>
                 <Link href="#" className="text-sm text-primary hover:underline">Shop All →</Link>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {premiumApparel.map((item) => (
                   <div key={item.id} className="group cursor-pointer">
                     <div className="relative aspect-square rounded-lg overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-colors mb-2">
@@ -461,34 +466,113 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
                         src={item.image} 
                         alt={item.name}
                         fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       {item.tag && (
-                        <span className={`absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold rounded ${
-                          item.tag === 'NEW' ? 'bg-accent text-accent-foreground' :
-                          item.tag === 'HOT' ? 'bg-destructive text-destructive-foreground' :
-                          'bg-primary text-primary-foreground'
-                        }`}>
+                        <span className={`absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold rounded ${item.tagColor}`}>
                           {item.tag}
                         </span>
                       )}
                     </div>
-                    <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{item.name}</h3>
+                    <p className="font-medium text-sm group-hover:text-primary transition-colors">{item.name}</p>
                     <p className="text-sm text-muted-foreground">{item.price}</p>
                   </div>
                 ))}
               </div>
             </section>
-          </>
+        </>
+
+        {/* Submitted Evaluations for Others */}
+        {hasSubmittedEvaluations && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-xs text-emerald-400 font-medium tracking-wider">EVALUATIONS</span>
+                <h2 className="text-lg font-semibold">Athletes You&apos;ve Evaluated</h2>
+              </div>
+              <span className="text-sm text-muted-foreground">{submittedEvaluations.length} total</span>
+            </div>
+            
+            <div className="space-y-3">
+              {submittedEvaluations.map((evaluation) => (
+                <div
+                  key={evaluation.id}
+                  className="p-4 bg-card/50 backdrop-blur-sm border border-border rounded-xl flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-400/15 flex items-center justify-center">
+                      <span className="text-lg font-black text-emerald-400">
+                        {evaluation.overall_score?.toFixed(1) || '?'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-semibold">
+                        {evaluation.athlete_name || 'Unknown Athlete'}
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="capitalize">{evaluation.evaluator_type}</span>
+                        <span>•</span>
+                        <span>
+                          {evaluation.completed_at 
+                            ? new Date(evaluation.completed_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })
+                            : 'Pending'
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {evaluation.scores && (
+                    <div className="hidden sm:flex items-center gap-2">
+                      {(Object.keys(evaluation.scores) as Category[]).map((cat) => {
+                        const cfg = pillarConfig[cat]
+                        return (
+                          <div
+                            key={cat}
+                            className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center`}
+                            title={categories[cat].name}
+                          >
+                            <span className={`text-xs font-bold ${cfg.color}`}>
+                              {evaluation.scores?.[cat].toFixed(0)}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-6 px-6 mt-12">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
-          <p className="font-mono text-xs text-muted-foreground">D · O · T · IQ</p>
-        </div>
-      </footer>
+      {/* Verification Modal */}
+      <RequestVerificationModal
+        isOpen={verificationModalOpen}
+        onClose={() => setVerificationModalOpen(false)}
+        assessmentId={selectedAssessmentId || ''}
+        athleteName={profile?.full_name || 'Athlete'}
+        onSuccess={() => {
+          // Refresh page to show updated verification status
+          window.location.reload()
+        }}
+      />
+
+      {/* Purchase Modal */}
+      <PurchaseModal
+        isOpen={purchaseModalOpen}
+        onClose={() => setPurchaseModalOpen(false)}
+        assessmentId={selectedAssessmentId || ''}
+        score={selectedAssessmentScore}
+        onPurchaseComplete={() => {
+          // Page will refresh after purchase completes
+        }}
+      />
     </div>
   )
 }

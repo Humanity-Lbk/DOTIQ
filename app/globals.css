@@ -203,6 +203,77 @@
   }
 }
 
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-left {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+
+@keyframes question-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes question-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes neon-glow-pulse {
+  0% {
+    box-shadow: 0 0 0px 0px oklch(0.82 0.18 72 / 0);
+  }
+  30% {
+    box-shadow: 0 0 22px 6px oklch(0.82 0.18 72 / 0.14), 0 0 48px 14px oklch(0.82 0.18 72 / 0.05);
+  }
+  70% {
+    box-shadow: 0 0 18px 5px oklch(0.82 0.18 72 / 0.11), 0 0 36px 10px oklch(0.82 0.18 72 / 0.04);
+  }
+  100% {
+    box-shadow: 0 0 0px 0px oklch(0.82 0.18 72 / 0);
+  }
+}
+
+.animate-question-in {
+  animation: question-fade-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-question-out {
+  animation: question-fade-out 0.3s ease-in forwards;
+}
+
+.animate-neon-glow {
+  animation: neon-glow-pulse 0.9s ease-out forwards;
+}
+
 @keyframes pulse-soft {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
@@ -251,6 +322,14 @@
 
 .animate-slide-up {
   animation: slide-up 0.5s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.35s ease-out forwards;
+}
+
+.animate-slide-out-left {
+  animation: slide-out-left 0.25s ease-out forwards;
 }
 
 .animate-pulse-soft {

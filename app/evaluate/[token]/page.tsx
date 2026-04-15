@@ -17,6 +17,7 @@ export default async function EvaluatePage({ params }: PageProps) {
       id,
       evaluator_type,
       evaluator_name,
+      athlete_name,
       status,
       expires_at,
       user_id,
@@ -74,7 +75,7 @@ export default async function EvaluatePage({ params }: PageProps) {
     )
   }
   
-  const athleteName = (request.profiles as { full_name: string | null } | null)?.full_name || 'the athlete'
+  const athleteName = request.athlete_name || (request.profiles as { full_name: string | null } | null)?.full_name || 'the athlete'
   
   return (
     <div className="min-h-screen bg-background">

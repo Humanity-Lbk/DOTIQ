@@ -32,12 +32,20 @@ export default async function DashboardPage() {
     .select('*')
     .in('assessment_id', assessmentIds.length > 0 ? assessmentIds : ['none'])
   
+  // Get evaluations this user has submitted for others
+  const { data: submittedEvaluations } = await supabase
+    .from('verification_requests')
+    .select('*')
+    .eq('evaluator_id', user.id)
+    .order('completed_at', { ascending: false })
+  
   return (
     <DashboardContent 
       user={user}
       profile={profile}
       assessments={assessments || []}
       verifications={verifications || []}
+      submittedEvaluations={submittedEvaluations || []}
     />
   )
 }
