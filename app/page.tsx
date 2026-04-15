@@ -49,15 +49,14 @@ export default function HomePage() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative min-h-[85vh] flex items-center justify-center px-6 grid-subtle overflow-hidden">
-          {/* Ambient glow effects */}
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+        <section className="relative py-32 md:py-44 flex items-center justify-center px-6 grid-subtle overflow-hidden">
+          {/* Ambient glow */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/8 rounded-full blur-[120px] pointer-events-none" />
           
-          <div className="max-w-4xl mx-auto text-center space-y-8 relative z-10">
+          <div className="max-w-4xl mx-auto text-center relative z-10">
             {/* System Status Bar */}
-            <div className={`transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-              <div className="inline-flex items-center gap-3 px-4 py-2 bg-card/50 border border-border rounded-full backdrop-blur-sm">
+            <div className={`mb-8 transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-card/60 border border-border/80 rounded-full backdrop-blur-sm">
                 <span className="status-dot status-active" />
                 <TypewriterText 
                   text="SYS.INIT: DOTIQ_CORE  V.2026.1.0  STATUS: ACTIVE" 
@@ -70,25 +69,21 @@ export default function HomePage() {
             </div>
             
             {/* Main Headline */}
-            <div className={`space-y-2 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight">
-                Building the Future of
-              </h1>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight">
-                <span className="gradient-text-gold animate-text-glow">Athletic Performance</span>
-              </h1>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight">
+            <div className={`mb-6 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[88px] font-black leading-[0.92] tracking-tight text-balance">
+                Building the Future of{' '}
+                <span className="gradient-text-gold animate-text-glow">Athletic Performance</span>{' '}
                 Intelligence
               </h1>
             </div>
             
             {/* Subhead */}
-            <p className={`text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <p className={`text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 transition-all duration-700 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
               The question isn&apos;t just what athletes can do — it&apos;s who they become when the lights come on. DOTIQ measures what the scoreboard can&apos;t.
             </p>
             
             {/* System Message */}
-            <div className={`transition-all duration-700 delay-400 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`mb-10 transition-all duration-700 delay-400 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
               <TypewriterText 
                 text=">> PREDICTIVE_ACCURACY: LOW WITHOUT INTANGIBLES" 
                 className="font-mono text-xs text-muted-foreground"
@@ -99,16 +94,22 @@ export default function HomePage() {
             </div>
             
             {/* CTA Buttons */}
-            <div className={`flex flex-col sm:flex-row gap-4 justify-center pt-4 transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className={`flex flex-col sm:flex-row gap-3 justify-center transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <Link 
                 href="/assessment"
-                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-lg hover:scale-105 transition-all duration-300 animate-glow-pulse text-lg"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-lg hover:scale-[1.03] transition-all duration-300 animate-glow-pulse text-base"
               >
                 Take the DOTIQ Assessment
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
               </Link>
+              <Link
+                href="/auth/login"
+                className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-card border border-border text-foreground font-semibold rounded-lg hover:border-primary/50 transition-all duration-300 text-base"
+              >
+                Sign In
+              </Link>
             </div>
-            <p className={`text-sm text-muted-foreground transition-all duration-700 delay-600 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <p className={`text-sm text-muted-foreground mt-4 transition-all duration-700 delay-600 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
               Free. Quick signup. About 10 minutes.
             </p>
           </div>

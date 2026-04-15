@@ -10,9 +10,9 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.12 0.015 260);
   --popover-foreground: oklch(0.98 0 0);
-  /* Rich gold - less yellow, more warm gold */
-  --primary: oklch(0.75 0.14 65);
-  --primary-foreground: oklch(0.12 0 0);
+  /* Bright true gold */
+  --primary: oklch(0.82 0.18 72);
+  --primary-foreground: oklch(0.10 0 0);
   --secondary: oklch(0.16 0.015 260);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.18 0.015 260);
@@ -34,15 +34,15 @@
   --radius: 0.5rem;
   --sidebar: oklch(0.08 0.01 260);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.75 0.14 65);
-  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-primary: oklch(0.82 0.18 72);
+  --sidebar-primary-foreground: oklch(0.10 0 0);
   --sidebar-accent: oklch(0.16 0.015 260);
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(0.22 0.015 260);
-  --sidebar-ring: oklch(0.75 0.14 65);
+  --sidebar-ring: oklch(0.82 0.18 72);
   
   /* Neon accent palette */
-  --neon-gold: oklch(0.80 0.16 65);
+  --neon-gold: oklch(0.88 0.20 72);
   --neon-lime: oklch(0.85 0.30 130);
   --neon-pink: oklch(0.75 0.28 330);
   --neon-cyan: oklch(0.85 0.18 200);
@@ -56,8 +56,8 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.12 0.015 260);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.75 0.14 65);
-  --primary-foreground: oklch(0.12 0 0);
+  --primary: oklch(0.82 0.18 72);
+  --primary-foreground: oklch(0.10 0 0);
   --secondary: oklch(0.16 0.015 260);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.18 0.015 260);
@@ -68,8 +68,8 @@
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.22 0.02 260);
   --input: oklch(0.16 0.015 260);
-  --ring: oklch(0.75 0.14 65);
-  --chart-1: oklch(0.75 0.14 65);
+  --ring: oklch(0.82 0.18 72);
+  --chart-1: oklch(0.82 0.18 72);
   --chart-2: oklch(0.80 0.28 145);
   --chart-3: oklch(0.75 0.25 330);
   --chart-4: oklch(0.75 0.18 200);
@@ -164,19 +164,19 @@
 
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(205, 155, 50, 0.4);
+    box-shadow: 0 0 18px rgba(230, 185, 60, 0.5);
   }
   50% {
-    box-shadow: 0 0 30px rgba(205, 155, 50, 0.6), 0 0 50px rgba(205, 155, 50, 0.3);
+    box-shadow: 0 0 36px rgba(230, 185, 60, 0.75), 0 0 60px rgba(230, 185, 60, 0.35);
   }
 }
 
 @keyframes text-glow {
   0%, 100% {
-    text-shadow: 0 0 8px rgba(205, 155, 50, 0.5);
+    text-shadow: 0 0 10px rgba(230, 185, 60, 0.6);
   }
   50% {
-    text-shadow: 0 0 20px rgba(205, 155, 50, 0.8), 0 0 30px rgba(205, 155, 50, 0.4);
+    text-shadow: 0 0 24px rgba(230, 185, 60, 0.95), 0 0 40px rgba(230, 185, 60, 0.5);
   }
 }
 
@@ -273,7 +273,7 @@
 
 .card-hover:hover {
   @apply border-primary/50;
-  box-shadow: 0 0 25px rgba(205, 155, 50, 0.15);
+  box-shadow: 0 0 25px rgba(230, 185, 60, 0.2);
 }
 
 /* Subtle grid background */
@@ -287,7 +287,7 @@
 /* Neon text utilities */
 .text-neon-gold {
   color: var(--neon-gold);
-  text-shadow: 0 0 12px rgba(205, 155, 50, 0.6);
+  text-shadow: 0 0 14px rgba(230, 185, 60, 0.75);
 }
 
 .text-neon-lime {
@@ -313,7 +313,7 @@
 /* Neon border glow */
 .border-neon-gold {
   border-color: var(--neon-gold);
-  box-shadow: 0 0 10px rgba(205, 155, 50, 0.3), inset 0 0 10px rgba(205, 155, 50, 0.1);
+  box-shadow: 0 0 12px rgba(230, 185, 60, 0.45), inset 0 0 10px rgba(230, 185, 60, 0.12);
 }
 
 .border-neon-lime {
@@ -344,7 +344,7 @@
 
 /* Gradient text */
 .gradient-text-gold {
-  background: linear-gradient(135deg, #CD9B32, #E8C252, #CD9B32);
+  background: linear-gradient(135deg, #E6B93C, #F5D060, #E6B93C);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

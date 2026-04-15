@@ -69,9 +69,9 @@ export default function Header() {
           <Image 
             src="/logo.png" 
             alt="DOTIQ" 
-            width={160} 
-            height={48} 
-            className="h-10 w-auto invert brightness-0"
+            width={180} 
+            height={56} 
+            className="h-11 w-auto invert brightness-0"
             priority
           />
         </Link>
@@ -93,15 +93,33 @@ export default function Header() {
               >
                 Assessment
               </Link>
-              <span className="text-sm text-foreground font-medium">
-                {displayName}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Sign Out
-              </button>
+              {/* Avatar dropdown */}
+              <div className="relative group">
+                <button className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground font-bold text-sm hover:scale-105 transition-all duration-200 ring-2 ring-primary/30 hover:ring-primary/60">
+                  {displayName.charAt(0).toUpperCase()}
+                </button>
+                {/* Dropdown */}
+                <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-50">
+                  <div className="px-4 py-3 border-b border-border">
+                    <p className="text-xs text-muted-foreground font-mono">SIGNED IN AS</p>
+                    <p className="text-sm font-semibold truncate mt-0.5">{displayName}</p>
+                  </div>
+                  <div className="py-1">
+                    <Link href="/dashboard" className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                      Dashboard
+                    </Link>
+                    <Link href="/assessment" className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                      Take Assessment
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted/50 transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              </div>
             </>
           ) : (
             <>
