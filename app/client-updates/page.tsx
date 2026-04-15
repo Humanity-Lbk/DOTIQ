@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import Header from '@/components/header'
+import { Suspense } from 'react'
 
 interface Commit {
   sha: string
@@ -32,12 +33,17 @@ const CATEGORY_STYLES = {
   Refactor: { bg: 'bg-[var(--neon-cyan)]/10',  text: 'text-neon-cyan' },
 }
 
-export default function ClientUpdatesPage() {
+function ClientUpdatesContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  // viewMode: 'internal' for super_admin internal view, 'external' for client/admin view
+  const requestedView = searchParams.get('view')
 
   const [user, setUser] = useState<User | null>(null)
   const [role, setRole] = useState<Role | null>(null)
+  const [viewMode, setViewMode] = useState<'internal' | 'external'>('external')
   const [authLoading, setAuthLoading] = useState(true)
 
   const [commits, setCommits] = useState<Commit[]>([])
@@ -92,12 +98,21 @@ export default function ClientUpdatesPage() {
       }
 
       setRole(userRole)
+      
+      // Determine view mode based on role and requested view
+      // Super admins can access internal view if requested, admins always see external
+      if (userRole === 'super_admin' && requestedView === 'internal') {
+        setViewMode('internal')
+      } else {
+        setViewMode('external')
+      }
+
       setAuthLoading(false)
       fetchData()
     }
 
     checkAuth()
-  }, [supabase, router])
+  }, [supabase, router, requestedView])
 
   async function fetchData() {
     setLoading(true)
@@ -206,7 +221,7 @@ export default function ClientUpdatesPage() {
   }
 
   // Determine view mode based on role
-  const isInternal = role === 'super_admin'
+  const isInternal = role === 'super_admin' && viewMode === 'internal'
 
   return (
     <div className="min-h-screen bg-background">
@@ -434,5 +449,17 @@ export default function ClientUpdatesPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function ClientUpdatesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground font-mono text-sm">Loading...</div>
+      </div>
+    }>
+      <ClientUpdatesContent />
+    </Suspense>
   )
 }

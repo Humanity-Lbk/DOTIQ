@@ -138,18 +138,42 @@ export default function Header() {
                       >
                         Take Assessment
                       </Link>
-                      {/* Change Log - visible to admin and super_admin */}
+                      {/* Admin/Super Admin section */}
                       {(profile?.role === 'admin' || profile?.role === 'super_admin') && (
-                        <Link
-                          href="/client-updates"
-                          onClick={() => setDropdownOpen(false)}
-                          className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                        >
-                          Change Log
+                        <>
+                          <div className="border-t border-border my-1" />
+                          <p className="px-4 py-1 text-[10px] font-mono text-muted-foreground/60">ADMIN</p>
+                          
+                          {/* Requests - visible to both admin and super_admin */}
+                          <Link
+                            href="/requests"
+                            onClick={() => setDropdownOpen(false)}
+                            className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                          >
+                            Requests & Tickets
+                          </Link>
+                          
+                          {/* Change Log (external) - visible to both */}
+                          <Link
+                            href="/client-updates"
+                            onClick={() => setDropdownOpen(false)}
+                            className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                          >
+                            Change Log
+                          </Link>
+                          
+                          {/* Internal Change Log - super_admin only */}
                           {profile?.role === 'super_admin' && (
-                            <span className="ml-2 text-[10px] text-neon-gold font-mono">INTERNAL</span>
+                            <Link
+                              href="/client-updates?view=internal"
+                              onClick={() => setDropdownOpen(false)}
+                              className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                            >
+                              Change Log
+                              <span className="ml-2 text-[10px] text-neon-gold font-mono">INTERNAL</span>
+                            </Link>
                           )}
-                        </Link>
+                        </>
                       )}
                       <div className="border-t border-border my-1" />
                       <button
