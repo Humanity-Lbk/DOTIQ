@@ -97,7 +97,7 @@ export default function HomePage() {
             <div className={`flex flex-col sm:flex-row gap-3 justify-center transition-all duration-700 delay-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <Link 
                 href="/assessment"
-                className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-lg hover:scale-[1.03] transition-all duration-300 animate-glow-pulse text-base"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-4 text-primary-foreground font-bold rounded-lg hover:scale-[1.03] transition-transform duration-300 animate-shimmer-sweep text-base"
               >
                 Take the DOTIQ Assessment
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -390,7 +390,7 @@ export default function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-black">The work starts now.</h2>
             <Link 
               href="/assessment"
-              className="group inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-bold rounded-lg hover:scale-105 transition-all duration-300 animate-glow-pulse"
+              className="group inline-flex items-center gap-2 px-8 py-4 text-primary-foreground font-bold rounded-lg hover:scale-105 transition-transform duration-300 animate-shimmer-sweep"
             >
               Begin Assessment
               <span className="group-hover:translate-x-1 transition-transform">→</span>
