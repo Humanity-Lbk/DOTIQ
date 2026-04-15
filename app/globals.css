@@ -229,11 +229,11 @@
 .animate-shimmer-sweep {
   background: linear-gradient(
     105deg,
-    hsl(var(--primary)) 0%,
-    hsl(var(--primary)) 40%,
-    oklch(0.92 0.20 78) 50%,
-    hsl(var(--primary)) 60%,
-    hsl(var(--primary)) 100%
+    #E6B93C 0%,
+    #E6B93C 40%,
+    #F5D060 50%,
+    #E6B93C 60%,
+    #E6B93C 100%
   );
   background-size: 300% auto;
   animation: shimmer-sweep 3.5s linear infinite;
