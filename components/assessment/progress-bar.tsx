@@ -1,7 +1,27 @@
 "use client"
 
 import { useAssessmentStore } from "@/lib/assessment-store"
-import { questions, categories, type Category } from "@/lib/assessment-data"
+import { questions, type Category } from "@/lib/assessment-data"
+import { cn } from "@/lib/utils"
+
+const categoryColors: Record<Category, { bg: string; glow: string }> = {
+  discipline: { 
+    bg: "bg-[var(--neon-gold)]", 
+    glow: "shadow-[0_0_12px_rgba(255,200,50,0.5)]"
+  },
+  ownership: { 
+    bg: "bg-[var(--neon-lime)]", 
+    glow: "shadow-[0_0_12px_rgba(150,255,50,0.5)]"
+  },
+  toughness: { 
+    bg: "bg-[var(--neon-pink)]", 
+    glow: "shadow-[0_0_12px_rgba(255,100,150,0.5)]"
+  },
+  sportsiq: { 
+    bg: "bg-[var(--neon-cyan)]", 
+    glow: "shadow-[0_0_12px_rgba(100,220,255,0.5)]"
+  },
+}
 
 export function ProgressBar() {
   const { currentQuestion, answers } = useAssessmentStore()
@@ -9,49 +29,61 @@ export function ProgressBar() {
   const answeredCount = Object.keys(answers).length
   
   const currentCategory = questions[currentQuestion]?.category
-  const categoryInfo = currentCategory ? categories[currentCategory] : null
+  const colors = currentCategory ? categoryColors[currentCategory] : categoryColors.discipline
+
+  // Calculate section progress (4 sections of ~12-13 questions each)
+  const sections: Category[] = ['discipline', 'ownership', 'toughness', 'sportsiq']
+  const sectionBoundaries = [0, 13, 25, 38, 50] // Question indices where sections start
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Progress info */}
-      <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1.5">
-          <span className="font-bold text-foreground">{currentQuestion + 1}</span>
-          <span className="text-muted-foreground">/ {questions.length}</span>
-        </div>
-        <span className="text-muted-foreground">{answeredCount} answered</span>
+    <div className="flex flex-col gap-4">
+      {/* Section indicators */}
+      <div className="flex items-center justify-between gap-2">
+        {sections.map((section, idx) => {
+          const sectionStart = sectionBoundaries[idx]
+          const sectionEnd = sectionBoundaries[idx + 1]
+          const isActive = currentQuestion >= sectionStart && currentQuestion < sectionEnd
+          const isCompleted = currentQuestion >= sectionEnd
+          const sectionColors = categoryColors[section]
+          
+          return (
+            <div 
+              key={section}
+              className={cn(
+                "flex-1 h-1.5 rounded-full transition-all duration-500",
+                isCompleted 
+                  ? cn(sectionColors.bg, sectionColors.glow)
+                  : isActive 
+                    ? "bg-muted overflow-hidden"
+                    : "bg-muted/50"
+              )}
+            >
+              {isActive && (
+                <div 
+                  className={cn(
+                    "h-full rounded-full transition-all duration-300",
+                    sectionColors.bg,
+                    sectionColors.glow
+                  )}
+                  style={{ 
+                    width: `${((currentQuestion - sectionStart + 1) / (sectionEnd - sectionStart)) * 100}%` 
+                  }}
+                />
+              )}
+            </div>
+          )
+        })}
       </div>
       
-      {/* Progress bar */}
-      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-        <div
-          className="h-full bg-primary transition-all duration-300 ease-out rounded-full"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      
-      {/* Category badge */}
-      {categoryInfo && (
-        <div className="flex items-center gap-2">
-          <CategoryBadge category={currentCategory as Category} />
-          <span className="text-xs text-muted-foreground truncate">{categoryInfo.description}</span>
+      {/* Progress counter */}
+      <div className="flex items-center justify-center">
+        <div className="flex items-baseline gap-1 font-mono">
+          <span className={cn("text-2xl font-black", `text-[var(--neon-${currentCategory === 'sportsiq' ? 'cyan' : currentCategory === 'toughness' ? 'pink' : currentCategory === 'ownership' ? 'lime' : 'gold'})]`)}>
+            {currentQuestion + 1}
+          </span>
+          <span className="text-muted-foreground/50 text-sm">/ {questions.length}</span>
         </div>
-      )}
+      </div>
     </div>
-  )
-}
-
-function CategoryBadge({ category }: { category: Category }) {
-  const colors: Record<Category, string> = {
-    discipline: "bg-primary/15 text-primary border-primary/25",
-    ownership: "bg-accent/15 text-accent border-accent/25",
-    toughness: "bg-chart-3/15 text-chart-3 border-chart-3/25",
-    sportsiq: "bg-chart-4/15 text-chart-4 border-chart-4/25",
-  }
-
-  return (
-    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${colors[category]}`}>
-      {categories[category].name}
-    </span>
   )
 }
