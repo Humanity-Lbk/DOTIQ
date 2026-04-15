@@ -37,69 +37,115 @@ interface TimeEntry {
   commit_sha?: string
 }
 
-function generateUserFriendlyTitle(message: string): string {
-  let title = message.split('\n')[0].trim()
+function generateUserFriendlyTitle(message: string, category: string): string {
+  const raw = message.split('\n')[0].trim().toLowerCase()
   
-  // Remove common commit prefixes (feat:, fix:, chore:, etc.)
-  title = title.replace(/^(feat|fix|chore|docs|style|refactor|test|perf|ci|build):\s*/i, '')
-  
-  // Remove common technical jargon and make it readable
-  title = title
-    .replace(/UI\s*\/\s*[Ss]tyle/, 'Interface')
-    .replace(/bug\s*[Ff]ix/i, 'Fixed')
-    .replace(/implement/i, 'Added')
-    .replace(/update/i, 'Updated')
-    .replace(/enhance/i, 'Improved')
-    .replace(/refactor/i, 'Optimized')
-    .replace(/add\s+support\s+for/i, 'Added support for')
-  
-  // Capitalize first letter
-  title = title.charAt(0).toUpperCase() + title.slice(1)
-  
-  // Limit to 60 characters for readability
-  if (title.length > 60) {
-    title = title.substring(0, 57) + '...'
+  // Handle merge commits - these are system updates
+  if (raw.startsWith('merge pull request') || raw.startsWith('merge branch')) {
+    return 'System Update'
   }
   
-  return title
-}
-
-function generateUserFriendlyDescription(message: string, category: string): string {
-  const lines = message.split('\n').filter(l => l.trim())
-  let title = generateUserFriendlyTitle(message)
+  // Map technical terms to user-friendly titles based on content
+  const mappings: Array<{ patterns: RegExp[], title: string }> = [
+    // Authentication & Security
+    { patterns: [/auth/i, /login/i, /sign.?in/i, /sign.?out/i, /password/i], title: 'Authentication Improvements' },
+    { patterns: [/security/i, /rls/i, /permission/i, /access control/i], title: 'Security Enhancements' },
+    
+    // UI/Visual
+    { patterns: [/color/i, /theme/i, /dark mode/i, /light mode/i, /lightness/i], title: 'Visual Theme Update' },
+    { patterns: [/text visibility/i, /readability/i, /contrast/i], title: 'Improved Readability' },
+    { patterns: [/layout/i, /responsive/i, /mobile/i], title: 'Layout Improvements' },
+    { patterns: [/button/i, /click/i, /hover/i, /dropdown/i], title: 'Interface Enhancements' },
+    { patterns: [/avatar/i, /profile/i, /user menu/i], title: 'Profile Updates' },
+    { patterns: [/header/i, /nav/i, /menu/i, /sidebar/i], title: 'Navigation Updates' },
+    
+    // Features
+    { patterns: [/dashboard/i], title: 'Dashboard Improvements' },
+    { patterns: [/video/i, /media/i, /stream/i], title: 'Video Content Updates' },
+    { patterns: [/apparel/i, /shop/i, /store/i, /product/i], title: 'Shop Updates' },
+    { patterns: [/premium/i, /subscription/i, /upgrade/i], title: 'Premium Features' },
+    { patterns: [/program/i, /course/i, /training/i], title: 'Training Program Updates' },
+    { patterns: [/assessment/i, /score/i, /evaluation/i], title: 'Assessment Updates' },
+    { patterns: [/request/i, /ticket/i, /feedback/i], title: 'Feedback System' },
+    { patterns: [/change.?log/i, /time.?log/i, /history/i], title: 'Activity Log Updates' },
+    { patterns: [/upload/i, /image/i, /file/i, /attachment/i], title: 'File Handling Improvements' },
+    { patterns: [/email/i, /notification/i, /alert/i], title: 'Notification Updates' },
+    
+    // Technical (mapped to friendly terms)
+    { patterns: [/jsx/i, /component/i, /render/i], title: 'Display Fix' },
+    { patterns: [/api/i, /endpoint/i, /route/i], title: 'Performance Improvements' },
+    { patterns: [/database/i, /table/i, /schema/i, /migration/i], title: 'Data Structure Updates' },
+    { patterns: [/title/i, /description/i, /generator/i, /clarity/i], title: 'Content Improvements' },
+    { patterns: [/pr description/i, /summary/i], title: 'Documentation Updates' },
+  ]
   
-  // Try to get description from commit body (lines after first line)
-  let description = lines.slice(1).join(' ').trim()
-  
-  // If no body, generate based on category and title
-  if (!description) {
-    switch (category) {
-      case 'Bug Fix':
-        return `Fixed an issue: ${title}`
-      case 'UI/Style':
-        return `Updated the interface and visual design. ${title}`
-      case 'Refactor':
-        return `Improved performance and code quality. ${title}`
-      case 'Feature':
-        return `Added new functionality. ${title}`
-      default:
-        return `Development update: ${title}`
+  // Find matching pattern
+  for (const mapping of mappings) {
+    if (mapping.patterns.some(pattern => pattern.test(raw))) {
+      return mapping.title
     }
   }
   
-  // Clean up description
-  description = description
-    .replace(/feat:/i, '')
-    .replace(/fix:/i, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+  // Fallback based on category
+  switch (category) {
+    case 'Bug Fix': return 'Bug Fix'
+    case 'UI/Style': return 'Interface Update'
+    case 'Refactor': return 'Performance Improvement'
+    case 'Feature': return 'New Feature'
+    default: return 'System Update'
+  }
+}
+
+function generateUserFriendlyDescription(message: string, category: string): string {
+  const raw = message.split('\n')[0].trim().toLowerCase()
   
-  // Limit description to 200 characters
-  if (description.length > 200) {
-    description = description.substring(0, 197) + '...'
+  // Handle merge commits
+  if (raw.startsWith('merge pull request') || raw.startsWith('merge branch')) {
+    return 'Applied the latest improvements and bug fixes to keep your experience smooth and up-to-date.'
   }
   
-  return description
+  // Generate contextual descriptions based on content
+  const descMappings: Array<{ patterns: RegExp[], desc: string }> = [
+    // Authentication
+    { patterns: [/auth/i, /login/i, /sign.?in/i], desc: 'Improved the sign-in experience for faster and more secure access.' },
+    
+    // Visual
+    { patterns: [/color/i, /theme/i, /lightness/i], desc: 'Adjusted colors and visual styling for a better viewing experience.' },
+    { patterns: [/text visibility/i, /readability/i, /contrast/i], desc: 'Made text easier to read across the application.' },
+    { patterns: [/layout/i, /responsive/i], desc: 'Improved how content displays on different screen sizes.' },
+    { patterns: [/button/i, /hover/i, /dropdown/i, /click/i], desc: 'Enhanced interactive elements for smoother navigation.' },
+    { patterns: [/header/i, /nav/i, /menu/i], desc: 'Updated navigation for easier access to key features.' },
+    
+    // Features
+    { patterns: [/dashboard/i], desc: 'Enhanced your personal dashboard with new insights and features.' },
+    { patterns: [/video/i, /media/i], desc: 'Improved video content delivery and playback experience.' },
+    { patterns: [/premium/i, /subscription/i], desc: 'Added new premium features and content for members.' },
+    { patterns: [/program/i, /training/i], desc: 'Enhanced training programs for better athlete development.' },
+    { patterns: [/request/i, /ticket/i, /feedback/i], desc: 'Improved the feedback and support system.' },
+    { patterns: [/change.?log/i, /time.?log/i], desc: 'Updated how activity and changes are tracked and displayed.' },
+    { patterns: [/upload/i, /image/i, /file/i], desc: 'Improved file upload handling for better reliability.' },
+    
+    // Technical fixes
+    { patterns: [/jsx/i, /component/i, /mismatch/i], desc: 'Fixed a display issue to ensure content renders correctly.' },
+    { patterns: [/api/i, /endpoint/i], desc: 'Improved backend performance for faster load times.' },
+    { patterns: [/generator/i, /clarity/i, /title/i], desc: 'Improved how updates are described for better clarity.' },
+  ]
+  
+  // Find matching description
+  for (const mapping of descMappings) {
+    if (mapping.patterns.some(pattern => pattern.test(raw))) {
+      return mapping.desc
+    }
+  }
+  
+  // Fallback descriptions
+  switch (category) {
+    case 'Bug Fix': return 'Fixed an issue to improve stability and reliability.'
+    case 'UI/Style': return 'Made visual improvements to enhance your experience.'
+    case 'Refactor': return 'Optimized performance for a smoother experience.'
+    case 'Feature': return 'Added new functionality to improve your workflow.'
+    default: return 'Applied updates to keep everything running smoothly.'
+  }
 }
 
 function categorizeCommit(message: string): Commit['category'] {
@@ -251,7 +297,7 @@ export async function POST(request: NextRequest) {
           const success = await addTimeEntry({
             id: `commit-${commit.fullSha}`,
             type: 'commit',
-            title: generateUserFriendlyTitle(commit.message),
+            title: generateUserFriendlyTitle(commit.message, commit.category),
             description: generateUserFriendlyDescription(commit.message, commit.category),
             hours,
             date: commit.date,
