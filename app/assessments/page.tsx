@@ -1,52 +1,50 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { DashboardContent } from './dashboard-content'
+import { AssessmentsContent } from './assessments-content'
 
-export default async function DashboardPage() {
+export default async function AssessmentsPage() {
   const supabase = await createClient()
-  
-  // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  if (userError || !user) {
+
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) {
     redirect('/auth/login')
   }
-  
-  // Get user profile including role
+
+  // Get user profile
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, role')
+    .select('full_name, role')
     .eq('id', user.id)
     .single()
-  
-  // Get user's completed assessments
+
+  // Get all completed assessments
   const { data: assessments } = await supabase
     .from('assessments')
     .select('*')
     .eq('user_id', user.id)
     .eq('is_complete', true)
     .order('created_at', { ascending: false })
-  
+
   // Get verification requests for each assessment
   const assessmentIds = assessments?.map(a => a.id) || []
   const { data: verifications } = await supabase
     .from('verification_requests')
     .select('*')
     .in('assessment_id', assessmentIds.length > 0 ? assessmentIds : ['none'])
-  
-  // Get evaluations this user has submitted for others
-  const { data: submittedEvaluations } = await supabase
-    .from('verification_requests')
+
+  // Get reports for purchased assessments
+  const { data: reports } = await supabase
+    .from('reports')
     .select('*')
-    .eq('evaluator_id', user.id)
-    .order('completed_at', { ascending: false })
-  
+    .in('assessment_id', assessmentIds.length > 0 ? assessmentIds : ['none'])
+
   return (
-    <DashboardContent 
+    <AssessmentsContent
       user={user}
       profile={profile}
       assessments={assessments || []}
       verifications={verifications || []}
-      submittedEvaluations={submittedEvaluations || []}
+      reports={reports || []}
     />
   )
 }

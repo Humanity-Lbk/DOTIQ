@@ -126,6 +126,13 @@ export default function Header() {
                         Dashboard
                       </Link>
                       <Link
+                        href="/assessments"
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                      >
+                        My Assessments
+                      </Link>
+                      <Link
                         href="/assessment"
                         onClick={() => setDropdownOpen(false)}
                         className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
