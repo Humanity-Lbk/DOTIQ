@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { answerOptions, questions, type Question } from "@/lib/assessment-data"
 import { useAssessmentStore } from "@/lib/assessment-store"
@@ -8,32 +7,24 @@ import { Check } from "lucide-react"
 
 interface QuestionCardProps {
   question: Question
+  onAnswerSelected: () => void
+  transitioning: boolean
 }
 
-export function QuestionCard({ question }: QuestionCardProps) {
-  const { answers, setAnswer, nextQuestion, currentQuestion, completeAssessment } = useAssessmentStore()
+export function QuestionCard({ question, onAnswerSelected, transitioning }: QuestionCardProps) {
+  const { answers, setAnswer, currentQuestion } = useAssessmentStore()
   const currentAnswer = answers[question.id]
-  const isLastQuestion = currentQuestion === questions.length - 1
-  const [advancing, setAdvancing] = useState(false)
 
   const handleSelect = (value: number) => {
-    if (advancing) return
+    if (transitioning) return
     setAnswer(question.id, value)
-    setAdvancing(true)
-
-    setTimeout(() => {
-      if (isLastQuestion) {
-        completeAssessment()
-      } else {
-        nextQuestion()
-      }
-      setAdvancing(false)
-    }, 280)
+    // Let the parent (Assessment) drive the timing
+    onAnswerSelected()
   }
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Question number — no category label */}
+      {/* Question number only — no category hint */}
       <p className="font-mono text-xs text-muted-foreground/50 tracking-widest">
         {currentQuestion + 1} / {questions.length}
       </p>
@@ -51,15 +42,16 @@ export function QuestionCard({ question }: QuestionCardProps) {
             <button
               key={option.value}
               onClick={() => handleSelect(option.value)}
-              disabled={advancing}
+              disabled={transitioning}
               className={cn(
                 "group relative w-full px-6 py-4 rounded-xl border-2 text-left",
                 "transition-all duration-200 ease-out",
                 "hover:scale-[1.01] active:scale-[0.99]",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isSelected
-                  ? "border-primary bg-primary/10 shadow-[0_0_18px_rgba(0,0,0,0.15)]"
-                  : "border-border/40 bg-card/30 hover:border-border hover:bg-card/50"
+                  ? "border-primary bg-primary/10"
+                  : "border-border/40 bg-card/30 hover:border-border hover:bg-card/50",
+                transitioning && "cursor-default"
               )}
             >
               <div className="flex items-center justify-between gap-4">
