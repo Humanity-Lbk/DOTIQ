@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -26,6 +26,18 @@ export default function SignUpContent() {
   const [password, setPassword] = useState('')
 
   const supabase = createClient()
+
+  // Redirect authenticated users away from sign-up
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        // If already authenticated, redirect to the intended page or dashboard
+        router.push(redirectTo)
+      }
+    }
+    checkAuth()
+  }, [supabase, router, redirectTo])
 
   const handlePhoneSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
