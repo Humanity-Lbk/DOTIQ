@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
 import Header from '@/components/header'
 import type { User } from '@supabase/supabase-js'
@@ -10,6 +11,7 @@ interface Profile {
   full_name: string | null
   phone: string | null
   avatar_url: string | null
+  role?: 'user' | 'admin' | 'super_admin'
 }
 
 interface Assessment {
@@ -45,6 +47,28 @@ const pillarColors: Record<Category, string> = {
   toughness: 'from-chart-3 to-red-600',
   sportsiq: 'from-chart-4 to-blue-600',
 }
+
+// Premium content data
+const premiumVideos = [
+  { id: 1, title: 'The Discipline Code', speaker: 'Marcus Thompson', role: 'Former MLB Player', duration: '18:42', image: '/images/videos/discipline-ep.jpg', pillar: 'discipline', color: 'border-neon-gold' },
+  { id: 2, title: 'Own Your Game', speaker: 'Coach Sarah Chen', role: 'D1 Head Coach', duration: '24:15', image: '/images/videos/ownership-ep.jpg', pillar: 'ownership', color: 'border-neon-lime' },
+  { id: 3, title: 'Built Different', speaker: 'Derek Williams', role: 'Sports Psychologist', duration: '21:08', image: '/images/videos/toughness-ep.jpg', pillar: 'toughness', color: 'border-neon-pink' },
+  { id: 4, title: 'Read The Game', speaker: 'Tony Reyes', role: 'Hitting Coach, MLB', duration: '19:33', image: '/images/videos/sportsiq-ep.jpg', pillar: 'sportsiq', color: 'border-neon-cyan' },
+]
+
+const premiumApparel = [
+  { id: 1, name: 'Elite Cap', price: '$42', image: '/images/apparel/hat-gold.jpg', tag: 'NEW' },
+  { id: 2, name: 'Neon Hoodie', price: '$85', image: '/images/apparel/hoodie-neon.jpg', tag: 'HOT' },
+  { id: 3, name: 'Graphic Tee', price: '$38', image: '/images/apparel/tshirt-pattern.jpg', tag: null },
+  { id: 4, name: 'Performance Socks', price: '$18', image: '/images/apparel/socks-bright.jpg', tag: null },
+]
+
+const eightWeekPrograms = [
+  { pillar: 'discipline', name: 'Discipline', desc: 'Build habits that outlast motivation', price: '$149', color: 'border-neon-gold', bgColor: 'bg-[var(--neon-gold)]/10' },
+  { pillar: 'ownership', name: 'Ownership', desc: 'Take full accountability for outcomes', price: '$149', color: 'border-neon-lime', bgColor: 'bg-[var(--neon-lime)]/10' },
+  { pillar: 'toughness', name: 'Toughness', desc: 'Develop mental resilience under pressure', price: '$149', color: 'border-neon-pink', bgColor: 'bg-[var(--neon-pink)]/10' },
+  { pillar: 'sportsiq', name: 'Sports IQ', desc: 'Sharpen decision-making speed', price: '$149', color: 'border-neon-cyan', bgColor: 'bg-[var(--neon-cyan)]/10' },
+]
 
 function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2
@@ -343,6 +367,120 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
               </Link>
             </div>
           </section>
+        )}
+      </main>
+
+        {/* Premium Content Section - visible to admin and super_admin */}
+        {(profile?.role === 'admin' || profile?.role === 'super_admin') && (
+          <>
+            {/* 8-Week Programs */}
+            <section className="mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="font-mono text-[10px] text-muted-foreground mb-1">PREMIUM PROGRAMS</p>
+                  <h2 className="text-xl font-black">8-Week Development Programs</h2>
+                </div>
+                <span className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-full text-xs text-primary font-bold">
+                  DOTIQ+
+                </span>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {eightWeekPrograms.map((program) => (
+                  <div key={program.pillar} className={`bg-card border-2 ${program.color} rounded-xl p-5 space-y-3 hover:scale-[1.02] transition-transform cursor-pointer`}>
+                    <div className={`w-12 h-12 rounded-lg ${program.bgColor} flex items-center justify-center`}>
+                      <span className="font-black text-lg">{program.pillar === 'sportsiq' ? 'IQ' : program.name.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">{program.name}</h3>
+                      <p className="text-sm text-muted-foreground">{program.desc}</p>
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="font-mono text-xs text-muted-foreground">8 WEEKS</span>
+                      <span className="font-bold text-primary">{program.price}</span>
+                    </div>
+                    <button className="w-full py-2 bg-primary text-primary-foreground font-bold text-sm rounded-lg hover:bg-primary/90 transition-colors">
+                      Enroll Now
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Premium Videos */}
+            <section className="mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="font-mono text-[10px] text-muted-foreground mb-1">DOTIQ TV</p>
+                  <h2 className="text-xl font-black">Premium Video Content</h2>
+                </div>
+                <Link href="#" className="text-sm text-primary hover:underline">Browse All →</Link>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {premiumVideos.map((video) => (
+                  <div key={video.id} className="group cursor-pointer">
+                    <div className={`relative aspect-video rounded-lg overflow-hidden border-2 ${video.color} mb-3`}>
+                      <Image 
+                        src={video.image} 
+                        alt={video.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute bottom-3 left-3">
+                        <span className="font-mono text-[10px] text-white/70">{video.duration}</span>
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-primary-foreground ml-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                    <h3 className="font-bold group-hover:text-primary transition-colors">{video.title}</h3>
+                    <p className="text-sm text-muted-foreground">{video.speaker}</p>
+                    <p className="text-xs text-muted-foreground">{video.role}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Premium Apparel */}
+            <section className="mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="font-mono text-[10px] text-accent mb-1">MEMBER EXCLUSIVE</p>
+                  <h2 className="text-xl font-black">DOTIQ Apparel</h2>
+                </div>
+                <Link href="#" className="text-sm text-primary hover:underline">Shop All →</Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {premiumApparel.map((item) => (
+                  <div key={item.id} className="group cursor-pointer">
+                    <div className="relative aspect-square rounded-lg overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-colors mb-2">
+                      <Image 
+                        src={item.image} 
+                        alt={item.name}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      {item.tag && (
+                        <span className={`absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold rounded ${
+                          item.tag === 'NEW' ? 'bg-accent text-accent-foreground' :
+                          item.tag === 'HOT' ? 'bg-destructive text-destructive-foreground' :
+                          'bg-primary text-primary-foreground'
+                        }`}>
+                          {item.tag}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{item.name}</h3>
+                    <p className="text-sm text-muted-foreground">{item.price}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
         )}
       </main>
 
