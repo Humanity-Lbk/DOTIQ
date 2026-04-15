@@ -54,6 +54,10 @@ export default function ClientUpdatesPage() {
   const [manualSuccess, setManualSuccess] = useState(false)
   const [manualLoading, setManualLoading] = useState(false)
 
+  // Seed state (internal only)
+  const [seedLoading, setSeedLoading] = useState(false)
+  const [seedResult, setSeedResult] = useState<string | null>(null)
+
   const [activeTab, setActiveTab] = useState<'commits' | 'timelog'>('commits')
   const [stats, setStats] = useState({ feature: 0, bugFix: 0, style: 0, refactor: 0 })
 
@@ -112,6 +116,33 @@ export default function ClientUpdatesPage() {
     setCommits([])
     setTimeLog([])
     setTotalHours(0)
+  }
+
+  async function handleSeedFromGitHub() {
+    setSeedLoading(true)
+    setSeedResult(null)
+    try {
+      const res = await fetch('/api/client-updates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'seed',
+          password: 'dotiq-internal-2026',
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSeedResult(`Seeded ${data.added} new commits. Total: ${data.totalHours.toFixed(1)} hrs`)
+        await fetchData()
+      } else {
+        setSeedResult(data.error || 'Failed to seed')
+      }
+    } catch {
+      setSeedResult('Network error')
+    } finally {
+      setSeedLoading(false)
+      setTimeout(() => setSeedResult(null), 5000)
+    }
   }
 
   async function handleManualEntry(e: React.FormEvent) {
@@ -272,13 +303,28 @@ export default function ClientUpdatesPage() {
           ))}
         </div>
 
-        {/* Internal: Manual Time Entry */}
+        {/* Internal: Seed + Manual Time Entry */}
         {role === 'internal' && (
-          <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-            <div>
-              <p className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">INTERNAL ONLY</p>
-              <h2 className="text-lg font-bold">Log Manual Time</h2>
+          <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">INTERNAL ONLY</p>
+                <h2 className="text-lg font-bold">Time Management</h2>
+              </div>
+              <button
+                onClick={handleSeedFromGitHub}
+                disabled={seedLoading}
+                className="px-4 py-2 bg-[var(--neon-lime)]/10 border border-[var(--neon-lime)]/30 text-neon-lime font-bold rounded-lg text-xs font-mono hover:bg-[var(--neon-lime)]/20 transition-colors disabled:opacity-50"
+              >
+                {seedLoading ? 'SEEDING...' : 'SEED FROM GITHUB'}
+              </button>
             </div>
+            {seedResult && (
+              <p className="text-sm text-neon-lime font-mono">{seedResult}</p>
+            )}
+
+            <div className="border-t border-border pt-6">
+              <p className="font-mono text-[10px] text-muted-foreground tracking-widest mb-3">ADD MANUAL ENTRY</p>
             <form onSubmit={handleManualEntry} className="grid sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end">
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-muted-foreground">DESCRIPTION</label>
@@ -320,6 +366,7 @@ export default function ClientUpdatesPage() {
             </form>
             {manualError && <p className="text-sm text-destructive">{manualError}</p>}
             {manualSuccess && <p className="text-sm text-neon-lime font-mono">Entry added successfully.</p>}
+            </div>
           </div>
         )}
 
