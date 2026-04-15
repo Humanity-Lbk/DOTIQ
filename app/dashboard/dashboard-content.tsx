@@ -192,7 +192,9 @@ export function DashboardContent({ user, profile, assessments, verifications, su
                 {(() => {
                   const THREE_MONTHS_MS = 1000 * 60 * 60 * 24 * 90
                   const lastDate = new Date(latestAssessment.created_at).getTime()
-                  const canRetake = Date.now() - lastDate >= THREE_MONTHS_MS
+                  // Admins, super_admins, and trey@gethumanity.ai can always retake
+                  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin' || user.email === 'trey@gethumanity.ai'
+                  const canRetake = isAdmin || (Date.now() - lastDate >= THREE_MONTHS_MS)
                   const nextEligible = new Date(lastDate + THREE_MONTHS_MS)
                   return canRetake ? (
                     <Link
