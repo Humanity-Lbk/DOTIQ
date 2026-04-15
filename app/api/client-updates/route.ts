@@ -31,9 +31,46 @@ interface TimeEntry {
   id: string
   type: 'commit' | 'manual'
   description: string
+  title: string
   hours: number
   date: string
   commit_sha?: string
+}
+
+function generateUserFriendlyTitle(message: string): string {
+  // Clean up the commit message
+  let title = message.split('\n')[0].trim()
+  
+  // Remove common prefixes like "feat:", "fix:", etc.
+  title = title.replace(/^(feat|fix|chore|docs|style|refactor|test|perf|ci):\s*/i, '')
+  
+  // Capitalize first letter
+  title = title.charAt(0).toUpperCase() + title.slice(1)
+  
+  return title
+}
+
+function generateUserFriendlyDescription(message: string, category: string): string {
+  const lines = message.split('\n').filter(l => l.trim())
+  let description = lines.slice(1).join(' ').trim()
+  
+  if (!description) {
+    // Generate description from category and title
+    const title = generateUserFriendlyTitle(message)
+    switch (category) {
+      case 'Bug Fix':
+        return `Fixed an issue: ${title}`
+      case 'UI/Style':
+        return `Updated the interface and visual design: ${title}`
+      case 'Refactor':
+        return `Improved the codebase structure and efficiency: ${title}`
+      case 'Feature':
+      default:
+        return `Added new functionality: ${title}`
+    }
+  }
+  
+  return description
 }
 
 function categorizeCommit(message: string): Commit['category'] {
@@ -102,6 +139,7 @@ async function addTimeEntry(entry: TimeEntry): Promise<boolean> {
     .upsert({
       id: entry.id,
       type: entry.type,
+      title: entry.title,
       description: entry.description,
       hours: entry.hours,
       date: entry.date,
@@ -184,7 +222,8 @@ export async function POST(request: NextRequest) {
           const success = await addTimeEntry({
             id: `commit-${commit.fullSha}`,
             type: 'commit',
-            description: commit.message,
+            title: generateUserFriendlyTitle(commit.message),
+            description: generateUserFriendlyDescription(commit.message, commit.category),
             hours,
             date: commit.date,
             commit_sha: commit.fullSha,

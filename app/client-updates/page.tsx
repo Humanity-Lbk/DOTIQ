@@ -397,8 +397,8 @@ export default function ClientUpdatesPage() {
                 </p>
               ) : (
                 timeLog.map(entry => (
-                  <div key={entry.id} className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-4 hover:border-primary/30 transition-colors">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div key={entry.id} className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
+                    <div className="flex items-start gap-3 mb-2">
                       <span className={`shrink-0 text-[10px] font-mono px-2 py-1 rounded-full mt-0.5 ${
                         entry.type === 'manual'
                           ? 'bg-[var(--neon-cyan)]/10 text-neon-cyan'
@@ -407,16 +407,24 @@ export default function ClientUpdatesPage() {
                         {entry.type === 'manual' ? 'MANUAL' : 'COMMIT'}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground leading-snug">{entry.description}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono mt-1">
-                          {new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          {entry.commitSha && ` · ${entry.commitSha}`}
-                        </p>
+                        <p className="text-sm font-semibold text-foreground">{entry.title || entry.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{entry.description}</p>
                       </div>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <span className="text-lg font-black text-foreground">{Number(entry.hours).toFixed(2)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">hr</span>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] text-muted-foreground font-mono">
+                        {new Date(entry.date).toLocaleString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                      <div className="text-right">
+                        <span className="text-base font-black text-foreground">{Number(entry.hours).toFixed(2)}</span>
+                        <span className="text-xs text-muted-foreground ml-1">hr</span>
+                      </div>
                     </div>
                   </div>
                 ))
