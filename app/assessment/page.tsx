@@ -17,8 +17,8 @@ export default async function AssessmentPage() {
     .eq('id', user.id)
     .single()
 
-  // Admins and super_admins can take unlimited assessments
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin'
+  // Admins, super_admins, and trey@gethumanity.ai can take unlimited assessments
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin' || user.email === 'trey@gethumanity.ai'
 
   // Fetch the most recent completed assessment
   const { data: latestAssessment } = await supabase
