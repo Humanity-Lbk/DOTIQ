@@ -165,7 +165,7 @@ export default function PurchasePage() {
 
                 <button
                   onClick={() => setShowCheckout(true)}
-                  className="w-full py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:scale-[1.02] transition-all duration-300 animate-glow-pulse"
+                  className="w-full py-4 text-primary-foreground font-semibold rounded-lg hover:scale-[1.02] transition-transform duration-300 animate-shimmer-sweep"
                 >
                   Unlock Full Report →
                 </button>

@@ -181,7 +181,7 @@ export default function AboutPage() {
             </p>
             <Link 
               href="/assessment" 
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:scale-105 transition-all duration-300 animate-glow-pulse"
+              className="group inline-flex items-center gap-3 px-8 py-4 text-primary-foreground font-semibold rounded-lg hover:scale-105 transition-transform duration-300 animate-shimmer-sweep"
             >
               Get Started
               <span className="group-hover:translate-x-1 transition-transform">→</span>

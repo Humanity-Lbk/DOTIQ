@@ -1,9 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { categories, type Category } from '@/lib/assessment-data'
+import Header from '@/components/header'
 import type { User } from '@supabase/supabase-js'
 
 interface Profile {
@@ -41,16 +40,18 @@ interface DashboardContentProps {
 }
 
 const pillarColors: Record<Category, string> = {
-  discipline: 'from-green-500 to-emerald-600',
-  ownership: 'from-purple-500 to-violet-600',
-  toughness: 'from-orange-500 to-red-600',
-  sportsiq: 'from-cyan-500 to-blue-600',
+  discipline: 'from-primary to-yellow-600',
+  ownership: 'from-accent to-green-600',
+  toughness: 'from-chart-3 to-red-600',
+  sportsiq: 'from-chart-4 to-blue-600',
 }
 
 function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
-  const offset = circumference - (score / 100) * circumference
+  // Score is now 1-10 scale
+  const percentage = (score / 10) * 100
+  const offset = circumference - (percentage / 100) * circumference
   
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -77,29 +78,20 @@ function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size
         />
         <defs>
           <linearGradient id="dashboardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#84cc16" />
-            <stop offset="50%" stopColor="#a855f7" />
-            <stop offset="100%" stopColor="#06b6d4" />
+            <stop offset="0%" stopColor="#CD9B32" />
+            <stop offset="100%" stopColor="#E8B95A" />
           </linearGradient>
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-black">{score}</span>
+        <span className="text-3xl font-black">{score.toFixed(1)}</span>
+        <span className="text-[9px] text-muted-foreground font-mono">/ 10</span>
       </div>
     </div>
   )
 }
 
 export function DashboardContent({ user, profile, assessments, verifications }: DashboardContentProps) {
-  const router = useRouter()
-  const supabase = createClient()
-  
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
-  }
-  
   const latestAssessment = assessments[0]
   const hasAssessments = assessments.length > 0
   
@@ -109,31 +101,9 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
   
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">D</span>
-            </div>
-            <span className="font-bold">DOTIQ</span>
-          </Link>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:block">
-              {profile?.full_name || user.email || user.phone}
-            </span>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-5xl mx-auto px-6 py-12">
         {/* Welcome Section */}
         <section className="mb-12">
           <h1 className="text-3xl md:text-4xl font-black mb-2">
@@ -209,6 +179,7 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
                   const score = latestAssessment.scores[category]
                   const letter = category === 'sportsiq' ? 'IQ' : category.charAt(0).toUpperCase()
                   
+                  const percentage = (score / 10) * 100
                   return (
                     <div key={category} className="bg-card border border-border rounded-2xl p-6 space-y-4">
                       <div className="flex items-center gap-3">
@@ -217,13 +188,16 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
                         </div>
                         <div>
                           <h3 className="font-bold text-sm">{categories[category].name}</h3>
-                          <p className="text-2xl font-black">{score}</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black">{score.toFixed(1)}</span>
+                            <span className="text-xs text-muted-foreground">/ 10</span>
+                          </div>
                         </div>
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div 
                           className={`h-full bg-gradient-to-r ${pillarColors[category]}`}
-                          style={{ width: `${score}%` }}
+                          style={{ width: `${percentage}%` }}
                         />
                       </div>
                     </div>
@@ -251,7 +225,7 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
                         <div>
                           <h3 className="font-bold">Score Verified</h3>
                           <p className="text-sm text-muted-foreground">
-                            All 3 evaluations completed. Your verified score is {latestAssessment.verified_score}.
+                            All 3 evaluations completed. Your verified score is {latestAssessment.verified_score?.toFixed(1)}.
                           </p>
                         </div>
                       </div>
@@ -324,7 +298,7 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
                     <div key={assessment.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center font-black text-lg">
-                          {assessment.overall_score}
+                          {assessment.overall_score.toFixed(1)}
                         </div>
                         <div>
                           <p className="font-medium">{new Date(assessment.created_at).toLocaleDateString()}</p>
@@ -373,17 +347,9 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 px-6 bg-card/30 mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">D</span>
-            </div>
-            <span className="font-bold">DOTIQ</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Discipline · Ownership · Toughness · IQ
-          </p>
+      <footer className="border-t border-border py-6 px-6 mt-12">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <p className="font-mono text-xs text-muted-foreground">D · O · T · IQ</p>
         </div>
       </footer>
     </div>
