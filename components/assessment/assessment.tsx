@@ -9,7 +9,6 @@ import { NavigationControls } from "./navigation-controls"
 import { ResultsView } from "./results-view"
 import { cn } from "@/lib/utils"
 
-// 3-phase transition: idle → glow → exit → (swap) → enter
 type Phase = "idle" | "glow" | "exit" | "enter"
 
 export function Assessment() {
@@ -22,17 +21,15 @@ export function Assessment() {
     if (phase !== "idle") return
     const isLast = displayedQuestion === questions.length - 1
 
-    // Phase 1: glow blooms on the selected option only (900ms)
+    // Phase 1: glow on selected option (900ms)
     setGlowValue(value)
     setPhase("glow")
     setTimeout(() => {
       setGlowValue(null)
 
-      // Phase 2: card fades out (300ms)
+      // Phase 2: fade out (300ms)
       setPhase("exit")
       setTimeout(() => {
-
-        // Swap question
         if (isLast) {
           completeAssessment()
         } else {
@@ -40,7 +37,7 @@ export function Assessment() {
           setDisplayedQuestion((q) => q + 1)
         }
 
-        // Phase 3: new card fades in (400ms)
+        // Phase 3: fade in (400ms)
         setPhase("enter")
         setTimeout(() => {
           setPhase("idle")
@@ -51,22 +48,19 @@ export function Assessment() {
   }, [phase, displayedQuestion, completeAssessment, nextQuestion])
 
   if (isComplete) {
-    return (
-      <div className="w-full max-w-2xl mx-auto">
-        <ResultsView />
-      </div>
-    )
+    return <ResultsView />
   }
 
   const question = questions[displayedQuestion]
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-8">
+    <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 sm:p-8 space-y-8">
       <ProgressBar />
 
-      {/* Question fade in/out wrapper */}
+      {/* Question area with transitions */}
       <div
         className={cn(
+          "min-h-[320px]",
           phase === "enter" && "animate-question-in",
           phase === "exit" && "animate-question-out",
           (phase === "idle" || phase === "glow") && "opacity-100"

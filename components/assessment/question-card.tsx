@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils"
 import { answerOptions, questions, type Question } from "@/lib/assessment-data"
 import { useAssessmentStore } from "@/lib/assessment-store"
-import { Check } from "lucide-react"
 
 interface QuestionCardProps {
   question: Question
@@ -23,72 +22,57 @@ export function QuestionCard({ question, onAnswerSelected, transitioning, glowVa
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* Question number only — no category hint */}
-      <p className="font-mono text-xs text-muted-foreground/50 tracking-widest">
-        {currentQuestion + 1} / {questions.length}
-      </p>
+    <div className="space-y-10">
+      {/* Question */}
+      <div className="space-y-6">
+        <p className="text-2xl sm:text-3xl font-bold text-foreground leading-snug tracking-tight">
+          {question.text}
+        </p>
+      </div>
 
-      {/* Question text */}
-      <p className="text-xl sm:text-2xl font-bold text-foreground leading-relaxed">
-        {question.text}
-      </p>
-
-      {/* Answer options */}
-      <div className="flex flex-col gap-3">
+      {/* Answer options - clean, minimal, SaaS-like */}
+      <div className="space-y-3">
         {answerOptions.map((option) => {
           const isSelected = currentAnswer === option.value
+          const isGlowing = glowValue === option.value
+          
           return (
             <button
               key={option.value}
               onClick={() => handleSelect(option.value)}
               disabled={transitioning}
               className={cn(
-                "group relative w-full px-6 py-4 rounded-xl border-2 text-left",
-                "transition-all duration-200 ease-out",
-                "hover:scale-[1.01] active:scale-[0.99]",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "group relative w-full text-left transition-all duration-200",
+                "px-5 py-4 rounded-xl border",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isSelected
-                  ? "border-primary bg-primary/10"
-                  : "border-border/40 bg-card/30 hover:border-border hover:bg-card/50",
-                transitioning && "cursor-default",
-                glowValue === option.value && "animate-neon-glow"
+                  ? "bg-primary/10 border-primary text-foreground"
+                  : "bg-card/40 border-border/50 hover:bg-card/80 hover:border-border text-muted-foreground hover:text-foreground",
+                transitioning && "pointer-events-none",
+                isGlowing && "animate-neon-glow"
               )}
             >
-              <div className="flex items-center justify-between gap-4">
-                <span className={cn(
-                  "text-base font-semibold transition-colors duration-150",
-                  isSelected ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
-                )}>
-                  {option.label}
-                </span>
-
-                {/* Checkmark circle */}
+              <div className="flex items-center gap-4">
+                {/* Radio indicator */}
                 <div className={cn(
-                  "shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                  "shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200",
                   isSelected
                     ? "border-primary bg-primary"
-                    : "border-border/50 group-hover:border-primary/50"
+                    : "border-muted-foreground/30 group-hover:border-muted-foreground/50"
                 )}>
                   {isSelected && (
-                    <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />
+                    <div className="w-2 h-2 rounded-full bg-primary-foreground" />
                   )}
                 </div>
+                
+                <span className="text-base font-medium">
+                  {option.label}
+                </span>
               </div>
-
-              {/* Left accent bar */}
-              <div className={cn(
-                "absolute left-0 top-2 bottom-2 w-0.5 rounded-full transition-all duration-200",
-                isSelected ? "bg-primary" : "bg-transparent"
-              )} />
             </button>
           )
         })}
       </div>
-
-      <p className="text-center text-[11px] text-muted-foreground/40 font-mono tracking-wider">
-        TAP AN ANSWER TO CONTINUE
-      </p>
     </div>
   )
 }
