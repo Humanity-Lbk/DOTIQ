@@ -22,7 +22,10 @@ export function Assessment() {
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-8">
       <ProgressBar />
-      <QuestionCard question={question} />
+      {/* key forces a fresh mount on each question — CSS handles the slide, no flash */}
+      <div key={currentQuestion} className="animate-slide-in-right">
+        <QuestionCard question={question} />
+      </div>
       <NavigationControls onComplete={completeAssessment} />
     </div>
   )

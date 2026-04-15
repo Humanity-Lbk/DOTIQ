@@ -206,7 +206,7 @@
 @keyframes slide-in-right {
   from {
     opacity: 0;
-    transform: translateX(30px);
+    transform: translateX(18px);
   }
   to {
     opacity: 1;
