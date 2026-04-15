@@ -156,7 +156,7 @@ export default function HomePage() {
       <footer className="border-t border-border py-6 px-6">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <Link href="/">
-            <Image src="/logo.png" alt="DOTIQ" width={80} height={26} className="h-5 w-auto invert brightness-0" />
+            <Image src="/logo.png" alt="DOTIQ" width={100} height={32} className="h-6 w-auto invert brightness-0" />
           </Link>
           <p className="font-mono text-xs text-muted-foreground">
             D · O · T · IQ

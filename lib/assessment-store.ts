@@ -77,13 +77,15 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
       const categoryAnswers = questionIds.map((id) => answers[id] || 0)
       const maxScore = questionIds.length * 5
       const actualScore = categoryAnswers.reduce((sum, val) => sum + val, 0)
-      categoryScores[category as Category] = Math.round((actualScore / maxScore) * 100)
+      // Convert to 1-10 scale with one decimal place
+      categoryScores[category as Category] = Math.round((actualScore / maxScore) * 100) / 10
     }
 
     const totalAnswers = Object.values(answers)
     const maxTotal = 50 * 5
     const actualTotal = totalAnswers.reduce((sum, val) => sum + val, 0)
-    const totalScore = Math.round((actualTotal / maxTotal) * 100)
+    // Convert to 1-10 scale with one decimal place
+    const totalScore = Math.round((actualTotal / maxTotal) * 100) / 10
 
     return {
       total: totalScore,
