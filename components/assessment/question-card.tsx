@@ -57,12 +57,14 @@ export function QuestionCard({
       })
     : question.text
 
-  // Determine color based on value
-  const getSliderColor = (value: number) => {
-    if (value <= 3) return 'from-rose-500 to-rose-400'
-    if (value <= 5) return 'from-amber-500 to-yellow-400'
-    if (value <= 7) return 'from-primary to-primary'
-    return 'from-emerald-500 to-emerald-400'
+  // Allow clicking anywhere on the track area to jump to that value
+  const handleTrackClick = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (transitioning) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const ratio = Math.min(Math.max(x / rect.width, 0), 1)
+    const value = Math.round(ratio * 9) + 1
+    handleSliderChange(value)
   }
 
   return (
@@ -104,15 +106,18 @@ export function QuestionCard({
 
         {/* Slider */}
         <div className="relative px-2">
+          {/* Clickable track zone — full height for easy tapping */}
+          <div
+            className="absolute inset-x-2 top-0 bottom-0 cursor-pointer z-20"
+            onPointerDown={handleTrackClick}
+          />
+
           {/* Track background */}
           <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 h-3 bg-muted/50 rounded-full" />
           
-          {/* Filled track */}
+          {/* Filled track — single primary color */}
           <div 
-            className={cn(
-              "absolute left-2 top-1/2 -translate-y-1/2 h-3 rounded-full bg-gradient-to-r transition-all duration-150",
-              getSliderColor(sliderValue)
-            )}
+            className="absolute left-2 top-1/2 -translate-y-1/2 h-3 rounded-full bg-primary transition-all duration-150"
             style={{ width: `${((sliderValue - 1) / 9) * 100}%` }}
           />
 
