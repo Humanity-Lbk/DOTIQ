@@ -51,24 +51,28 @@ async function fetchCommitsFromGitHub(): Promise<{ commits: Commit[], error?: st
   }
 
   console.log('[v0] Fetching commits from GitHub...')
-  console.log('[v0] Token prefix:', GITHUB_TOKEN.slice(0, 10) + '...')
+  console.log('[v0] Token available:', !!GITHUB_TOKEN)
+  console.log('[v0] Token length:', GITHUB_TOKEN.length)
 
   try {
     const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=100`
     console.log('[v0] GitHub API URL:', url)
+    console.log('[v0] Using auth header with token prefix:', GITHUB_TOKEN.substring(0, 10) + '...')
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        'Authorization': `token ${GITHUB_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'DOTIQ-Client',
       },
     })
 
     console.log('[v0] GitHub response status:', response.status)
+    console.log('[v0] GitHub response headers:', Object.fromEntries(response.headers.entries()))
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[v0] GitHub API error:', errorText)
+      console.error('[v0] GitHub API error response:', errorText)
       return { commits: [], error: `GitHub API returned ${response.status}: ${errorText}` }
     }
 
@@ -87,7 +91,7 @@ async function fetchCommitsFromGitHub(): Promise<{ commits: Commit[], error?: st
     return { commits }
   } catch (err) {
     console.error('[v0] Error fetching commits:', err)
-    return { commits: [], error: String(err) }
+    return { commits: [], error: `Exception: ${String(err)}` }
   }
 }
 
