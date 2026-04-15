@@ -1,7 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { categories, type Category } from '@/lib/assessment-data'
+import { Share2, Copy, Check, Loader2 } from 'lucide-react'
 
 interface Assessment {
   id: string
@@ -20,58 +22,57 @@ interface Verification {
   overall_score: number | null
 }
 
+interface AIReport {
+  executiveSummary: string
+  overallAnalysis: string
+  pillars: Record<string, {
+    interpretation: string
+    strengths: string[]
+    improvements: string[]
+    recommendations: string[]
+  }>
+  strongestSignals: Array<{ question: string; score: number }>
+  pressurePoints: Array<{ question: string; score: number }>
+  actionPlan: {
+    habit1: { title: string; description: string }
+    habit2: { title: string; description: string }
+  }
+  resetScript: {
+    breath: string
+    body: string
+    words: string
+    task: string
+  }
+  selfCheckPrompts: string[]
+}
+
 interface FullReportProps {
   assessment: Assessment
   verifications: Verification[]
   userName: string
+  aiReport: AIReport | null
+  shareToken: string | null
 }
 
 const pillarColors: Record<Category, string> = {
-  discipline: 'from-green-500 to-emerald-600',
-  ownership: 'from-purple-500 to-violet-600',
-  toughness: 'from-orange-500 to-red-600',
+  discipline: 'from-primary to-primary/70',
+  ownership: 'from-emerald-500 to-emerald-600',
+  toughness: 'from-rose-500 to-rose-600',
   sportsiq: 'from-cyan-500 to-blue-600',
 }
 
-const getScoreLevel = (score: number): { label: string; color: string } => {
-  if (score >= 90) return { label: 'Elite', color: 'text-primary' }
-  if (score >= 80) return { label: 'Excellent', color: 'text-green-500' }
-  if (score >= 70) return { label: 'Strong', color: 'text-cyan-500' }
-  if (score >= 60) return { label: 'Developing', color: 'text-yellow-500' }
-  return { label: 'Growth Area', color: 'text-orange-500' }
+const pillarBgs: Record<Category, string> = {
+  discipline: 'bg-primary/15 border-primary/30',
+  ownership: 'bg-emerald-400/15 border-emerald-400/30',
+  toughness: 'bg-rose-400/15 border-rose-400/30',
+  sportsiq: 'bg-cyan-400/15 border-cyan-400/30',
 }
 
-const actionPlanItems: Record<Category, string[]> = {
-  discipline: [
-    'Create a daily pre-practice routine checklist',
-    'Set 3 specific weekly training goals and track completion',
-    'Review game film for 15 minutes after each competition',
-    'Establish a consistent sleep and nutrition schedule',
-  ],
-  ownership: [
-    'After each mistake, verbalize what you will do differently',
-    'Give one genuine compliment to a teammate daily',
-    'Ask your coach for specific feedback weekly',
-    'Lead a 5-minute team warm-up once per week',
-  ],
-  toughness: [
-    'Practice the "3 breath reset" after errors (3 deep breaths, refocus)',
-    'Create a personal mantra for pressure situations',
-    'Visualize successful performances for 5 minutes daily',
-    'Train in uncomfortable conditions intentionally once per week',
-  ],
-  sportsiq: [
-    'Watch professional games and predict plays before they happen',
-    'Ask "what if" questions about different game scenarios',
-    'Study opponent tendencies before competitions',
-    'Communicate more during practice - call out plays and situations',
-  ],
-}
-
-function ScoreRing({ score, size = 180, strokeWidth = 10 }: { score: number; size?: number; strokeWidth?: number }) {
+function ScoreRing({ score, size = 160, strokeWidth = 10 }: { score: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
-  const offset = circumference - (score / 100) * circumference
+  const percentage = (score / 10) * 100
+  const offset = circumference - (percentage / 100) * circumference
   
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -99,21 +100,25 @@ function ScoreRing({ score, size = 180, strokeWidth = 10 }: { score: number; siz
         />
         <defs>
           <linearGradient id="scoreGradientFull" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#84cc16" />
-            <stop offset="50%" stopColor="#a855f7" />
-            <stop offset="100%" stopColor="#06b6d4" />
+            <stop offset="0%" stopColor="hsl(var(--primary))" />
+            <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
           </linearGradient>
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-black">{score}</span>
-        <span className="text-xs text-muted-foreground font-medium">OVERALL</span>
+        <span className="text-5xl font-black">{score.toFixed(1)}</span>
+        <span className="text-xs text-muted-foreground font-medium">/ 10</span>
       </div>
     </div>
   )
 }
 
-export function FullReport({ assessment, verifications, userName }: FullReportProps) {
+export function FullReport({ assessment, verifications, userName, aiReport, shareToken }: FullReportProps) {
+  const [report, setReport] = useState<AIReport | null>(aiReport)
+  const [loading, setLoading] = useState(!aiReport)
+  const [copied, setCopied] = useState(false)
+  const [currentShareToken, setCurrentShareToken] = useState(shareToken)
+  
   const scores = assessment.scores as Record<Category, number>
   const sortedPillars = Object.entries(scores).sort((a, b) => b[1] - a[1])
   const topPillar = sortedPillars[0][0] as Category
@@ -122,181 +127,348 @@ export function FullReport({ assessment, verifications, userName }: FullReportPr
   const completedVerifications = verifications.filter(v => v.status === 'completed')
   const displayScore = assessment.is_verified ? (assessment.verified_score || assessment.overall_score) : assessment.overall_score
   
+  // Generate report if not exists
+  useEffect(() => {
+    if (!aiReport && !report) {
+      generateReport()
+    }
+  }, [aiReport])
+  
+  const generateReport = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/report/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId: assessment.id }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setReport(data.report)
+        setCurrentShareToken(data.shareToken)
+      }
+    } catch (error) {
+      console.error('Error generating report:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const copyShareLink = () => {
+    if (!currentShareToken) return
+    const shareUrl = `${window.location.origin}/report/shared/${currentShareToken}`
+    navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <h2 className="text-xl font-bold">Generating Your Report</h2>
+          <p className="text-muted-foreground">Our AI is analyzing your assessment...</p>
+        </div>
+      </div>
+    )
+  }
+  
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-black text-sm">D</span>
             </div>
             <span className="font-bold">DOTIQ</span>
           </Link>
-          <Link 
-            href="/dashboard" 
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Back to Dashboard
-          </Link>
+          <div className="flex items-center gap-3">
+            {currentShareToken && (
+              <button
+                onClick={copyShareLink}
+                className="flex items-center gap-2 px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                {copied ? 'Copied!' : 'Share'}
+              </button>
+            )}
+            <Link 
+              href="/dashboard" 
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Dashboard
+            </Link>
+          </div>
         </div>
       </header>
       
       {/* Hero */}
-      <section className="relative py-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-fuchsia-800/20 to-cyan-700/10" />
-        <div className="absolute top-0 right-0 w-[50%] h-[80%] bg-gradient-to-bl from-primary/20 via-purple-500/10 to-transparent blur-3xl" />
+      <section className="relative py-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
         
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-6">
-          <div className="space-y-2">
-            <p className="text-primary font-semibold text-sm tracking-wide">Full Report</p>
-            <h1 className="text-4xl md:text-5xl font-black">{userName}&apos;s DOTIQ Report</h1>
-            <p className="text-muted-foreground">
-              Generated on {new Date(assessment.created_at).toLocaleDateString()}
-            </p>
-          </div>
-          
-          <div className="flex justify-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center gap-8">
             <ScoreRing score={displayScore} />
-          </div>
-          
-          <div className="flex flex-wrap justify-center gap-4">
-            <div className="px-4 py-2 bg-card border border-border rounded-full text-sm">
-              <span className="text-muted-foreground">Top Pillar: </span>
-              <span className="font-bold">{categories[topPillar].name}</span>
-            </div>
-            <div className="px-4 py-2 bg-card border border-border rounded-full text-sm">
-              <span className="text-muted-foreground">Growth Area: </span>
-              <span className="font-bold">{categories[growthPillar].name}</span>
-            </div>
-            {assessment.is_verified && (
-              <div className="px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary font-bold flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Verified Score
+            
+            <div className="flex-1 text-center md:text-left">
+              <p className="text-primary font-semibold text-sm tracking-wide mb-2">DOTIQ Report</p>
+              <h1 className="text-3xl md:text-4xl font-black mb-2">{userName}</h1>
+              <p className="text-muted-foreground mb-4">
+                Generated on {new Date(assessment.created_at).toLocaleDateString('en-US', { 
+                  month: 'long', 
+                  day: 'numeric', 
+                  year: 'numeric' 
+                })}
+              </p>
+              
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {assessment.is_verified && (
+                  <span className="px-3 py-1.5 bg-emerald-400/15 text-emerald-400 text-xs font-bold rounded-full flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Verified
+                  </span>
+                )}
+                <span className="px-3 py-1.5 bg-primary/15 text-primary text-xs font-bold rounded-full">
+                  Top: {categories[topPillar].name}
+                </span>
+                <span className="px-3 py-1.5 bg-muted text-muted-foreground text-xs font-bold rounded-full">
+                  Focus: {categories[growthPillar].name}
+                </span>
               </div>
-            )}
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* Executive Summary */}
+      {report?.executiveSummary && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <h2 className="text-lg font-bold mb-3">Executive Summary</h2>
+            <p className="text-muted-foreground leading-relaxed">{report.executiveSummary}</p>
+          </div>
+        </section>
+      )}
+
+      {/* Pillar Scores Overview */}
+      <section className="max-w-5xl mx-auto px-6 py-8">
+        <h2 className="text-xl font-bold mb-6">Pillar Breakdown</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {(Object.keys(scores) as Category[]).map((category) => {
+            const score = scores[category]
+            const letter = category === 'sportsiq' ? 'IQ' : category.charAt(0).toUpperCase()
+            
+            return (
+              <div key={category} className={`p-5 rounded-2xl border ${pillarBgs[category]}`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-lg shadow-lg`}>
+                    {letter}
+                  </div>
+                  <div>
+                    <p className="font-semibold">{categories[category].name}</p>
+                    <p className="text-2xl font-black">{score.toFixed(1)}</p>
+                  </div>
+                </div>
+                <div className="h-2 bg-background/50 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full bg-gradient-to-r ${pillarColors[category]}`}
+                    style={{ width: `${(score / 10) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
         </div>
       </section>
 
       {/* Detailed Pillar Analysis */}
-      <section className="max-w-4xl mx-auto px-6 py-12 space-y-8">
-        <h2 className="text-2xl font-black text-center">Detailed Pillar Analysis</h2>
-        
-        <div className="space-y-6">
-          {(Object.keys(scores) as Category[]).map((category) => {
+      {report?.pillars && (
+        <section className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+          <h2 className="text-xl font-bold">Detailed Analysis</h2>
+          
+          {(Object.keys(report.pillars) as Category[]).map((category) => {
+            const pillarData = report.pillars[category]
             const score = scores[category]
-            const level = getScoreLevel(score)
             const letter = category === 'sportsiq' ? 'IQ' : category.charAt(0).toUpperCase()
             
             return (
-              <div key={category} className="bg-card border border-border rounded-2xl p-6 space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-2xl shadow-lg`}>
-                    {letter}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-xl font-bold">{categories[category].name}</h3>
-                      <span className={`text-sm font-semibold ${level.color}`}>{level.label}</span>
+              <div key={category} className="bg-card border border-border rounded-2xl overflow-hidden">
+                <div className={`p-5 border-b ${pillarBgs[category]}`}>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-xl shadow-lg`}>
+                      {letter}
                     </div>
-                    <p className="text-sm text-muted-foreground">{categories[category].description}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-4xl font-black">{score}</div>
-                    <div className="text-xs text-muted-foreground">/ 100</div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold">{categories[category].name}</h3>
+                      <p className="text-sm text-muted-foreground">{categories[category].description}</p>
+                    </div>
+                    <div className="text-3xl font-black">{score.toFixed(1)}</div>
                   </div>
                 </div>
                 
-                {/* Score bar */}
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full bg-gradient-to-r ${pillarColors[category]} transition-all duration-1000`}
-                    style={{ width: `${score}%` }}
-                  />
-                </div>
-                
-                {/* Analysis text */}
-                <div className="bg-muted/50 rounded-xl p-4">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {score >= 80 ? (
-                      <>Your {categories[category].name.toLowerCase()} score of {score} indicates exceptional strength in this area. You consistently demonstrate the behaviors and habits that define elite performers. Continue to refine and maintain these strengths while helping teammates develop in this area.</>
-                    ) : score >= 60 ? (
-                      <>Your {categories[category].name.toLowerCase()} score of {score} shows solid development with room for growth. You have a good foundation but can elevate to the next level by focusing on consistency and pushing through comfort zones.</>
-                    ) : (
-                      <>Your {categories[category].name.toLowerCase()} score of {score} highlights a significant growth opportunity. This pillar represents your biggest potential for improvement. Focus your development efforts here for maximum impact on your overall performance.</>
-                    )}
-                  </p>
+                <div className="p-5 space-y-5">
+                  <p className="text-muted-foreground">{pillarData.interpretation}</p>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-emerald-400/10 border border-emerald-400/20 rounded-xl p-4">
+                      <h4 className="font-semibold text-emerald-400 mb-2">Strengths</h4>
+                      <ul className="space-y-2">
+                        {pillarData.strengths.map((s, i) => (
+                          <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                            <span className="text-emerald-400">+</span> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-rose-400/10 border border-rose-400/20 rounded-xl p-4">
+                      <h4 className="font-semibold text-rose-400 mb-2">Growth Areas</h4>
+                      <ul className="space-y-2">
+                        {pillarData.improvements.map((s, i) => (
+                          <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                            <span className="text-rose-400">→</span> {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <h4 className="font-semibold mb-2">Recommendations</h4>
+                    <ul className="space-y-2">
+                      {pillarData.recommendations.map((r, i) => (
+                        <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             )
           })}
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Strongest Signals & Pressure Points */}
+      {report?.strongestSignals && report?.pressurePoints && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-card border border-border rounded-2xl p-5">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-emerald-400/20 text-emerald-400 flex items-center justify-center">+</span>
+                Strongest Signals
+              </h3>
+              <ul className="space-y-3">
+                {report.strongestSignals.slice(0, 6).map((item, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm">
+                    <span className="px-2 py-0.5 bg-emerald-400/20 text-emerald-400 font-bold rounded text-xs">{item.score}</span>
+                    <span className="text-muted-foreground">{item.question}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="bg-card border border-border rounded-2xl p-5">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-rose-400/20 text-rose-400 flex items-center justify-center">!</span>
+                Pressure Points
+              </h3>
+              <ul className="space-y-3">
+                {report.pressurePoints.slice(0, 6).map((item, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm">
+                    <span className="px-2 py-0.5 bg-rose-400/20 text-rose-400 font-bold rounded text-xs">{item.score}</span>
+                    <span className="text-muted-foreground">{item.question}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Action Plan */}
-      <section className="max-w-4xl mx-auto px-6 py-12 space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-black">Your Personalized Action Plan</h2>
-          <p className="text-muted-foreground">Based on your scores, focus on these development areas</p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          {(Object.keys(actionPlanItems) as Category[]).map((category) => {
-            const score = scores[category]
-            const isPriority = category === growthPillar
-            
-            return (
-              <div 
-                key={category} 
-                className={`bg-card border rounded-2xl p-6 space-y-4 ${isPriority ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border'}`}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold">{categories[category].name}</h3>
-                  {isPriority && (
-                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded">
-                      Priority
-                    </span>
-                  )}
-                </div>
-                
-                <ul className="space-y-3">
-                  {actionPlanItems[category].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-sm">
-                      <span className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <span className="text-muted-foreground">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+      {report?.actionPlan && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <h2 className="text-xl font-bold mb-6">This Week&apos;s Action Plan</h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold">1</span>
+                <h3 className="font-bold">{report.actionPlan.habit1.title}</h3>
               </div>
-            )
-          })}
-        </div>
-      </section>
+              <p className="text-sm text-muted-foreground">{report.actionPlan.habit1.description}</p>
+            </div>
+            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold">2</span>
+                <h3 className="font-bold">{report.actionPlan.habit2.title}</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">{report.actionPlan.habit2.description}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Reset Script */}
+      {report?.resetScript && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <h2 className="text-xl font-bold mb-6">Your 5-Second Reset Script</h2>
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <p className="text-sm text-muted-foreground mb-4">Use this sequence after any mistake to reset mentally:</p>
+            <div className="grid sm:grid-cols-4 gap-4">
+              {[
+                { label: 'Breath', value: report.resetScript.breath, color: 'bg-cyan-400/15 text-cyan-400' },
+                { label: 'Body', value: report.resetScript.body, color: 'bg-emerald-400/15 text-emerald-400' },
+                { label: 'Words', value: report.resetScript.words, color: 'bg-primary/15 text-primary' },
+                { label: 'Task', value: report.resetScript.task, color: 'bg-rose-400/15 text-rose-400' },
+              ].map((item, i) => (
+                <div key={i} className={`${item.color} rounded-xl p-4 text-center`}>
+                  <p className="text-xs font-bold mb-1">{item.label}</p>
+                  <p className="text-sm text-foreground">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Self-Check Prompts */}
+      {report?.selfCheckPrompts && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <h2 className="text-xl font-bold mb-6">7-Day Journal Prompts</h2>
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <ul className="space-y-4">
+              {report.selfCheckPrompts.map((prompt, i) => (
+                <li key={i} className="flex gap-4">
+                  <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold shrink-0">
+                    {i + 1}
+                  </span>
+                  <p className="text-muted-foreground pt-1">{prompt}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* Verification Status */}
-      <section className="max-w-4xl mx-auto px-6 py-12 space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-black">Verification Status</h2>
-          <p className="text-muted-foreground">
-            {assessment.is_verified 
-              ? 'Your score has been verified by 3 evaluators'
-              : `${completedVerifications.length} of 3 evaluations completed`
-            }
-          </p>
-        </div>
-        
+      <section className="max-w-5xl mx-auto px-6 py-8">
+        <h2 className="text-xl font-bold mb-6">Verification Status</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {['coach', 'peer', 'mentor'].map((type) => {
             const verification = verifications.find(v => v.evaluator_type === type)
             const isComplete = verification?.status === 'completed'
             
             return (
-              <div key={type} className="bg-card border border-border rounded-2xl p-6 text-center space-y-3">
+              <div key={type} className="bg-card border border-border rounded-2xl p-5 text-center space-y-3">
                 <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
                   isComplete ? 'bg-primary/20' : 'bg-muted'
                 }`}>
@@ -317,7 +489,7 @@ export function FullReport({ assessment, verifications, userName }: FullReportPr
                   </p>
                 </div>
                 {isComplete && verification?.overall_score && (
-                  <div className="text-2xl font-black text-primary">{verification.overall_score}</div>
+                  <div className="text-2xl font-black text-primary">{verification.overall_score.toFixed(1)}</div>
                 )}
               </div>
             )
@@ -325,39 +497,9 @@ export function FullReport({ assessment, verifications, userName }: FullReportPr
         </div>
       </section>
 
-      {/* Resources */}
-      <section className="max-w-4xl mx-auto px-6 py-12 space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-black">Development Resources</h2>
-          <p className="text-muted-foreground">Tools to support your athletic journey</p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-purple-900/30 via-fuchsia-800/20 to-cyan-700/10 border border-border rounded-2xl p-6 space-y-4">
-            <h3 className="font-bold text-lg">Mental Toughness Guide</h3>
-            <p className="text-sm text-muted-foreground">
-              A 12-week program designed to build mental resilience, focus, and composure under pressure.
-            </p>
-            <button className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg text-sm">
-              Coming Soon
-            </button>
-          </div>
-          
-          <div className="bg-gradient-to-br from-green-900/30 via-emerald-800/20 to-cyan-700/10 border border-border rounded-2xl p-6 space-y-4">
-            <h3 className="font-bold text-lg">Leadership Playbook</h3>
-            <p className="text-sm text-muted-foreground">
-              Develop ownership and leadership skills with exercises designed for team captains.
-            </p>
-            <button className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg text-sm">
-              Coming Soon
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="border-t border-border py-8 px-6 bg-card/30 mt-12">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-black text-sm">D</span>

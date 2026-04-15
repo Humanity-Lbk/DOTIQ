@@ -1,9 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
 import Header from '@/components/header'
+import { RequestVerificationModal } from '@/components/verification/request-verification-modal'
+import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import type { User } from '@supabase/supabase-js'
 
 interface Profile {
@@ -34,11 +37,23 @@ interface Verification {
   overall_score: number | null
 }
 
+interface SubmittedEvaluation {
+  id: string
+  assessment_id: string
+  evaluator_type: string
+  athlete_name: string | null
+  status: string
+  overall_score: number | null
+  completed_at: string | null
+  scores: Record<string, number> | null
+}
+
 interface DashboardContentProps {
   user: User
   profile: Profile | null
   assessments: Assessment[]
   verifications: Verification[]
+  submittedEvaluations: SubmittedEvaluation[]
 }
 
 const pillarConfig: Record<Category, { letter: string; color: string; bg: string; border: string; glow: string }> = {
@@ -113,12 +128,29 @@ function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size
   )
 }
 
-export function DashboardContent({ user, profile, assessments, verifications }: DashboardContentProps) {
+export function DashboardContent({ user, profile, assessments, verifications, submittedEvaluations }: DashboardContentProps) {
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false)
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
+  const [selectedAssessmentScore, setSelectedAssessmentScore] = useState<number>(0)
+  
   const latestAssessment = assessments[0]
   const hasAssessments = assessments.length > 0
+  const hasSubmittedEvaluations = submittedEvaluations.length > 0
   
   const getVerificationsForAssessment = (assessmentId: string) => {
     return verifications.filter(v => v.assessment_id === assessmentId)
+  }
+  
+  const openVerificationModal = (assessmentId: string) => {
+    setSelectedAssessmentId(assessmentId)
+    setVerificationModalOpen(true)
+  }
+  
+  const openPurchaseModal = (assessmentId: string, score: number) => {
+    setSelectedAssessmentId(assessmentId)
+    setSelectedAssessmentScore(score)
+    setPurchaseModalOpen(true)
   }
   
   return (
@@ -281,15 +313,18 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
                               View Report
                             </Link>
                           ) : (
-                            <Link
-                              href="/purchase"
+                            <button
+                              onClick={() => openPurchaseModal(assessment.id, displayScore)}
                               className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
                             >
                               Unlock Report
-                            </Link>
+                            </button>
                           )}
                           {!assessment.is_verified && (
-                            <button className="px-4 py-2 bg-muted hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
+                            <button 
+                              onClick={() => openVerificationModal(assessment.id)}
+                              className="px-4 py-2 bg-muted hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                            >
                               Get Verified
                             </button>
                           )}
@@ -446,7 +481,98 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
               </div>
             </section>
         </>
+
+        {/* Submitted Evaluations for Others */}
+        {hasSubmittedEvaluations && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-xs text-emerald-400 font-medium tracking-wider">EVALUATIONS</span>
+                <h2 className="text-lg font-semibold">Athletes You&apos;ve Evaluated</h2>
+              </div>
+              <span className="text-sm text-muted-foreground">{submittedEvaluations.length} total</span>
+            </div>
+            
+            <div className="space-y-3">
+              {submittedEvaluations.map((evaluation) => (
+                <div
+                  key={evaluation.id}
+                  className="p-4 bg-card/50 backdrop-blur-sm border border-border rounded-xl flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-400/15 flex items-center justify-center">
+                      <span className="text-lg font-black text-emerald-400">
+                        {evaluation.overall_score?.toFixed(1) || '?'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-semibold">
+                        {evaluation.athlete_name || 'Unknown Athlete'}
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="capitalize">{evaluation.evaluator_type}</span>
+                        <span>•</span>
+                        <span>
+                          {evaluation.completed_at 
+                            ? new Date(evaluation.completed_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })
+                            : 'Pending'
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {evaluation.scores && (
+                    <div className="hidden sm:flex items-center gap-2">
+                      {(Object.keys(evaluation.scores) as Category[]).map((cat) => {
+                        const cfg = pillarConfig[cat]
+                        return (
+                          <div
+                            key={cat}
+                            className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center`}
+                            title={categories[cat].name}
+                          >
+                            <span className={`text-xs font-bold ${cfg.color}`}>
+                              {evaluation.scores?.[cat].toFixed(0)}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
+
+      {/* Verification Modal */}
+      <RequestVerificationModal
+        isOpen={verificationModalOpen}
+        onClose={() => setVerificationModalOpen(false)}
+        assessmentId={selectedAssessmentId || ''}
+        athleteName={profile?.full_name || 'Athlete'}
+        onSuccess={() => {
+          // Refresh page to show updated verification status
+          window.location.reload()
+        }}
+      />
+
+      {/* Purchase Modal */}
+      <PurchaseModal
+        isOpen={purchaseModalOpen}
+        onClose={() => setPurchaseModalOpen(false)}
+        assessmentId={selectedAssessmentId || ''}
+        score={selectedAssessmentScore}
+        onPurchaseComplete={() => {
+          // Page will refresh after purchase completes
+        }}
+      />
     </div>
   )
 }

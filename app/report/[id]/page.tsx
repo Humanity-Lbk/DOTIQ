@@ -30,7 +30,7 @@ export default async function ReportPage({ params }: PageProps) {
   
   // Check if purchased
   if (!assessment.purchased_at) {
-    redirect(`/purchase?assessment=${id}`)
+    redirect(`/dashboard`)
   }
   
   // Get verification requests
@@ -47,11 +47,20 @@ export default async function ReportPage({ params }: PageProps) {
     .eq('id', user.id)
     .single()
   
+  // Get existing report (if any)
+  const { data: report } = await supabase
+    .from('reports')
+    .select('*')
+    .eq('assessment_id', id)
+    .single()
+  
   return (
     <FullReport 
       assessment={assessment}
       verifications={verifications || []}
       userName={profile?.full_name || 'Athlete'}
+      aiReport={report?.content || null}
+      shareToken={report?.share_token || null}
     />
   )
 }
