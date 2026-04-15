@@ -44,23 +44,36 @@ function categorizeCommit(message: string): Commit['category'] {
   return 'Feature'
 }
 
-async function fetchCommitsFromGitHub(): Promise<Commit[]> {
-  if (!GITHUB_TOKEN) return []
+async function fetchCommitsFromGitHub(): Promise<{ commits: Commit[], error?: string }> {
+  if (!GITHUB_TOKEN) {
+    console.error('[v0] GITHUB_TOKEN is not set')
+    return { commits: [], error: 'GITHUB_TOKEN not configured' }
+  }
+
+  console.log('[v0] Fetching commits from GitHub...')
+  console.log('[v0] Token prefix:', GITHUB_TOKEN.slice(0, 10) + '...')
 
   try {
-    const response = await fetch(
-      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=100`,
-      {
-        headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      }
-    )
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=100`
+    console.log('[v0] GitHub API URL:', url)
 
-    if (!response.ok) return []
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+      },
+    })
+
+    console.log('[v0] GitHub response status:', response.status)
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[v0] GitHub API error:', errorText)
+      return { commits: [], error: `GitHub API returned ${response.status}: ${errorText}` }
+    }
 
     const data = await response.json()
+    console.log('[v0] Fetched commits count:', data.length)
 
     const commits: Commit[] = data.map((item: any) => ({
       sha: item.sha.slice(0, 7),
@@ -71,9 +84,10 @@ async function fetchCommitsFromGitHub(): Promise<Commit[]> {
       category: categorizeCommit(item.commit.message),
     }))
 
-    return commits
-  } catch {
-    return []
+    return { commits }
+  } catch (err) {
+    console.error('[v0] Error fetching commits:', err)
+    return { commits: [], error: String(err) }
   }
 }
 
@@ -114,8 +128,11 @@ export async function GET() {
   const now = Date.now()
 
   // Get commits (cached)
+  let githubError: string | undefined
   if (!cachedCommits.length || now - cacheTimestamp >= CACHE_DURATION) {
-    cachedCommits = await fetchCommitsFromGitHub()
+    const result = await fetchCommitsFromGitHub()
+    cachedCommits = result.commits
+    githubError = result.error
     cacheTimestamp = now
   }
 
@@ -127,6 +144,7 @@ export async function GET() {
     commits: cachedCommits,
     timeLog,
     totalHours,
+    githubError,
   })
 }
 
@@ -142,7 +160,11 @@ export async function POST(request: NextRequest) {
 
     // SEED: Bulk add all existing GitHub commits as time entries
     if (action === 'seed') {
-      const commits = await fetchCommitsFromGitHub()
+      const result = await fetchCommitsFromGitHub()
+      if (result.error) {
+        return NextResponse.json({ error: result.error, added: 0, totalHours: 0 }, { status: 500 })
+      }
+      const commits = result.commits
       const existingLog = await getTimeLog()
       const existingShas = new Set(existingLog.filter(e => e.commit_sha).map(e => e.commit_sha))
 
