@@ -58,6 +58,9 @@ export default function ClientUpdatesPage() {
   const [seedLoading, setSeedLoading] = useState(false)
   const [seedResult, setSeedResult] = useState<string | null>(null)
 
+  // GitHub error state
+  const [githubError, setGithubError] = useState<string | null>(null)
+
   const [activeTab, setActiveTab] = useState<'commits' | 'timelog'>('commits')
   const [stats, setStats] = useState({ feature: 0, bugFix: 0, style: 0, refactor: 0 })
 
@@ -78,6 +81,7 @@ export default function ClientUpdatesPage() {
       setTimeLog(data.timeLog || [])
       setTotalHours(data.totalHours || 0)
       setLastSync(new Date())
+      setGithubError(data.githubError || null)
 
       const s = { feature: 0, bugFix: 0, style: 0, refactor: 0 }
       data.commits?.forEach((c: Commit) => {
@@ -131,17 +135,17 @@ export default function ClientUpdatesPage() {
         }),
       })
       const data = await res.json()
-      if (res.ok) {
-        setSeedResult(`Seeded ${data.added} new commits. Total: ${data.totalHours.toFixed(1)} hrs`)
+      if (res.ok && !data.error) {
+        setSeedResult(`Seeded ${data.added} new commits. Total: ${data.totalHours?.toFixed(1) || 0} hrs`)
         await fetchData()
       } else {
-        setSeedResult(data.error || 'Failed to seed')
+        setSeedResult(`ERROR: ${data.error || 'Failed to seed'}`)
       }
-    } catch {
-      setSeedResult('Network error')
+    } catch (err) {
+      setSeedResult(`Network error: ${String(err)}`)
     } finally {
       setSeedLoading(false)
-      setTimeout(() => setSeedResult(null), 5000)
+      setTimeout(() => setSeedResult(null), 10000)
     }
   }
 
@@ -263,6 +267,14 @@ export default function ClientUpdatesPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-10 space-y-10">
+
+        {/* GitHub API Error Banner */}
+        {githubError && (
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
+            <p className="font-mono text-xs text-destructive font-semibold mb-1">GITHUB API ERROR</p>
+            <p className="text-sm text-destructive/80 break-all">{githubError}</p>
+          </div>
+        )}
 
         {/* Total Hours Banner */}
         <div className="relative bg-card border border-primary/30 rounded-2xl p-8 overflow-hidden">
