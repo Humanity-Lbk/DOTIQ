@@ -44,8 +44,8 @@ function ScoreRing({ score, size = 220, strokeWidth = 10 }: { score: number; siz
         />
         <defs>
           <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#818cf8" />
+            <stop offset="0%" stopColor="#DAA520" />
+            <stop offset="100%" stopColor="#F0C050" />
           </linearGradient>
         </defs>
       </svg>
@@ -118,16 +118,17 @@ export function PreviewReport() {
   const growthPillar = sortedPillars[sortedPillars.length - 1][0] as Category
   
   return (
-    <div className="pb-24 grid-pattern">
+    <div className="pb-24">
       {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-10">
+      <section className="relative py-16 overflow-hidden">
+        <div className="max-w-3xl mx-auto px-6 text-center space-y-8">
           {/* Status */}
           <div className={`space-y-2 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <p className="font-mono text-xs text-muted-foreground tracking-widest">
-              {'>> ASSESSMENT_STATUS: '}<span className="text-green-500">COMPLETE</span>
+            <p className="font-mono text-xs text-primary inline-flex items-center gap-2">
+              <span className="status-dot status-active" />
+              ASSESSMENT COMPLETE
             </p>
-            <h1 className="text-4xl md:text-6xl font-black">Your DOTIQ Score</h1>
+            <h1 className="text-3xl md:text-5xl font-black">Your DOTIQ Score</h1>
           </div>
           
           {/* Score Ring */}
@@ -150,13 +151,8 @@ export function PreviewReport() {
       </section>
 
       {/* Pillar Breakdown */}
-      <section className="max-w-4xl mx-auto px-6 py-12 space-y-8">
-        <div className="space-y-2">
-          <p className="font-mono text-xs text-muted-foreground tracking-widest">
-            {'>> METRIC_TYPE: BEHAVIORAL · STATUS: '}<span className="text-primary">QUANTIFIED</span>
-          </p>
-          <h2 className="text-2xl font-black">Pillar Breakdown</h2>
-        </div>
+      <section className="max-w-3xl mx-auto px-6 py-10 space-y-6">
+        <h2 className="text-xl font-black">Pillar Breakdown</h2>
         
         <div className="grid md:grid-cols-2 gap-4">
           {(Object.keys(scores) as Category[]).map((category, i) => (
@@ -166,13 +162,10 @@ export function PreviewReport() {
       </section>
 
       {/* Blurred Full Report Section */}
-      <section className="max-w-4xl mx-auto px-6 py-12 space-y-8">
-        <div className="space-y-2">
-          <p className="font-mono text-xs text-destructive tracking-widest">
-            {'>> ACCESS_LEVEL: RESTRICTED'}
-          </p>
-          <h2 className="text-2xl font-black">Full Report</h2>
-          <p className="text-muted-foreground">Detailed insights, action plans, and development resources</p>
+      <section className="max-w-3xl mx-auto px-6 py-10 space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-xl font-black">Full Report</h2>
+          <p className="text-sm text-muted-foreground">Detailed insights, action plans, and development resources</p>
         </div>
         
         {/* Blurred Content */}
@@ -251,28 +244,23 @@ export function PreviewReport() {
       </section>
 
       {/* Verify Your Score Section */}
-      <section className="max-w-4xl mx-auto px-6 py-12">
-        <div className="card-premium bg-card border border-border rounded-lg p-8 text-center space-y-6">
-          <div className="space-y-1">
-            <p className="font-mono text-xs text-muted-foreground tracking-widest">
-              {'>> VERIFICATION_PROTOCOL'}
-            </p>
-            <h3 className="text-2xl font-black">Verify Your Score</h3>
-          </div>
-          <p className="text-muted-foreground max-w-lg mx-auto text-sm">
-            Get a verified badge by having 3 people evaluate you: a <span className="text-foreground font-medium">coach</span>, a <span className="text-foreground font-medium">peer</span>, and a <span className="text-foreground font-medium">mentor</span>. Your verified score will be the average of all evaluations.
+      <section className="max-w-3xl mx-auto px-6 py-10">
+        <div className="bg-card border border-border rounded-lg p-6 text-center space-y-4">
+          <h3 className="text-lg font-black">Verify Your Score</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Get a verified badge by having 3 people evaluate you: a coach, a peer, and a mentor.
           </p>
           <button
             onClick={() => setShowVerify(true)}
-            className="px-6 py-3 bg-muted text-foreground font-semibold rounded-lg hover:bg-muted/80 transition-colors border border-border"
+            className="px-5 py-2.5 bg-muted text-foreground text-sm font-semibold rounded-lg hover:bg-muted/80 transition-colors border border-border"
           >
-            Start Verification Process
+            Start Verification
           </button>
         </div>
       </section>
 
       {/* Actions */}
-      <section className="max-w-4xl mx-auto px-6 py-8 flex flex-wrap gap-4 justify-center">
+      <section className="max-w-3xl mx-auto px-6 py-8 flex flex-wrap gap-4 justify-center">
         <button
           onClick={() => resetAssessment()}
           className="px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"

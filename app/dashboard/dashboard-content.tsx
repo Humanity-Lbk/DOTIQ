@@ -1,9 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { categories, type Category } from '@/lib/assessment-data'
+import Header from '@/components/header'
 import type { User } from '@supabase/supabase-js'
 
 interface Profile {
@@ -41,10 +40,10 @@ interface DashboardContentProps {
 }
 
 const pillarColors: Record<Category, string> = {
-  discipline: 'from-green-500 to-emerald-600',
-  ownership: 'from-purple-500 to-violet-600',
-  toughness: 'from-orange-500 to-red-600',
-  sportsiq: 'from-cyan-500 to-blue-600',
+  discipline: 'from-primary to-yellow-600',
+  ownership: 'from-accent to-green-600',
+  toughness: 'from-chart-3 to-red-600',
+  sportsiq: 'from-chart-4 to-blue-600',
 }
 
 function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size?: number; strokeWidth?: number }) {
@@ -91,15 +90,6 @@ function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size
 }
 
 export function DashboardContent({ user, profile, assessments, verifications }: DashboardContentProps) {
-  const router = useRouter()
-  const supabase = createClient()
-  
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
-  }
-  
   const latestAssessment = assessments[0]
   const hasAssessments = assessments.length > 0
   
@@ -109,31 +99,9 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
   
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">D</span>
-            </div>
-            <span className="font-bold">DOTIQ</span>
-          </Link>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:block">
-              {profile?.full_name || user.email || user.phone}
-            </span>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-5xl mx-auto px-6 py-12">
         {/* Welcome Section */}
         <section className="mb-12">
           <h1 className="text-3xl md:text-4xl font-black mb-2">
@@ -373,17 +341,9 @@ export function DashboardContent({ user, profile, assessments, verifications }: 
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 px-6 bg-card/30 mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">D</span>
-            </div>
-            <span className="font-bold">DOTIQ</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Discipline · Ownership · Toughness · IQ
-          </p>
+      <footer className="border-t border-border py-6 px-6 mt-12">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <p className="font-mono text-xs text-muted-foreground">D · O · T · IQ</p>
         </div>
       </footer>
     </div>
