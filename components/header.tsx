@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 
 interface Profile {
   full_name: string | null
+  role: 'user' | 'admin' | 'super_admin'
 }
 
 export default function Header() {
@@ -47,7 +48,7 @@ export default function Header() {
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('full_name, role')
           .eq('id', user.id)
           .single()
         setProfile(profile)
@@ -137,6 +138,20 @@ export default function Header() {
                       >
                         Take Assessment
                       </Link>
+                      {/* Change Log - visible to admin and super_admin */}
+                      {(profile?.role === 'admin' || profile?.role === 'super_admin') && (
+                        <Link
+                          href="/client-updates"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                        >
+                          Change Log
+                          {profile?.role === 'super_admin' && (
+                            <span className="ml-2 text-[10px] text-neon-gold font-mono">INTERNAL</span>
+                          )}
+                        </Link>
+                      )}
+                      <div className="border-t border-border my-1" />
                       <button
                         onClick={handleSignOut}
                         className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-muted/50 transition-colors"
