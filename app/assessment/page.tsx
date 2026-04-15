@@ -10,6 +10,16 @@ export default async function AssessmentPage() {
     redirect('/auth/login')
   }
 
+  // Fetch user profile to check role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  // Admins and super_admins can take unlimited assessments
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin'
+
   // Fetch the most recent completed assessment
   const { data: latestAssessment } = await supabase
     .from('assessments')
@@ -26,7 +36,8 @@ export default async function AssessmentPage() {
   let nextEligibleDate: string | null = null
   let daysTilEligible: number | null = null
 
-  if (latestAssessment) {
+  // Only enforce 3-month restriction for non-admin users
+  if (latestAssessment && !isAdmin) {
     const lastTaken = new Date(latestAssessment.created_at).getTime()
     const now = Date.now()
     const elapsed = now - lastTaken
