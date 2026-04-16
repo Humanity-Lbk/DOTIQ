@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/treywoodward/DOTIQ status)",
+      "Bash(git -C /Users/treywoodward/DOTIQ diff --stat)",
+      "Bash(git fetch *)",
+      "Bash(git rm *)",
+      "Bash(git stash *)"
+    ]
+  }
+}

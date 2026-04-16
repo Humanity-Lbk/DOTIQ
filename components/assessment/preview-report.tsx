@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { useAssessmentStore } from '@/lib/assessment-store'
 import { categories, questions, type Category } from '@/lib/assessment-data'
@@ -156,10 +156,10 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const hasSaved = useRef(false)
   
-  const scoreData = calculateScores()
+  const scoreData = useMemo(() => calculateScores(), [answers])
   const scores = scoreData.categories
   const overallScore = scoreData.total
-  
+
   useEffect(() => {
     setMounted(true)
     
@@ -192,13 +192,12 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
       }
     }
     
-    // Only save if there are answers and user is logged in
     if (Object.keys(answers).length > 0 && !isGuest) {
       saveAssessment()
     }
-  }, [answers, scores, overallScore, isGuest])
+  }, [answers, isGuest])
   
-  const insights = generateInsights(scores, overallScore, answers)
+  const insights = useMemo(() => generateInsights(scores, overallScore, answers), [scores, overallScore, answers])
   
   return (
     <div className="pb-24">

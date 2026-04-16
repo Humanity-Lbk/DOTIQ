@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import AppSidebar from '@/components/app-sidebar'
+import Header from '@/components/header'
 
 type RequestType = 'feature' | 'change' | 'bug' | 'error'
 type RequestStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
@@ -188,12 +188,11 @@ export default function RequestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <AppSidebar />
+    <div className="min-h-screen bg-background">
+      <Header />
 
-      <div className="flex-1 ml-64">
       {/* Grid background */}
-      <div className="fixed inset-0 ml-64 grid-subtle pointer-events-none" />
+      <div className="fixed inset-0 grid-subtle pointer-events-none" />
 
       <main className="relative max-w-4xl mx-auto px-6 py-12">
         {/* Success Toast */}
@@ -428,7 +427,6 @@ export default function RequestsPage() {
           )}
         </div>
       </main>
-      </div>
     </div>
   )
 }
