@@ -14,6 +14,7 @@ interface AssessmentContentProps {
   daysTilEligible: number | null
   isGuest?: boolean
   userEmail?: string | null
+  isSuperAdmin?: boolean
 }
 
 export function AssessmentContent({ 
@@ -21,7 +22,8 @@ export function AssessmentContent({
   nextEligibleDate, 
   daysTilEligible,
   isGuest = false,
-  userEmail
+  userEmail,
+  isSuperAdmin = false,
 }: AssessmentContentProps) {
   const { isComplete } = useAssessmentStore()
   const [showSignupModal, setShowSignupModal] = useState(false)
@@ -143,7 +145,7 @@ export function AssessmentContent({
 
             <div className="flex-1 flex items-start justify-center px-6 pb-12">
               <div className="w-full max-w-xl">
-                <Assessment />
+                <Assessment isSuperAdmin={isSuperAdmin} />
               </div>
             </div>
           </div>

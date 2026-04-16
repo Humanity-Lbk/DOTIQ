@@ -56,6 +56,17 @@ export default async function AssessmentPage() {
     }
   }
 
+  // Check super admin for quick fill testing feature
+  let isSuperAdmin = false
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    isSuperAdmin = profile?.role === 'super_admin'
+  }
+
   return (
     <AssessmentContent
       canTake={canTake}
@@ -63,6 +74,7 @@ export default async function AssessmentPage() {
       daysTilEligible={daysTilEligible}
       isGuest={isGuest}
       userEmail={user?.email}
+      isSuperAdmin={isSuperAdmin}
     />
   )
 }
