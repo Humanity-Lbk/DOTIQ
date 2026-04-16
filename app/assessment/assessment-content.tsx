@@ -1,19 +1,46 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Header from "@/components/header"
 import { Assessment } from "@/components/assessment/assessment"
 import { useAssessmentStore } from "@/lib/assessment-store"
 import { PreviewReport } from "@/components/assessment/preview-report"
+import { SignupPromptModal } from "@/components/assessment/signup-prompt-modal"
 
 interface AssessmentContentProps {
   canTake: boolean
   nextEligibleDate: string | null
   daysTilEligible: number | null
+  isGuest?: boolean
+  userEmail?: string | null
 }
 
-export function AssessmentContent({ canTake, nextEligibleDate, daysTilEligible }: AssessmentContentProps) {
+export function AssessmentContent({ 
+  canTake, 
+  nextEligibleDate, 
+  daysTilEligible,
+  isGuest = false,
+  userEmail
+}: AssessmentContentProps) {
   const { isComplete } = useAssessmentStore()
+  const [showSignupModal, setShowSignupModal] = useState(false)
+  const [signedUp, setSignedUp] = useState(false)
+  
+  // Show signup modal for guests when assessment is complete
+  useEffect(() => {
+    if (isComplete && isGuest && !signedUp) {
+      setShowSignupModal(true)
+    }
+  }, [isComplete, isGuest, signedUp])
+
+  const handleSignupSuccess = () => {
+    setSignedUp(true)
+    setShowSignupModal(false)
+  }
+
+  // For guests who haven't signed up, show signup modal before results
+  const shouldShowResults = isComplete && (!isGuest || signedUp)
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -35,8 +62,8 @@ export function AssessmentContent({ canTake, nextEligibleDate, daysTilEligible }
       </div>
 
       <main className="flex-1 flex flex-col">
-        {/* Locked state */}
-        {!canTake ? (
+        {/* Locked state - only for logged in users */}
+        {!canTake && !isGuest ? (
           <div className="flex-1 flex items-center justify-center px-6 py-20">
             <div className="w-full max-w-md text-center">
               {/* Icon */}
@@ -120,10 +147,29 @@ export function AssessmentContent({ canTake, nextEligibleDate, daysTilEligible }
               </div>
             </div>
           </div>
+        ) : shouldShowResults ? (
+          <PreviewReport isGuest={isGuest && !signedUp} />
         ) : (
-          <PreviewReport />
+          // Show loading/transition state while signup modal is shown
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-muted-foreground">Preparing your results...</p>
+            </div>
+          </div>
         )}
       </main>
+
+      {/* Signup Modal for guests */}
+      <SignupPromptModal
+        isOpen={showSignupModal}
+        onClose={() => {
+          // Allow them to continue as guest
+          setSignedUp(true)
+          setShowSignupModal(false)
+        }}
+        onSuccess={handleSignupSuccess}
+      />
     </div>
   )
 }

@@ -54,6 +54,7 @@ interface FullReportProps {
   aiReport: AIReport | null
   shareToken: string | null
   isPurchased: boolean
+  userEmail?: string | null
 }
 
 const pillarColors: Record<Category, string> = {
@@ -115,7 +116,7 @@ function ScoreRing({ score, size = 160, strokeWidth = 10 }: { score: number; siz
   )
 }
 
-export function FullReport({ assessment, verifications, userName, aiReport, shareToken, isPurchased }: FullReportProps) {
+export function FullReport({ assessment, verifications, userName, aiReport, shareToken, isPurchased, userEmail }: FullReportProps) {
   const [report, setReport] = useState<AIReport | null>(aiReport)
   const [loading, setLoading] = useState(!aiReport && isPurchased)
   const [copied, setCopied] = useState(false)
@@ -183,12 +184,12 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">D</span>
-            </div>
-            <span className="font-bold">DOTIQ</span>
-          </Link>
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-black text-lg">D</span>
+              </div>
+              <span className="font-bold text-lg">DOTIQ</span>
+            </Link>
           <div className="flex items-center gap-3">
             {currentShareToken && (
               <button
@@ -553,10 +554,10 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       <footer className="border-t border-border py-8 px-6 bg-card/30 mt-12">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">D</span>
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-black text-lg">D</span>
             </div>
-            <span className="font-bold">DOTIQ</span>
+            <span className="font-bold text-lg">DOTIQ</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Discipline · Ownership · Toughness · IQ
@@ -570,6 +571,7 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         onClose={() => setPurchaseModalOpen(false)}
         assessmentId={assessment.id}
         score={displayScore}
+        userEmail={userEmail}
         onPurchaseComplete={() => {
           window.location.reload()
         }}

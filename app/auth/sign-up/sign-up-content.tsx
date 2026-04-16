@@ -151,7 +151,7 @@ export default function SignUpContent() {
         {/* Header */}
         <div className="text-center space-y-4">
           <Link href="/" className="inline-block mb-4">
-            <Image src="/logo.png" alt="DOTIQ" width={80} height={26} className="h-5 w-auto invert brightness-0" />
+            <Image src="/logo.png" alt="DOTIQ" width={140} height={46} className="h-10 w-auto invert brightness-0" />
           </Link>
           <div className="space-y-2">
             <p className="font-mono text-xs text-muted-foreground tracking-widest">{'>> NEW_USER_REGISTRATION'}</p>

@@ -144,7 +144,11 @@ function generateInsights(scores: Record<Category, number>, overallScore: number
   return { strengths, weaknesses, actionSteps, pillarSummaries, topPillar, growthPillar }
 }
 
-export function PreviewReport() {
+interface PreviewReportProps {
+  isGuest?: boolean
+}
+
+export function PreviewReport({ isGuest = false }: PreviewReportProps) {
   const { calculateScores, resetAssessment, answers } = useAssessmentStore()
   const [showVerify, setShowVerify] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -159,9 +163,9 @@ export function PreviewReport() {
   useEffect(() => {
     setMounted(true)
     
-    // Save assessment to database (only once)
+    // Save assessment to database (only once, and only for logged in users)
     async function saveAssessment() {
-      if (hasSaved.current) return
+      if (hasSaved.current || isGuest) return
       hasSaved.current = true
       
       setSaveStatus('saving')
@@ -188,11 +192,11 @@ export function PreviewReport() {
       }
     }
     
-    // Only save if there are answers
-    if (Object.keys(answers).length > 0) {
+    // Only save if there are answers and user is logged in
+    if (Object.keys(answers).length > 0 && !isGuest) {
       saveAssessment()
     }
-  }, [answers, scores, overallScore])
+  }, [answers, scores, overallScore, isGuest])
   
   const insights = generateInsights(scores, overallScore, answers)
   
@@ -204,7 +208,7 @@ export function PreviewReport() {
           {/* System Status */}
           <div className={`space-y-3 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <TypewriterText 
-              text={`>> ASSESSMENT_COMPLETE : ${saveStatus === 'saved' ? 'DATA_SAVED' : saveStatus === 'saving' ? 'SAVING...' : 'SCORE_CALCULATED'}`}
+              text={`>> ASSESSMENT_COMPLETE : ${isGuest ? 'SCORE_CALCULATED' : saveStatus === 'saved' ? 'DATA_SAVED' : saveStatus === 'saving' ? 'SAVING...' : 'SCORE_CALCULATED'}`}
               className="font-mono text-xs text-primary"
               speed={30}
             />

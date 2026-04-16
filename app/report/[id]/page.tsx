@@ -60,6 +60,7 @@ export default async function ReportPage({ params }: PageProps) {
       aiReport={report?.content || null}
       shareToken={report?.share_token || null}
       isPurchased={!!assessment.purchased_at}
+      userEmail={user.email}
     />
   )
 }
