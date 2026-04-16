@@ -110,15 +110,32 @@ export function PurchaseModal({
 
   const handleCheckoutComplete = useCallback(async () => {
     setStep("processing")
+    setError(null)
     
-    // Wait a moment for Stripe to process
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // The webhook will handle updating the database
-    // For now, we'll just show success and let the user know to refresh
-    setStep("complete")
-    onPurchaseComplete?.(assessmentId)
-  }, [assessmentId, onPurchaseComplete])
+    try {
+      // Get the session ID from the client secret (format: cs_xxx_secret_xxx)
+      const sessionId = clientSecret?.split('_secret_')[0]
+      
+      if (!sessionId) {
+        throw new Error("Session not found")
+      }
+      
+      // Call server to verify payment and update database
+      const result = await completeReportPurchase(sessionId)
+      
+      if (result.success) {
+        setStep("complete")
+        onPurchaseComplete?.(assessmentId)
+      } else {
+        setError(result.error || "Failed to complete purchase")
+        setStep("checkout") // Go back to checkout to retry
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to verify payment"
+      setError(message)
+      setStep("checkout")
+    }
+  }, [assessmentId, clientSecret, onPurchaseComplete])
 
   if (!isOpen) return null
 
@@ -193,7 +210,7 @@ export function PurchaseModal({
               <div className="p-6 flex flex-col">
                 <div className="flex-1 space-y-6">
                   <div className="text-center">
-                    <div className="text-5xl font-black mb-2">$19.99</div>
+                    <div className="text-5xl font-black mb-2">$9.99</div>
                     <p className="text-muted-foreground text-sm">One-time purchase</p>
                   </div>
 

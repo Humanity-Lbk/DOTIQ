@@ -386,7 +386,7 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
                 href="/purchase"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:brightness-110 transition-all"
               >
-                Unlock for $19.99
+                Unlock for $9.99
                 <span>→</span>
               </Link>
             </div>
