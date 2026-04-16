@@ -213,10 +213,30 @@ ${Object.keys(categories).map(cat => {
       return NextResponse.json({ error: 'Failed to store report' }, { status: 500 })
     }
     
+    // Create a share record for easy sharing
+    const shareToken = newReport.id.substring(0, 16) // Use first 16 chars of report ID as token
+    const { error: shareError } = await supabase
+      .from('assessment_shares')
+      .insert({
+        assessment_id: assessmentId,
+        share_token: shareToken,
+        created_by: user.id,
+        shared_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+    
+    if (shareError) {
+      console.warn('[v0] Warning: Failed to create share record:', shareError)
+      // Don't fail the request, the report was still created successfully
+    } else {
+      console.log('[v0] Share record created with token:', shareToken)
+    }
+    
     return NextResponse.json({ 
       success: true, 
       report: reportContent,
-      shareToken: newReport.share_token,
+      shareToken: shareToken,
     })
     
   } catch (error) {

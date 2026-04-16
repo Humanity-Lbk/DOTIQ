@@ -7,6 +7,7 @@ import { categories, type Category } from '@/lib/assessment-data'
 import { Share2, Copy, Check, Loader2, Lock, ChevronRight, Mail, Zap, Target, Brain, Trophy, TrendingUp, Flame, ArrowRight, Sparkles, Users, User, CheckCircle2, Clock, Plus } from 'lucide-react'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import { RequestVerificationModal, type EvaluatorType } from '@/components/verification/request-verification-modal'
+import AppSidebar from '@/components/app-sidebar'
 
 interface Assessment {
   id: string
@@ -280,7 +281,9 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   const overallAnimated = useCounter(displayScore, 2000, 300)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex">
+      <AppSidebar />
+      <div className="flex-1 ml-64">
       {/* Hero Header */}
       <header className="relative overflow-hidden">
         {/* Animated background gradient */}
@@ -857,6 +860,7 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
           // Could refresh verifications here
         }}
       />
+      </div>
     </div>
   )
 }

@@ -1,0 +1,61 @@
+import { notFound } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import SharedReportView from './shared-report-view'
+
+export async function generateMetadata({ params }: { params: { token: string } }) {
+  return {
+    title: 'DOTIQ Assessment Report - Shared',
+    description: 'View a shared DOTIQ athletic performance assessment report.',
+  }
+}
+
+export default async function SharedReportPage({ params }: { params: { token: string } }) {
+  const supabase = createClient()
+
+  try {
+    // Fetch the assessment using the share token
+    const { data: shareRecord, error: shareError } = await supabase
+      .from('assessment_shares')
+      .select(`
+        id,
+        assessment_id,
+        shared_at,
+        assessments (
+          id,
+          user_id,
+          name,
+          is_complete,
+          scores,
+          created_at,
+          profiles (
+            full_name,
+            role
+          )
+        )
+      `)
+      .eq('share_token', params.token)
+      .single()
+
+    if (shareError || !shareRecord) {
+      console.error('[v0] Share token not found:', shareError)
+      notFound()
+    }
+
+    const assessment = shareRecord.assessments
+    if (!assessment) {
+      notFound()
+    }
+
+    return (
+      <div className="min-h-screen bg-background">
+        <SharedReportView 
+          assessment={assessment}
+          shareRecord={shareRecord}
+        />
+      </div>
+    )
+  } catch (error) {
+    console.error('[v0] Error loading shared report:', error)
+    notFound()
+  }
+}

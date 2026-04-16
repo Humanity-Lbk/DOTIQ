@@ -62,8 +62,14 @@ export default function AppSidebar() {
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User"
   const role = profile?.role
 
-  const isActive = useCallback((href: string) =>
-    pathname === href || (href !== "/dashboard" && pathname.startsWith(href)), [pathname])
+  const isActive = useCallback((href: string) => {
+    // Exact match for all pages
+    if (pathname === href) return true
+    // For sub-routes, ensure we only match if there's a path separator after the href
+    // This prevents /assessments from matching /assessment
+    if (href !== "/dashboard" && pathname.startsWith(href + "/")) return true
+    return false
+  }, [pathname])
 
   const navItems = useMemo(() => [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

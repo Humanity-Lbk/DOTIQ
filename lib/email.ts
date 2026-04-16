@@ -66,7 +66,20 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
       body: JSON.stringify(payload),
     })
 
-    const data = await response.json()
+    // Get response text first to handle non-JSON responses
+    const responseText = await response.text()
+    console.log('[v0] Email API raw response:', responseText.substring(0, 200))
+    
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch {
+      console.error('[v0] Email API returned non-JSON response:', responseText)
+      return { 
+        success: false, 
+        error: `Email API error: ${responseText.substring(0, 100)}` 
+      }
+    }
 
     if (!response.ok) {
       console.error('[v0] Email API error:', data)
