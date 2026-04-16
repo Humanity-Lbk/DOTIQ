@@ -16,13 +16,13 @@ The report should follow this exact structure:
 
 3. **Pillar Breakdown** - For each of the 4 pillars (Discipline, Ownership, Toughness, Sports IQ):
    - Score interpretation (speak directly: "You scored..." "Your discipline shows...")
-   - 2-3 specific strengths based on high-scoring questions ("You excel at..." not "Shows strength in...")
-   - 1-2 areas for improvement ("You can improve..." not "Needs to improve...")
+   - 2-3 specific strengths: Write these as personal observations about the athlete derived from their HIGH-scoring answers. Do NOT just restate or rephrase the question. Instead, interpret what that high score MEANS about them as a person/athlete. Make it feel like coaching insight, not survey feedback. Example: instead of "Completes required work without reminders" write "Your intrinsic drive pushes you to show up even when no one's watching — that's a rare trait in athletes your level."
+   - 1-2 growth areas: Same rule — interpret what their LOW scores reveal about their mindset or habits. Make it honest, specific, and forward-looking. Example: instead of "Maintains discipline when motivation is low" write "When the grind stops feeling exciting, you tend to lose your edge — building systems that don't rely on motivation will be a game-changer for you."
    - 3-4 specific, actionable recommendations ("Focus on..." "Practice..." "Try...")
 
-4. **Strongest Signals** - Your top 6 highest-rated behaviors (questions rated 8-10)
+4. **Strongest Signals** - Your top 6 highest-rated behaviors. For each one, DO NOT copy the question text. Instead write a short, punchy first-person statement that captures what this high score says about the athlete's character. Example: question "Follows daily routines geared towards long-term growth" → signal "You're a creature of good habits — your daily structure is quietly building your ceiling higher than most."
 
-5. **Pressure Points** - 4-6 behaviors that need your attention (questions rated 1-5)
+5. **Pressure Points** - 4-6 behaviors that need attention (from questions rated 1-5). Again, DO NOT copy the question text. Write honest, empathetic coaching observations. Example: question "Maintains discipline when motivation is low" → pressure point "When the spark fades, so does your output — you haven't yet built the systems that carry you on autopilot."
 
 6. **Mindset Profile** - A short paragraph describing the athlete's overall mindset archetype based on their pillar balance
 
@@ -55,8 +55,8 @@ Format the response as valid JSON with this structure:
     "toughness": { ... },
     "sportsiq": { ... }
   },
-  "strongestSignals": [{ "question": "...", "score": 10 }, ...],
-  "pressurePoints": [{ "question": "...", "score": 4 }, ...],
+  "strongestSignals": [{ "insight": "Your personalized coaching observation here...", "score": 10 }, ...],
+  "pressurePoints": [{ "insight": "Your honest, forward-looking coaching observation here...", "score": 4 }, ...],
   "competitionChecklist": ["...", "...", "...", "...", "..."],
   "actionPlan": { "habit1": { "title": "...", "description": "...", "why": "..." }, "habit2": { ... } },
   "weeklyMicroGoals": ["...", "...", "..."],

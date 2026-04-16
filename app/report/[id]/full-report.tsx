@@ -35,8 +35,8 @@ interface AIReport {
     improvements: string[]
     recommendations: string[]
   }>
-  strongestSignals: Array<{ question: string; score: number }>
-  pressurePoints: Array<{ question: string; score: number }>
+  strongestSignals: Array<{ insight: string; question?: string; score: number }>
+  pressurePoints: Array<{ insight: string; question?: string; score: number }>
   competitionChecklist?: string[]
   actionPlan: {
     habit1: { title: string; description: string; why?: string }
@@ -542,12 +542,12 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {report.strongestSignals.slice(0, 6).map((item, i) => (
+                  {report.strongestSignals.slice(0, 6).map((item: { insight?: string; question?: string; score: number }, i: number) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/5 hover:bg-emerald-500/10 transition-all">
                       <span className="px-2 py-1 bg-emerald-500 text-white font-bold rounded text-xs shrink-0">
                         {item.score}
                       </span>
-                      <span className="text-sm text-muted-foreground">{item.question}</span>
+                      <span className="text-sm text-foreground/80 leading-snug">{item.insight || item.question}</span>
                     </div>
                   ))}
                 </div>
@@ -565,12 +565,12 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {report.pressurePoints.slice(0, 4).map((item, i) => (
+                  {report.pressurePoints.slice(0, 4).map((item: { insight?: string; question?: string; score: number }, i: number) => (
                     <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-rose-500/5 hover:bg-rose-500/10 transition-all">
                       <span className="px-2 py-1 bg-rose-500 text-white font-bold rounded text-xs shrink-0">
                         {item.score}
                       </span>
-                      <span className="text-sm text-muted-foreground">{item.question}</span>
+                      <span className="text-sm text-foreground/80 leading-snug">{item.insight || item.question}</span>
                     </div>
                   ))}
                 </div>
