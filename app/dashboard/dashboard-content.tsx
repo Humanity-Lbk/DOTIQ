@@ -71,10 +71,10 @@ const premiumVideos = [
 ]
 
 const programs = [
-  { pillar: 'discipline', name: 'Discipline', desc: 'Build habits that outlast motivation', price: '$149', color: 'border-primary/50', bg: 'bg-primary/10', accent: 'text-primary' },
-  { pillar: 'ownership', name: 'Ownership', desc: 'Take full accountability for outcomes', price: '$149', color: 'border-emerald-400/50', bg: 'bg-emerald-400/10', accent: 'text-emerald-400' },
-  { pillar: 'toughness', name: 'Toughness', desc: 'Develop mental resilience', price: '$149', color: 'border-rose-400/50', bg: 'bg-rose-400/10', accent: 'text-rose-400' },
-  { pillar: 'sportsiq', name: 'Sports IQ', desc: 'Sharpen decision-making speed', price: '$149', color: 'border-cyan-400/50', bg: 'bg-cyan-400/10', accent: 'text-cyan-400' },
+  { pillar: 'discipline', name: 'Discipline', desc: 'Build habits that outlast motivation', price: '$10', color: 'border-primary/50', bg: 'bg-primary/10', accent: 'text-primary' },
+  { pillar: 'ownership', name: 'Ownership', desc: 'Take full accountability for outcomes', price: '$10', color: 'border-emerald-400/50', bg: 'bg-emerald-400/10', accent: 'text-emerald-400' },
+  { pillar: 'toughness', name: 'Toughness', desc: 'Develop mental resilience', price: '$10', color: 'border-rose-400/50', bg: 'bg-rose-400/10', accent: 'text-rose-400' },
+  { pillar: 'sportsiq', name: 'Sports IQ', desc: 'Sharpen decision-making speed', price: '$10', color: 'border-cyan-400/50', bg: 'bg-cyan-400/10', accent: 'text-cyan-400' },
 ]
 
 const premiumApparel = [
