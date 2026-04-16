@@ -66,17 +66,24 @@ Format the response as valid JSON with this structure:
 }`
 
 export async function POST(request: Request) {
+  console.log('[v0] POST /api/report/generate called')
+  
   try {
     const supabase = await createClient()
     
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
+      console.log('[v0] Unauthorized - no user')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
+    console.log('[v0] User authenticated:', user.id)
+    
     const body = await request.json()
     const { assessmentId } = body
+    
+    console.log('[v0] Assessment ID:', assessmentId)
     
     if (!assessmentId) {
       return NextResponse.json({ error: 'Assessment ID required' }, { status: 400 })
@@ -91,11 +98,15 @@ export async function POST(request: Request) {
       .single()
     
     if (assessmentError || !assessment) {
+      console.log('[v0] Assessment not found:', assessmentError)
       return NextResponse.json({ error: 'Assessment not found' }, { status: 404 })
     }
     
+    console.log('[v0] Assessment found, purchased_at:', assessment.purchased_at)
+    
     // Check if purchase exists
     if (!assessment.purchased_at) {
+      console.log('[v0] Report not purchased')
       return NextResponse.json({ error: 'Report not purchased' }, { status: 403 })
     }
     
@@ -107,12 +118,15 @@ export async function POST(request: Request) {
       .single()
     
     if (existingReport) {
+      console.log('[v0] Returning existing report')
       return NextResponse.json({ 
         success: true, 
         report: existingReport.content,
         shareToken: existingReport.share_token,
       })
     }
+    
+    console.log('[v0] No existing report, generating new one...')
     
     // Get user profile
     const { data: profile } = await supabase
@@ -163,10 +177,12 @@ ${Object.keys(categories).map(cat => {
 `
 
     // Generate report using AI
+    console.log('[v0] Calling AI to generate report...')
     const { text } = await generateText({
       model: gateway('openai/gpt-4o-mini'),
       prompt: `${REPORT_PROMPT}\n\nASSESSMENT DATA:\n${context}`,
     })
+    console.log('[v0] AI response received, length:', text.length)
     
     // Parse the JSON response
     let reportContent
