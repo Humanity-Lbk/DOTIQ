@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import AppSidebar from "@/components/app-sidebar"
+import Header from "@/components/header"
 import { Assessment } from "@/components/assessment/assessment"
 import { useAssessmentStore } from "@/lib/assessment-store"
 import { PreviewReport } from "@/components/assessment/preview-report"
@@ -45,8 +45,8 @@ export function AssessmentContent({
   const shouldShowResults = isComplete && (!isGuest || signedUp)
 
   return (
-    <div className={`min-h-screen flex bg-background ${!isGuest ? 'flex-row' : 'flex-col'}`}>
-      {!isGuest && <AppSidebar />}
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
 
       {/* Grid background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -63,7 +63,7 @@ export function AssessmentContent({
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
       </div>
 
-      <main className={`flex-1 flex flex-col ${!isGuest ? 'ml-64' : ''}`}>
+      <main className="flex-1 flex flex-col">
         {/* Locked state - only for logged in users */}
         {!canTake && !isGuest ? (
           <div className="flex-1 flex items-center justify-center px-6 py-20">
