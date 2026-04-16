@@ -11,34 +11,36 @@ export default async function DashboardPage() {
     redirect('/auth/login')
   }
   
-  // Get user profile including role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, role')
-    .eq('id', user.id)
-    .single()
+  // Run profile and assessments queries in parallel
+  const [profileResult, assessmentsResult, submittedResult] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*, role')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('assessments')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('is_complete', true)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('verification_requests')
+      .select('*')
+      .eq('evaluator_id', user.id)
+      .order('completed_at', { ascending: false })
+  ])
   
-  // Get user's completed assessments
-  const { data: assessments } = await supabase
-    .from('assessments')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('is_complete', true)
-    .order('created_at', { ascending: false })
+  const profile = profileResult.data
+  const assessments = assessmentsResult.data
+  const submittedEvaluations = submittedResult.data
   
-  // Get verification requests for each assessment
+  // Get verification requests for assessments (depends on assessments result)
   const assessmentIds = assessments?.map(a => a.id) || []
   const { data: verifications } = await supabase
     .from('verification_requests')
     .select('*')
     .in('assessment_id', assessmentIds.length > 0 ? assessmentIds : ['none'])
-  
-  // Get evaluations this user has submitted for others
-  const { data: submittedEvaluations } = await supabase
-    .from('verification_requests')
-    .select('*')
-    .eq('evaluator_id', user.id)
-    .order('completed_at', { ascending: false })
   
   return (
     <DashboardContent 
