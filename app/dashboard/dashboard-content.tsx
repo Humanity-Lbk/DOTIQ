@@ -278,25 +278,34 @@ export function DashboardContent({ user, profile, assessments, verifications, su
                             })}
                           </p>
 
-                          {/* Pillar mini bars */}
+                          {/* Pillar mini bars with hover tooltips */}
                           {assessment.scores && (
                             <div className="grid grid-cols-4 gap-2 mt-4">
                               {(Object.keys(assessment.scores) as Category[]).map((cat) => {
                                 const cfg = pillarConfig[cat]
+                                const score = assessment.scores[cat]
                                 return (
-                                  <div key={cat}>
-                                    <div className="flex items-center justify-between mb-1">
-                                      <span className={`text-[10px] font-bold ${cfg.color}`}>{cfg.letter}</span>
-                                      <span className="text-[10px] text-muted-foreground">{assessment.scores[cat].toFixed(1)}</span>
+                                  <div key={cat} className="group relative cursor-pointer">
+                                    {/* Hover tooltip */}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-card border border-border rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
+                                      <p className={`text-sm font-bold ${cfg.color}`}>{categories[cat].name}</p>
+                                      <p className="text-lg font-black">{score.toFixed(1)} <span className="text-xs text-muted-foreground font-normal">/ 10</span></p>
+                                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1">
+                                        <div className="w-2 h-2 bg-card border-r border-b border-border rotate-45" />
+                                      </div>
                                     </div>
-                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className={`text-xs font-bold ${cfg.color} group-hover:scale-110 transition-transform`}>{cfg.letter}</span>
+                                      <span className="text-xs text-muted-foreground font-medium">{score.toFixed(1)}</span>
+                                    </div>
+                                    <div className="h-2 bg-muted rounded-full overflow-hidden group-hover:h-2.5 transition-all">
                                       <div
-                                        className={`h-full rounded-full ${
+                                        className={`h-full rounded-full transition-all group-hover:brightness-110 ${
                                           cat === 'discipline' ? 'bg-primary' :
                                           cat === 'ownership' ? 'bg-emerald-400' :
                                           cat === 'toughness' ? 'bg-rose-400' : 'bg-cyan-400'
                                         }`}
-                                        style={{ width: `${(assessment.scores[cat] / 10) * 100}%` }}
+                                        style={{ width: `${(score / 10) * 100}%` }}
                                       />
                                     </div>
                                   </div>
@@ -309,10 +318,7 @@ export function DashboardContent({ user, profile, assessments, verifications, su
                         {/* Actions */}
                         <div className="flex sm:flex-col gap-2 shrink-0">
                           {assessment.purchased_at ? (
-                            <span
-                              onClick={(e) => e.stopPropagation()}
-                              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
-                            >
+                            <span className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
                               View Report
                             </span>
                           ) : (
@@ -572,6 +578,7 @@ export function DashboardContent({ user, profile, assessments, verifications, su
         onClose={() => setPurchaseModalOpen(false)}
         assessmentId={selectedAssessmentId || ''}
         score={selectedAssessmentScore}
+        userEmail={user.email}
         onPurchaseComplete={() => {
           // Page will refresh after purchase completes
         }}

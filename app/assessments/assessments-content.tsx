@@ -328,6 +328,7 @@ export function AssessmentsContent({
         onClose={() => setPurchaseModalOpen(false)}
         assessmentId={selectedAssessmentId || ''}
         score={selectedScore}
+        userEmail={user.email}
         onPurchaseComplete={() => {
           window.location.reload()
         }}

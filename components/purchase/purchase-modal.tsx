@@ -16,6 +16,7 @@ interface PurchaseModalProps {
   onClose: () => void
   assessmentId: string
   score: number
+  userEmail?: string | null
   onPurchaseComplete?: (assessmentId: string) => void
 }
 
@@ -52,22 +53,26 @@ export function PurchaseModal({
   onClose, 
   assessmentId,
   score,
+  userEmail,
   onPurchaseComplete 
 }: PurchaseModalProps) {
   const [step, setStep] = useState<"overview" | "checkout" | "processing" | "complete">("overview")
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(userEmail || "")
   const [error, setError] = useState<string | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
+  
+  // If user has email, skip email entry
+  const hasUserEmail = !!userEmail
 
-  // Reset state when modal closes
+  // Reset state when modal closes or userEmail changes
   useEffect(() => {
     if (!isOpen) {
       setStep("overview")
-      setEmail("")
+      setEmail(userEmail || "")
       setError(null)
       setClientSecret(null)
     }
-  }, [isOpen])
+  }, [isOpen, userEmail])
 
   const startCheckout = useCallback(async () => {
     if (!email || !email.includes("@")) {
@@ -87,9 +92,19 @@ export function PurchaseModal({
       if (secret) {
         setClientSecret(secret)
         setStep("checkout")
+      } else {
+        setError("Unable to start checkout. Please try again.")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start checkout")
+      const message = err instanceof Error ? err.message : "Failed to start checkout"
+      // Make error message more user-friendly
+      if (message.includes("not authenticated")) {
+        setError("Please sign in to purchase a report")
+      } else if (message.includes("not found")) {
+        setError("Assessment not found. Please refresh and try again.")
+      } else {
+        setError(message)
+      }
     }
   }, [email, assessmentId])
 
@@ -182,21 +197,28 @@ export function PurchaseModal({
                     <p className="text-muted-foreground text-sm">One-time purchase</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Email for Report Delivery
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Your report will be sent to this email address
-                    </p>
-                  </div>
+                  {!hasUserEmail ? (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Email for Report Delivery
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Your report will be sent to this email address
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-muted/50 rounded-xl">
+                      <p className="text-sm text-muted-foreground mb-1">Report will be sent to:</p>
+                      <p className="font-medium">{email}</p>
+                    </div>
+                  )}
 
                   {error && (
                     <p className="text-sm text-destructive">{error}</p>
@@ -224,7 +246,7 @@ export function PurchaseModal({
 
                 <button
                   onClick={startCheckout}
-                  disabled={!email}
+                  disabled={!email || !email.includes('@')}
                   className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                 >
                   Continue to Payment
