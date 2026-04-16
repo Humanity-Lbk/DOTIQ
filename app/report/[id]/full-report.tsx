@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
-import { Share2, Copy, Check, Loader2, Lock } from 'lucide-react'
+import { Share2, Copy, Check, Loader2, Lock, ChevronDown, ChevronUp } from 'lucide-react'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 
 interface Assessment {
@@ -26,6 +27,7 @@ interface Verification {
 interface AIReport {
   executiveSummary: string
   overallAnalysis: string
+  mindsetProfile?: string
   pillars: Record<string, {
     interpretation: string
     strengths: string[]
@@ -34,10 +36,12 @@ interface AIReport {
   }>
   strongestSignals: Array<{ question: string; score: number }>
   pressurePoints: Array<{ question: string; score: number }>
+  competitionChecklist?: string[]
   actionPlan: {
-    habit1: { title: string; description: string }
-    habit2: { title: string; description: string }
+    habit1: { title: string; description: string; why?: string }
+    habit2: { title: string; description: string; why?: string }
   }
+  weeklyMicroGoals?: string[]
   resetScript: {
     breath: string
     body: string
@@ -45,6 +49,7 @@ interface AIReport {
     task: string
   }
   selfCheckPrompts: string[]
+  coachTalkingPoints?: string[]
 }
 
 interface FullReportProps {
@@ -122,6 +127,17 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   const [copied, setCopied] = useState(false)
   const [currentShareToken, setCurrentShareToken] = useState(shareToken)
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
+  const [expandedPillars, setExpandedPillars] = useState<Record<string, boolean>>({
+    discipline: true,
+    ownership: true,
+    toughness: true,
+    sportsiq: true,
+  })
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   const scores = assessment.scores as Record<Category, number>
   const sortedPillars = Object.entries(scores).sort((a, b) => b[1] - a[1])
@@ -184,11 +200,14 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-black text-lg">D</span>
-              </div>
-              <span className="font-bold text-lg">DOTIQ</span>
+            <Link href="/" className="flex items-center">
+              <Image 
+                src="/logo.png" 
+                alt="DOTIQ" 
+                width={120} 
+                height={40} 
+                className="h-8 w-auto invert brightness-0" 
+              />
             </Link>
           <div className="flex items-center gap-3">
             {currentShareToken && (
@@ -298,42 +317,134 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         </div>
       </section>
 
+      {/* Pillar Previews for non-purchased reports - teaser content */}
+      {!isPurchased && (
+        <section className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">Your Pillar Insights</h2>
+            <span className="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full">PREVIEW</span>
+          </div>
+          
+          {(Object.keys(scores) as Category[]).map((category) => {
+            const score = scores[category]
+            const letter = category === 'sportsiq' ? 'IQ' : category.charAt(0).toUpperCase()
+            const isStrength = score >= 7.5
+            const isGrowthArea = score < 5.5
+            
+            // Generate preview insight based on score
+            const getPreviewInsight = () => {
+              if (isStrength) {
+                return `Your ${categories[category].name.toLowerCase()} is a clear strength. You demonstrate consistent behaviors in this area that set you apart.`
+              } else if (isGrowthArea) {
+                return `Your ${categories[category].name.toLowerCase()} presents significant growth opportunity. Small improvements here can lead to major breakthroughs.`
+              } else {
+                return `Your ${categories[category].name.toLowerCase()} shows solid foundation with room for targeted development.`
+              }
+            }
+            
+            // Generate teaser strengths/improvements
+            const getTeaserStrength = () => {
+              if (category === 'discipline') return 'Maintains consistent effort during challenging training...'
+              if (category === 'ownership') return 'Takes responsibility for outcomes without deflecting...'
+              if (category === 'toughness') return 'Shows resilience when facing competitive pressure...'
+              return 'Processes information quickly under time constraints...'
+            }
+            
+            return (
+              <div key={category} className="bg-card border border-border rounded-2xl overflow-hidden">
+                <div className={`p-5 ${pillarBgs[category]}`}>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-xl shadow-lg`}>
+                      {letter}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold">{categories[category].name}</h3>
+                        {isStrength && <span className="px-2 py-0.5 bg-emerald-400/20 text-emerald-400 text-[10px] font-bold rounded-full">STRENGTH</span>}
+                        {isGrowthArea && <span className="px-2 py-0.5 bg-rose-400/20 text-rose-400 text-[10px] font-bold rounded-full">GROWTH AREA</span>}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{categories[category].description}</p>
+                    </div>
+                    <div className="text-3xl font-black">{score.toFixed(1)}</div>
+                  </div>
+                </div>
+                
+                <div className="p-5 space-y-4">
+                  <p className="text-muted-foreground">{getPreviewInsight()}</p>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-emerald-400/5 border border-emerald-400/10 rounded-xl p-4 relative overflow-hidden">
+                      <h4 className="font-semibold text-emerald-400 mb-2 text-sm">Key Strength</h4>
+                      <p className="text-sm text-muted-foreground/70">{getTeaserStrength()}</p>
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/80 to-transparent flex items-end justify-center pb-3">
+                        <Lock className="w-4 h-4 text-muted-foreground/40" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-muted/30 border border-border rounded-xl p-4 relative overflow-hidden">
+                      <h4 className="font-semibold text-muted-foreground mb-2 text-sm">+ 2 More Insights</h4>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-muted/50 rounded w-full" />
+                        <div className="h-3 bg-muted/50 rounded w-4/5" />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </section>
+      )}
+
       {/* Unlock Full Report CTA for non-purchased */}
       {!isPurchased && (
-        <section className="max-w-5xl mx-auto px-6 py-12">
+        <section className="max-w-5xl mx-auto px-6 py-8">
           <div className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-8 text-center">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
             <div className="relative z-10">
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/20 flex items-center justify-center">
                 <Lock className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-black mb-2">Unlock Your Full Report</h2>
+              <h2 className="text-2xl font-black mb-2">Unlock Your Complete Analysis</h2>
               <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                Get deep analysis, personalized action plans, habit recommendations, and AI-powered insights to accelerate your athletic development.
+                See exactly what&apos;s holding you back and get a personalized roadmap to breakthrough performance.
               </p>
-              <ul className="text-sm text-muted-foreground max-w-sm mx-auto mb-6 space-y-2 text-left">
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary shrink-0" />
-                  Detailed pillar analysis with strengths and growth areas
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary shrink-0" />
-                  Personalized 30-day action plan
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary shrink-0" />
-                  Custom reset scripts for high-pressure moments
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary shrink-0" />
-                  Shareable report link
-                </li>
-              </ul>
+              <div className="grid sm:grid-cols-2 gap-4 max-w-lg mx-auto mb-6 text-left">
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Deep Pillar Analysis</p>
+                    <p className="text-xs text-muted-foreground">Full strengths and growth areas</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Action Plan</p>
+                    <p className="text-xs text-muted-foreground">Daily habits for this week</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Reset Script</p>
+                    <p className="text-xs text-muted-foreground">Your 5-second mental reset</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Shareable Link</p>
+                    <p className="text-xs text-muted-foreground">Share with coaches</p>
+                  </div>
+                </div>
+              </div>
               <button
                 onClick={() => setPurchaseModalOpen(true)}
-                className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors"
+                className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors animate-pulse"
               >
-                Unlock Full Report
+                Unlock for $9.99
               </button>
             </div>
           </div>
@@ -345,63 +456,87 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         <section className="max-w-5xl mx-auto px-6 py-8 space-y-6">
           <h2 className="text-xl font-bold">Detailed Analysis</h2>
           
-          {(Object.keys(report.pillars) as Category[]).map((category) => {
+          {(Object.keys(report.pillars) as Category[]).map((category, categoryIndex) => {
             const pillarData = report.pillars[category]
             const score = scores[category]
             const letter = category === 'sportsiq' ? 'IQ' : category.charAt(0).toUpperCase()
+            const isExpanded = expandedPillars[category]
             
             return (
-              <div key={category} className="bg-card border border-border rounded-2xl overflow-hidden">
-                <div className={`p-5 border-b ${pillarBgs[category]}`}>
+              <div 
+                key={category} 
+                className={`bg-card border border-border rounded-2xl overflow-hidden transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                style={{ transitionDelay: `${categoryIndex * 150}ms` }}
+              >
+                <button 
+                  onClick={() => setExpandedPillars(prev => ({ ...prev, [category]: !prev[category] }))}
+                  className={`w-full p-5 ${isExpanded ? 'border-b' : ''} ${pillarBgs[category]} transition-all duration-300 hover:brightness-110`}
+                >
                   <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-xl shadow-lg`}>
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-xl shadow-lg transition-transform duration-300 ${isExpanded ? 'scale-100' : 'scale-95'}`}>
                       {letter}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-left">
                       <h3 className="text-lg font-bold">{categories[category].name}</h3>
                       <p className="text-sm text-muted-foreground">{categories[category].description}</p>
                     </div>
-                    <div className="text-3xl font-black">{score.toFixed(1)}</div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-3xl font-black">{score.toFixed(1)}</div>
+                      {isExpanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+                    </div>
                   </div>
-                </div>
+                </button>
                 
-                <div className="p-5 space-y-5">
-                  <p className="text-muted-foreground">{pillarData.interpretation}</p>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-emerald-400/10 border border-emerald-400/20 rounded-xl p-4">
-                      <h4 className="font-semibold text-emerald-400 mb-2">Strengths</h4>
-                      <ul className="space-y-2">
-                        {pillarData.strengths.map((s, i) => (
-                          <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                            <span className="text-emerald-400">+</span> {s}
-                          </li>
-                        ))}
-                      </ul>
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-5 space-y-5">
+                    <p className="text-muted-foreground leading-relaxed">{pillarData.interpretation}</p>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-emerald-400/10 border border-emerald-400/20 rounded-xl p-4 hover:bg-emerald-400/15 transition-colors">
+                        <h4 className="font-semibold text-emerald-400 mb-3">Strengths</h4>
+                        <ul className="space-y-3">
+                          {pillarData.strengths.map((s, i) => (
+                            <li 
+                              key={i} 
+                              className="text-sm text-muted-foreground flex gap-2 transition-all duration-300 hover:translate-x-1"
+                              style={{ animationDelay: `${i * 100}ms` }}
+                            >
+                              <span className="text-emerald-400 font-bold">+</span> {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div className="bg-rose-400/10 border border-rose-400/20 rounded-xl p-4 hover:bg-rose-400/15 transition-colors">
+                        <h4 className="font-semibold text-rose-400 mb-3">Growth Areas</h4>
+                        <ul className="space-y-3">
+                          {pillarData.improvements.map((s, i) => (
+                            <li 
+                              key={i} 
+                              className="text-sm text-muted-foreground flex gap-2 transition-all duration-300 hover:translate-x-1"
+                              style={{ animationDelay: `${i * 100}ms` }}
+                            >
+                              <span className="text-rose-400 font-bold">→</span> {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                     
-                    <div className="bg-rose-400/10 border border-rose-400/20 rounded-xl p-4">
-                      <h4 className="font-semibold text-rose-400 mb-2">Growth Areas</h4>
-                      <ul className="space-y-2">
-                        {pillarData.improvements.map((s, i) => (
-                          <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                            <span className="text-rose-400">→</span> {s}
+                    <div className="bg-muted/50 rounded-xl p-4 hover:bg-muted/60 transition-colors">
+                      <h4 className="font-semibold mb-3">Your Action Items</h4>
+                      <ul className="space-y-3">
+                        {pillarData.recommendations.map((r, i) => (
+                          <li 
+                            key={i} 
+                            className="text-sm text-muted-foreground flex gap-3 p-2 rounded-lg hover:bg-background/50 transition-all duration-300"
+                          >
+                            <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                            {r}
                           </li>
                         ))}
                       </ul>
                     </div>
-                  </div>
-                  
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <h4 className="font-semibold mb-2">Recommendations</h4>
-                    <ul className="space-y-2">
-                      {pillarData.recommendations.map((r, i) => (
-                        <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
-                          {r}
-                        </li>
-                      ))}
-                    </ul>
                   </div>
                 </div>
               </div>
@@ -447,25 +582,76 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         </section>
       )}
 
+      {/* Mindset Profile - only show if purchased */}
+      {isPurchased && report?.mindsetProfile && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <h2 className="text-xl font-bold mb-6">Your Mindset Profile</h2>
+          <div className="bg-gradient-to-br from-primary/10 via-card to-card border border-primary/20 rounded-2xl p-6">
+            <p className="text-muted-foreground leading-relaxed">{report.mindsetProfile}</p>
+          </div>
+        </section>
+      )}
+
+      {/* Competition Day Checklist - only show if purchased */}
+      {isPurchased && report?.competitionChecklist && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <h2 className="text-xl font-bold mb-6">Competition Day Checklist</h2>
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <p className="text-sm text-muted-foreground mb-4">Focus on these before and during competition:</p>
+            <ul className="space-y-3">
+              {report.competitionChecklist.map((item, i) => (
+                <li key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                  <span className="text-sm">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
       {/* Action Plan - only show if purchased */}
       {isPurchased && report?.actionPlan && (
         <section className="max-w-5xl mx-auto px-6 py-8">
           <h2 className="text-xl font-bold mb-6">This Week&apos;s Action Plan</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5">
+            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 hover:bg-primary/15 transition-colors">
               <div className="flex items-center gap-3 mb-3">
                 <span className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold">1</span>
                 <h3 className="font-bold">{report.actionPlan.habit1.title}</h3>
               </div>
-              <p className="text-sm text-muted-foreground">{report.actionPlan.habit1.description}</p>
+              <p className="text-sm text-muted-foreground mb-3">{report.actionPlan.habit1.description}</p>
+              {report.actionPlan.habit1.why && (
+                <p className="text-xs text-primary/80 bg-primary/5 rounded-lg p-2 italic">Why: {report.actionPlan.habit1.why}</p>
+              )}
             </div>
-            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5">
+            <div className="bg-primary/10 border border-primary/30 rounded-2xl p-5 hover:bg-primary/15 transition-colors">
               <div className="flex items-center gap-3 mb-3">
                 <span className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold">2</span>
                 <h3 className="font-bold">{report.actionPlan.habit2.title}</h3>
               </div>
-              <p className="text-sm text-muted-foreground">{report.actionPlan.habit2.description}</p>
+              <p className="text-sm text-muted-foreground mb-3">{report.actionPlan.habit2.description}</p>
+              {report.actionPlan.habit2.why && (
+                <p className="text-xs text-primary/80 bg-primary/5 rounded-lg p-2 italic">Why: {report.actionPlan.habit2.why}</p>
+              )}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Weekly Micro-Goals - only show if purchased */}
+      {isPurchased && report?.weeklyMicroGoals && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <h2 className="text-xl font-bold mb-6">Your Weekly Micro-Goals</h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {report.weeklyMicroGoals.map((goal, i) => (
+              <div key={i} className="bg-card border border-border rounded-xl p-4 hover:border-primary/40 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-emerald-400/20 text-emerald-400 flex items-center justify-center text-sm font-bold mb-3">
+                  {i + 1}
+                </div>
+                <p className="text-sm">{goal}</p>
+              </div>
+            ))}
           </div>
         </section>
       )}
@@ -494,17 +680,35 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       )}
 
       {/* Self-Check Prompts */}
-      {report?.selfCheckPrompts && (
+      {isPurchased && report?.selfCheckPrompts && (
         <section className="max-w-5xl mx-auto px-6 py-8">
           <h2 className="text-xl font-bold mb-6">7-Day Journal Prompts</h2>
           <div className="bg-card border border-border rounded-2xl p-6">
             <ul className="space-y-4">
               {report.selfCheckPrompts.map((prompt, i) => (
-                <li key={i} className="flex gap-4">
+                <li key={i} className="flex gap-4 p-3 rounded-lg hover:bg-muted/30 transition-colors">
                   <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold shrink-0">
                     {i + 1}
                   </span>
                   <p className="text-muted-foreground pt-1">{prompt}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      {/* Coach Talking Points - only show if purchased */}
+      {isPurchased && report?.coachTalkingPoints && (
+        <section className="max-w-5xl mx-auto px-6 py-8">
+          <h2 className="text-xl font-bold mb-6">Talk to Your Coach About</h2>
+          <div className="bg-gradient-to-br from-cyan-400/10 via-card to-card border border-cyan-400/20 rounded-2xl p-6">
+            <p className="text-sm text-muted-foreground mb-4">Share these points with your coaches or mentors:</p>
+            <ul className="space-y-3">
+              {report.coachTalkingPoints.map((point, i) => (
+                <li key={i} className="flex gap-3 p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
+                  <span className="w-6 h-6 rounded-full bg-cyan-400/20 text-cyan-400 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                  <p className="text-sm">{point}</p>
                 </li>
               ))}
             </ul>
@@ -553,12 +757,13 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       {/* Footer */}
       <footer className="border-t border-border py-8 px-6 bg-card/30 mt-12">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-lg">D</span>
-            </div>
-            <span className="font-bold text-lg">DOTIQ</span>
-          </div>
+          <Image 
+            src="/logo.png" 
+            alt="DOTIQ" 
+            width={100} 
+            height={33} 
+            className="h-7 w-auto invert brightness-0" 
+          />
           <p className="text-sm text-muted-foreground">
             Discipline · Ownership · Toughness · IQ
           </p>

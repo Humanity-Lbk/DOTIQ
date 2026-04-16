@@ -56,7 +56,10 @@ export default function ComingSoonPage() {
 
       if (res.ok) {
         setRevealed(true)
-        setTimeout(() => router.push('/'), 1800)
+        // Use window.location for full page reload to ensure cookies are read
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 1800)
       } else {
         setError('ACCESS DENIED — incorrect passphrase')
         setPassword('')

@@ -4,51 +4,65 @@ import { generateText } from 'ai'
 import { gateway } from '@ai-sdk/gateway'
 import { categories, questions } from '@/lib/assessment-data'
 
-const REPORT_PROMPT = `You are a sports psychology expert and performance coach. Generate a detailed DOTIQ athlete report based on the assessment data provided.
+const REPORT_PROMPT = `You are a sports psychology expert and performance coach speaking DIRECTLY to an athlete. Generate a detailed, personalized DOTIQ report based on their assessment data.
 
-The report should follow this exact structure and be personalized to the athlete's scores:
+CRITICAL: Always use second-person language ("you", "your") when speaking to the athlete. NEVER use their name or third-person references like "the athlete scored" or "[Name] demonstrates". Instead say "You scored" or "You demonstrate".
 
-1. **Executive Summary** - 2-3 sentences summarizing overall performance and key insights
+The report should follow this exact structure:
 
-2. **Overall DOTIQ Score Analysis** - Brief analysis of what the overall score means
+1. **Executive Summary** - 2-3 sentences speaking directly to the athlete about their overall performance ("You show exceptional..." not "Athlete shows...")
+
+2. **Overall DOTIQ Score Analysis** - Direct analysis of what their score means for them ("Your score of X.X indicates..." not "A score of X.X indicates...")
 
 3. **Pillar Breakdown** - For each of the 4 pillars (Discipline, Ownership, Toughness, Sports IQ):
-   - Score interpretation
-   - 2-3 specific strengths based on high-scoring questions
-   - 1-2 areas for improvement based on lower-scoring questions
-   - Specific, actionable recommendations
+   - Score interpretation (speak directly: "You scored..." "Your discipline shows...")
+   - 2-3 specific strengths based on high-scoring questions ("You excel at..." not "Shows strength in...")
+   - 1-2 areas for improvement ("You can improve..." not "Needs to improve...")
+   - 3-4 specific, actionable recommendations ("Focus on..." "Practice..." "Try...")
 
-4. **Strongest Signals** - List the top 6 highest-rated behaviors (questions rated 8-10)
+4. **Strongest Signals** - Your top 6 highest-rated behaviors (questions rated 8-10)
 
-5. **Pressure Points** - List the 4-6 lowest-rated behaviors that need attention (questions rated 1-5)
+5. **Pressure Points** - 4-6 behaviors that need your attention (questions rated 1-5)
 
-6. **Action Plan** - 2 concrete daily habits/practices to focus on this week
+6. **Mindset Profile** - A short paragraph describing the athlete's overall mindset archetype based on their pillar balance
 
-7. **5-Second Reset Script** - A personalized mental reset routine for after mistakes:
-   - Breath cue
-   - Body cue
-   - Words (a short mantra)
-   - Task focus
+7. **Competition Day Checklist** - 5 specific things to focus on before/during competition based on their profile
 
-8. **Self-Check Prompts** - 5 journal questions for the next 7 days
+8. **Action Plan** - 2 concrete daily habits for this week with detailed descriptions and WHY they matter for this athlete
 
-Be specific, actionable, and encouraging. Use the athlete's actual scores to personalize every section. Reference specific question topics when discussing strengths and weaknesses.
+9. **Weekly Micro-Goals** - 3 specific, measurable goals for the next 7 days
+
+10. **5-Second Reset Script** - A personalized mental reset routine for after mistakes:
+   - Breath cue (specific instruction)
+   - Body cue (physical action)
+   - Words (a powerful mantra for YOU)
+   - Task focus (what to do next)
+
+11. **Self-Check Prompts** - 5 reflective journal questions for the next 7 days
+
+12. **Coach Communication** - 2-3 talking points for discussing this assessment with coaches/mentors
+
+Be specific, direct, actionable, and encouraging. Speak AS IF you are coaching this athlete one-on-one. Reference specific behaviors from their assessment. Make every insight feel personalized.
 
 Format the response as valid JSON with this structure:
 {
   "executiveSummary": "...",
   "overallAnalysis": "...",
+  "mindsetProfile": "...",
   "pillars": {
-    "discipline": { "interpretation": "...", "strengths": ["..."], "improvements": ["..."], "recommendations": ["..."] },
+    "discipline": { "interpretation": "...", "strengths": ["...", "...", "..."], "improvements": ["...", "..."], "recommendations": ["...", "...", "...", "..."] },
     "ownership": { ... },
     "toughness": { ... },
     "sportsiq": { ... }
   },
   "strongestSignals": [{ "question": "...", "score": 10 }, ...],
   "pressurePoints": [{ "question": "...", "score": 4 }, ...],
-  "actionPlan": { "habit1": { "title": "...", "description": "..." }, "habit2": { ... } },
+  "competitionChecklist": ["...", "...", "...", "...", "..."],
+  "actionPlan": { "habit1": { "title": "...", "description": "...", "why": "..." }, "habit2": { ... } },
+  "weeklyMicroGoals": ["...", "...", "..."],
   "resetScript": { "breath": "...", "body": "...", "words": "...", "task": "..." },
-  "selfCheckPrompts": ["...", "...", "...", "...", "..."]
+  "selfCheckPrompts": ["...", "...", "...", "...", "..."],
+  "coachTalkingPoints": ["...", "...", "..."]
 }`
 
 export async function POST(request: Request) {
