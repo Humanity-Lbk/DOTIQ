@@ -448,17 +448,24 @@ async function generatePDF(
 }
 
 export async function POST(request: Request) {
+  console.log('[v0] POST /api/report/send-email called')
+  
   try {
     const supabase = await createClient()
     
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
+      console.log('[v0] Unauthorized - no user found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
+    console.log('[v0] User authenticated:', user.id)
+    
     const body = await request.json()
     const { assessmentId, email } = body
+    
+    console.log('[v0] Request body:', { assessmentId, email })
     
     if (!assessmentId) {
       return NextResponse.json({ error: 'Assessment ID required' }, { status: 400 })
@@ -500,13 +507,19 @@ export async function POST(request: Request) {
     const overallScore = assessment.overall_score
     const recipientEmail = email || user.email
     
+    console.log('[v0] Generating PDF for:', userName, 'Score:', overallScore)
+    
     // Generate PDF
     const pdfBytes = await generatePDF(report, scores, overallScore, userName)
     const pdfBuffer = Buffer.from(pdfBytes)
     
+    console.log('[v0] PDF generated, size:', pdfBuffer.length, 'bytes')
+    
     // Build report URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dotiq.com'
     const reportUrl = `${baseUrl}/report/${assessmentId}`
+    
+    console.log('[v0] Sending email to:', recipientEmail)
     
     // Send email with PDF attachment
     await sendEmail({

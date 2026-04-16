@@ -28,8 +28,13 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
   }
 
   try {
+    // SMTP2GO requires a verified sender email - use the username as the base
+    const fromEmail = process.env.SMTP_FROM_EMAIL || `${process.env.SMTP_USER}@smtp2go.com`
+    
+    console.log('[v0] Sending email to:', to, 'from:', fromEmail)
+    
     const info = await transporter.sendMail({
-      from: `"DOTIQ Reports" <${process.env.SMTP_USER}>`,
+      from: `"DOTIQ Reports" <${fromEmail}>`,
       to,
       subject,
       html,
