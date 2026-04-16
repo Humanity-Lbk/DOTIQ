@@ -10,9 +10,10 @@ interface RequestVerificationModalProps {
   assessmentId: string
   athleteName: string
   onSuccess?: () => void
+  preselectedType?: EvaluatorType | null
 }
 
-type EvaluatorType = "coach" | "parent" | "peer" | "mentor"
+export type EvaluatorType = "coach" | "parent" | "peer" | "mentor"
 
 const evaluatorTypes: { type: EvaluatorType; label: string; description: string; icon: React.ReactNode }[] = [
   { type: "coach", label: "Coach", description: "Your current or former coach", icon: <Users className="w-5 h-5" /> },
@@ -26,10 +27,11 @@ export function RequestVerificationModal({
   onClose, 
   assessmentId, 
   athleteName,
-  onSuccess 
+  onSuccess,
+  preselectedType = null
 }: RequestVerificationModalProps) {
-  const [step, setStep] = useState<"select" | "details" | "sending" | "success">("select")
-  const [selectedType, setSelectedType] = useState<EvaluatorType | null>(null)
+  const [step, setStep] = useState<"select" | "details" | "sending" | "success">(preselectedType ? "details" : "select")
+  const [selectedType, setSelectedType] = useState<EvaluatorType | null>(preselectedType)
   const [evaluatorName, setEvaluatorName] = useState("")
   const [evaluatorPhone, setEvaluatorPhone] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -77,8 +79,8 @@ export function RequestVerificationModal({
   }
 
   const resetAndClose = () => {
-    setStep("select")
-    setSelectedType(null)
+    setStep(preselectedType ? "details" : "select")
+    setSelectedType(preselectedType)
     setEvaluatorName("")
     setEvaluatorPhone("")
     setError(null)
