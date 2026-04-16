@@ -11,13 +11,9 @@ export default async function DashboardPage() {
     redirect('/auth/login')
   }
   
-  // Run profile and assessments queries in parallel
-  const [profileResult, assessmentsResult, submittedResult] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('*, role')
-      .eq('id', user.id)
-      .single(),
+  // Fetch profile, assessments, and submitted evaluations in parallel
+  const [{ data: profile }, { data: assessments }, { data: submittedEvaluations }] = await Promise.all([
+    supabase.from('profiles').select('*, role').eq('id', user.id).single(),
     supabase
       .from('assessments')
       .select('*')
@@ -28,14 +24,10 @@ export default async function DashboardPage() {
       .from('verification_requests')
       .select('*')
       .eq('evaluator_id', user.id)
-      .order('completed_at', { ascending: false })
+      .order('completed_at', { ascending: false }),
   ])
-  
-  const profile = profileResult.data
-  const assessments = assessmentsResult.data
-  const submittedEvaluations = submittedResult.data
-  
-  // Get verification requests for assessments (depends on assessments result)
+
+  // Get verification requests for user's assessments (needs assessmentIds from above)
   const assessmentIds = assessments?.map(a => a.id) || []
   const { data: verifications } = await supabase
     .from('verification_requests')
