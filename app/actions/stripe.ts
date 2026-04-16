@@ -134,6 +134,28 @@ export async function completeReportPurchase(sessionId: string) {
         })
         .eq('id', assessmentId)
 
+      // Trigger report generation and email in the background
+      // This is done via a fetch call so it doesn't block the purchase completion
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dotiq.com'
+      
+      // First generate the report
+      fetch(`${baseUrl}/api/report/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId }),
+      }).then(async (res) => {
+        if (res.ok) {
+          // Then send the email with PDF
+          await fetch(`${baseUrl}/api/report/send-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assessmentId, email }),
+          })
+        }
+      }).catch(err => {
+        console.error('Error triggering report generation:', err)
+      })
+
       return { 
         success: true, 
         assessmentId,
