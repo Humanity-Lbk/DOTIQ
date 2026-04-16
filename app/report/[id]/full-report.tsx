@@ -167,18 +167,26 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   const sendReportEmail = async () => {
     if (sendingEmail || !isPurchased) return
     setSendingEmail(true)
+    console.log('[v0] Sending report email for assessment:', assessment.id, 'to:', userEmail)
     try {
       const res = await fetch('/api/report/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assessmentId: assessment.id, email: userEmail }),
       })
-      if (res.ok) {
+      const data = await res.json()
+      console.log('[v0] Email API response:', data)
+      
+      if (res.ok && data.success) {
         setEmailSent(true)
         setTimeout(() => setEmailSent(false), 5000)
+      } else {
+        console.error('[v0] Email failed:', data.error)
+        alert(`Failed to send email: ${data.error || 'Unknown error'}`)
       }
     } catch (error) {
-      console.error('Failed to send email:', error)
+      console.error('[v0] Failed to send email:', error)
+      alert('Failed to send email. Please try again.')
     } finally {
       setSendingEmail(false)
     }

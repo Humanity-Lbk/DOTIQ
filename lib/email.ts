@@ -22,16 +22,30 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, attachments }: SendEmailOptions) {
+  console.log('[v0] sendEmail called for:', to)
+  
   if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    console.error('SMTP credentials not configured')
-    throw new Error('Email service not configured')
+    console.error('[v0] SMTP credentials not configured')
+    return { success: false, error: 'Email service not configured - missing SMTP credentials' }
+  }
+  
+  if (!process.env.SMTP_FROM_EMAIL) {
+    console.error('[v0] SMTP_FROM_EMAIL not configured')
+    return { success: false, error: 'Email service not configured - missing SMTP_FROM_EMAIL' }
   }
 
   try {
-    // SMTP2GO requires a verified sender email - use the username as the base
-    const fromEmail = process.env.SMTP_FROM_EMAIL || `${process.env.SMTP_USER}@smtp2go.com`
+    const fromEmail = process.env.SMTP_FROM_EMAIL
     
-    console.log('[v0] Sending email to:', to, 'from:', fromEmail)
+    console.log('[v0] SMTP Config:', {
+      host: process.env.SMTP_HOST || 'mail.smtp2go.com',
+      port: process.env.SMTP_PORT || '2525',
+      user: process.env.SMTP_USER ? 'SET' : 'MISSING',
+      pass: process.env.SMTP_PASSWORD ? 'SET' : 'MISSING',
+      from: fromEmail,
+    })
+    
+    console.log('[v0] Attempting to send email to:', to, 'from:', fromEmail)
     
     const info = await transporter.sendMail({
       from: `"DOTIQ Reports" <${fromEmail}>`,
@@ -41,11 +55,12 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
       attachments,
     })
 
-    console.log('Email sent:', info.messageId)
+    console.log('[v0] Email sent successfully! MessageId:', info.messageId)
     return { success: true, messageId: info.messageId }
   } catch (error) {
-    console.error('Failed to send email:', error)
-    throw error
+    console.error('[v0] Failed to send email:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return { success: false, error: errorMessage }
   }
 }
 

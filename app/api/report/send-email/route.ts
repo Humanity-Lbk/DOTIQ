@@ -522,7 +522,7 @@ export async function POST(request: Request) {
     console.log('[v0] Sending email to:', recipientEmail)
     
     // Send email with PDF attachment
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: recipientEmail,
       subject: `Your DOTIQ Assessment Report - Score: ${overallScore.toFixed(1)}`,
       html: generateReportEmailHtml(userName, overallScore, reportUrl),
@@ -535,6 +535,16 @@ export async function POST(request: Request) {
       ],
     })
     
+    console.log('[v0] Email result:', emailResult)
+    
+    if (!emailResult.success) {
+      console.error('[v0] Email failed:', emailResult.error)
+      return NextResponse.json({ 
+        success: false,
+        error: emailResult.error || 'Failed to send email' 
+      }, { status: 500 })
+    }
+    
     // Update report to mark email sent
     await supabase
       .from('reports')
@@ -544,14 +554,17 @@ export async function POST(request: Request) {
       })
       .eq('id', reportData.id)
     
+    console.log('[v0] Email sent successfully and database updated')
+    
     return NextResponse.json({ 
       success: true, 
       message: `Report sent to ${recipientEmail}`,
     })
     
   } catch (error) {
-    console.error('Error sending report email:', error)
+    console.error('[v0] Error in send-email route:', error)
     return NextResponse.json({ 
+      success: false,
       error: error instanceof Error ? error.message : 'Failed to send email' 
     }, { status: 500 })
   }
