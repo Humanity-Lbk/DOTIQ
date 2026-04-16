@@ -11,67 +11,89 @@ interface StartReportCheckoutParams {
 }
 
 export async function startReportCheckoutSession({ productId, assessmentId, email }: StartReportCheckoutParams) {
-  const product = PRODUCTS.find((p) => p.id === productId)
-  if (!product) {
-    throw new Error(`Product with id "${productId}" not found`)
-  }
+  try {
+    // Verify Stripe is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('Stripe is not configured. Please contact support.')
+    }
 
-  const supabase = await createClient()
-  
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('User not authenticated')
-  }
+    const product = PRODUCTS.find((p) => p.id === productId)
+    if (!product) {
+      throw new Error(`Product not found`)
+    }
 
-  // Verify assessment belongs to user
-  const { data: assessment } = await supabase
-    .from('assessments')
-    .select('id, user_id')
-    .eq('id', assessmentId)
-    .single()
-  
-  if (!assessment || assessment.user_id !== user.id) {
-    throw new Error('Assessment not found or does not belong to user')
-  }
+    const supabase = await createClient()
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('Please sign in to purchase a report')
+    }
 
-  const session = await stripe.checkout.sessions.create({
-    ui_mode: 'embedded',
-    redirect_on_completion: 'never',
-    customer_email: email,
-    line_items: [
-      {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: product.name,
-            description: product.description,
+    // Verify assessment belongs to user
+    const { data: assessment, error: assessmentError } = await supabase
+      .from('assessments')
+      .select('id, user_id')
+      .eq('id', assessmentId)
+      .single()
+    
+    if (assessmentError || !assessment) {
+      throw new Error('Assessment not found')
+    }
+    
+    if (assessment.user_id !== user.id) {
+      throw new Error('You do not have permission to purchase this report')
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      ui_mode: 'embedded',
+      redirect_on_completion: 'never',
+      customer_email: email,
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: product.name,
+              description: product.description,
+            },
+            unit_amount: product.priceInCents,
           },
-          unit_amount: product.priceInCents,
+          quantity: 1,
         },
-        quantity: 1,
+      ],
+      mode: 'payment',
+      metadata: {
+        assessmentId,
+        userId: user.id,
+        email,
       },
-    ],
-    mode: 'payment',
-    metadata: {
-      assessmentId,
-      userId: user.id,
-      email,
-    },
-  })
-
-  // Create purchase record
-  await supabase
-    .from('purchases')
-    .insert({
-      user_id: user.id,
-      assessment_id: assessmentId,
-      stripe_session_id: session.id,
-      amount_cents: product.priceInCents,
-      status: 'pending',
     })
 
-  return session.client_secret
+    // Create purchase record
+    const { error: purchaseError } = await supabase
+      .from('purchases')
+      .insert({
+        user_id: user.id,
+        assessment_id: assessmentId,
+        stripe_session_id: session.id,
+        amount_cents: product.priceInCents,
+        status: 'pending',
+      })
+
+    if (purchaseError) {
+      console.error('Failed to create purchase record:', purchaseError)
+      // Don't throw - we still have a valid checkout session
+    }
+
+    return session.client_secret
+  } catch (error) {
+    // Re-throw with a user-friendly message
+    if (error instanceof Error) {
+      throw new Error(error.message)
+    }
+    throw new Error('Failed to start checkout. Please try again.')
+  }
 }
 
 export async function completeReportPurchase(sessionId: string) {
