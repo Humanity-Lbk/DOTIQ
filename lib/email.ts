@@ -1,15 +1,3 @@
-import nodemailer from 'nodemailer'
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'mail.smtp2go.com',
-  port: parseInt(process.env.SMTP_PORT || '2525'),
-  secure: false, // Use TLS
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-})
-
 interface SendEmailOptions {
   to: string
   subject: string
@@ -24,39 +12,67 @@ interface SendEmailOptions {
 export async function sendEmail({ to, subject, html, attachments }: SendEmailOptions) {
   console.log('[v0] sendEmail called for:', to)
   
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    console.error('[v0] SMTP credentials not configured')
-    return { success: false, error: 'Email service not configured - missing SMTP credentials' }
+  const apiKey = process.env.SMTP2GO_API_KEY
+  const fromEmail = process.env.SMTP_FROM_EMAIL
+
+  if (!apiKey) {
+    console.error('[v0] SMTP2GO_API_KEY not configured')
+    return { success: false, error: 'Email service not configured - missing SMTP2GO_API_KEY' }
   }
-  
-  if (!process.env.SMTP_FROM_EMAIL) {
+
+  if (!fromEmail) {
     console.error('[v0] SMTP_FROM_EMAIL not configured')
     return { success: false, error: 'Email service not configured - missing SMTP_FROM_EMAIL' }
   }
 
   try {
-    const fromEmail = process.env.SMTP_FROM_EMAIL
+    console.log('[v0] Preparing email via SMTP2GO API')
     
-    console.log('[v0] SMTP Config:', {
-      host: process.env.SMTP_HOST || 'mail.smtp2go.com',
-      port: process.env.SMTP_PORT || '2525',
-      user: process.env.SMTP_USER ? 'SET' : 'MISSING',
-      pass: process.env.SMTP_PASSWORD ? 'SET' : 'MISSING',
-      from: fromEmail,
-    })
-    
-    console.log('[v0] Attempting to send email to:', to, 'from:', fromEmail)
-    
-    const info = await transporter.sendMail({
-      from: `"DOTIQ Reports" <${fromEmail}>`,
-      to,
-      subject,
-      html,
-      attachments,
+    // Convert attachments to base64 for API
+    const apiAttachments = attachments?.map((attachment) => {
+      const content = typeof attachment.content === 'string' 
+        ? attachment.content 
+        : attachment.content.toString('base64')
+      
+      return {
+        filename: attachment.filename,
+        mimetype: attachment.contentType || 'application/octet-stream',
+        fileblob: content,
+      }
     })
 
-    console.log('[v0] Email sent successfully! MessageId:', info.messageId)
-    return { success: true, messageId: info.messageId }
+    const payload = {
+      to: [to],
+      sender: `DOTIQ Reports <${fromEmail}>`,
+      subject,
+      html_body: html,
+      attachments: apiAttachments,
+      fastaccept: true,
+    }
+
+    console.log('[v0] Sending via SMTP2GO API to:', to)
+
+    const response = await fetch('https://api.smtp2go.com/v3/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Smtp2go-Api-Key': apiKey,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      console.error('[v0] SMTP2GO API error:', data)
+      return { 
+        success: false, 
+        error: data.data?.error || 'Failed to send email via API' 
+      }
+    }
+
+    console.log('[v0] Email sent successfully! EmailId:', data.data?.email_id)
+    return { success: true, messageId: data.data?.email_id }
   } catch (error) {
     console.error('[v0] Failed to send email:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
