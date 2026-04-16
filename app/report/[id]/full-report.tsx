@@ -63,6 +63,9 @@ interface FullReportProps {
   userEmail?: string | null
 }
 
+// Fixed pillar order: Discipline, Ownership, Toughness, Sports IQ
+const pillarOrder: Category[] = ['discipline', 'ownership', 'toughness', 'sportsiq']
+
 const pillarConfig: Record<Category, { gradient: string, bg: string, icon: React.ReactNode, color: string }> = {
   discipline: { 
     gradient: 'from-amber-500 via-orange-500 to-amber-600', 
@@ -347,7 +350,7 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       <section className="border-y border-border bg-card/50 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between gap-4 overflow-x-auto">
-            {(Object.keys(scores) as Category[]).map((category, i) => (
+            {pillarOrder.map((category, i) => (
               <button
                 key={category}
                 onClick={() => {
@@ -375,7 +378,7 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       <main className="max-w-6xl mx-auto px-6 py-12 space-y-16">
         
         {/* Pillar Deep Dives - Alternating Layout */}
-        {(Object.keys(scores) as Category[]).map((category, index) => {
+        {pillarOrder.map((category, index) => {
           const config = pillarConfig[category]
           const score = scores[category]
           const pillarReport = report?.pillars?.[category]
@@ -696,12 +699,11 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
             </div>
           </div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-3 gap-4">
             {[
               { type: 'coach' as EvaluatorType, label: 'Coach', icon: <Users className="w-5 h-5" />, desc: 'Have your coach evaluate you' },
               { type: 'parent' as EvaluatorType, label: 'Parent', icon: <User className="w-5 h-5" />, desc: 'Get a parent\'s perspective' },
-              { type: 'peer' as EvaluatorType, label: 'Teammate', icon: <Users className="w-5 h-5" />, desc: 'Ask a teammate to rate you' },
-              { type: 'mentor' as EvaluatorType, label: 'Mentor', icon: <User className="w-5 h-5" />, desc: 'Trainer or advisor feedback' },
+              { type: 'peer' as EvaluatorType, label: 'Peer', icon: <Users className="w-5 h-5" />, desc: 'Ask a teammate to rate you' },
             ].map(({ type, label, icon, desc }) => {
               const existing = verifications.find(v => v.evaluator_type === type)
               const isVerified = existing?.status === 'completed'
