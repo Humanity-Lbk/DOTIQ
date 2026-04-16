@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
-import { Share2, Copy, Check, Loader2, Lock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Share2, Copy, Check, Loader2, Lock, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 
 interface Assessment {
@@ -134,10 +134,35 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
     sportsiq: true,
   })
   const [mounted, setMounted] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
   
   useEffect(() => {
     setMounted(true)
   }, [])
+  
+  const sendReportEmail = async () => {
+    if (sendingEmail || !isPurchased) return
+    setSendingEmail(true)
+    try {
+      const res = await fetch('/api/report/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          assessmentId: assessment.id,
+          email: userEmail,
+        }),
+      })
+      if (res.ok) {
+        setEmailSent(true)
+        setTimeout(() => setEmailSent(false), 5000)
+      }
+    } catch (error) {
+      console.error('Failed to send email:', error)
+    } finally {
+      setSendingEmail(false)
+    }
+  }
   
   const scores = assessment.scores as Record<Category, number>
   const sortedPillars = Object.entries(scores).sort((a, b) => b[1] - a[1])
@@ -210,6 +235,22 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
               />
             </Link>
           <div className="flex items-center gap-3">
+            {isPurchased && (
+              <button
+                onClick={sendReportEmail}
+                disabled={sendingEmail}
+                className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-sm transition-colors disabled:opacity-50"
+              >
+                {sendingEmail ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : emailSent ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Mail className="w-4 h-4" />
+                )}
+                {emailSent ? 'Sent!' : sendingEmail ? 'Sending...' : 'Email PDF'}
+              </button>
+            )}
             {currentShareToken && (
               <button
                 onClick={copyShareLink}
