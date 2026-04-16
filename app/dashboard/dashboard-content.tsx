@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
-import Header from '@/components/header'
+import AppSidebar from '@/components/app-sidebar'
 import { RequestVerificationModal } from '@/components/verification/request-verification-modal'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import type { User } from '@supabase/supabase-js'
@@ -154,11 +154,12 @@ export function DashboardContent({ user, profile, assessments, verifications, su
   }
   
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background flex">
+      <AppSidebar />
 
+      <div className="flex-1 ml-64">
       {/* Grid background */}
-      <div className="fixed inset-0 grid-subtle pointer-events-none" />
+      <div className="fixed inset-0 ml-64 grid-subtle pointer-events-none" />
 
       <main className="relative max-w-5xl mx-auto px-6 py-12">
         {/* Welcome */}
@@ -583,6 +584,7 @@ export function DashboardContent({ user, profile, assessments, verifications, su
           // Page will refresh after purchase completes
         }}
       />
+      </div>
     </div>
   )
 }
