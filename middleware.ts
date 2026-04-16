@@ -4,7 +4,22 @@ import { type NextRequest, NextResponse } from 'next/server'
 // Routes that require authentication
 const protectedRoutes = ['/assessment', '/dashboard', '/report']
 
+// Routes exempt from the site-wide password gate
+const gateExemptRoutes = ['/coming-soon', '/api/gate-auth', '/_next', '/favicon']
+
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname
+
+  // --- Site-wide password gate ---
+  const isExempt = gateExemptRoutes.some(r => path.startsWith(r))
+  if (!isExempt) {
+    const gateToken = request.cookies.get('dotiq_gate')?.value
+    if (gateToken !== 'humanity_granted') {
+      const gateUrl = new URL('/coming-soon', request.url)
+      return NextResponse.redirect(gateUrl)
+    }
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -33,7 +48,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const path = request.nextUrl.pathname
   const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
 
   if (isProtectedRoute && !user) {
