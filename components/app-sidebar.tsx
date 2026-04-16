@@ -14,6 +14,8 @@ import {
   MessageSquare,
   LogOut,
   ChevronRight,
+  LogIn,
+  UserPlus,
 } from "lucide-react"
 
 interface Profile {
@@ -24,6 +26,7 @@ interface Profile {
 export default function AppSidebar() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -40,6 +43,7 @@ export default function AppSidebar() {
           .single()
         setProfile(data)
       }
+      setLoading(false)
     }
     load()
 
@@ -62,7 +66,14 @@ export default function AppSidebar() {
   const isActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href))
 
-  const navItems = [
+  const linkClass = (href: string) =>
+    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+      isActive(href)
+        ? "bg-primary/10 text-primary font-medium"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+    }`
+
+  const authedNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/assessments", label: "My Assessments", icon: FileText },
     { href: "/assessment", label: "Take Assessment", icon: ClipboardList },
@@ -73,11 +84,17 @@ export default function AppSidebar() {
     { href: "/client-updates", label: "Change Log", icon: History },
   ]
 
+  const guestNavItems = [
+    { href: "/assessment", label: "Take Assessment", icon: ClipboardList },
+    { href: "/auth/login", label: "Sign In", icon: LogIn },
+    { href: "/auth/sign-up", label: "Sign Up", icon: UserPlus },
+  ]
+
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border flex flex-col z-50">
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-border shrink-0">
-        <Link href="/dashboard">
+        <Link href={user ? "/dashboard" : "/"}>
           <Image
             src="/logo.png"
             alt="DOTIQ"
@@ -91,83 +108,81 @@ export default function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-              isActive(item.href)
-                ? "bg-primary/10 text-primary font-medium"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            }`}
-          >
-            <item.icon className="w-4 h-4 shrink-0" />
-            {item.label}
-            {isActive(item.href) && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
-          </Link>
-        ))}
-
-        {(role === "admin" || role === "super_admin") && (
+        {loading ? (
+          <div className="space-y-2 px-1">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-10 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        ) : user ? (
           <>
-            <div className="pt-5 pb-1.5">
-              <p className="px-3 text-[10px] font-mono text-muted-foreground/50 uppercase tracking-widest">
-                Admin
-              </p>
-            </div>
-            {adminNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  isActive(item.href)
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
+            {authedNavItems.map((item) => (
+              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
                 <item.icon className="w-4 h-4 shrink-0" />
                 {item.label}
                 {isActive(item.href) && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
               </Link>
             ))}
-            {role === "super_admin" && (
-              <Link
-                href="/client-updates?view=internal"
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  pathname === "/client-updates" && typeof window !== "undefined" && window.location.search.includes("internal")
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                <History className="w-4 h-4 shrink-0" />
-                Internal View
-                <span className="ml-auto text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono">
-                  DEV
-                </span>
-              </Link>
+
+            {(role === "admin" || role === "super_admin") && (
+              <>
+                <div className="pt-5 pb-1.5">
+                  <p className="px-3 text-[10px] font-mono text-muted-foreground/50 uppercase tracking-widest">
+                    Admin
+                  </p>
+                </div>
+                {adminNavItems.map((item) => (
+                  <Link key={item.href} href={item.href} className={linkClass(item.href)}>
+                    <item.icon className="w-4 h-4 shrink-0" />
+                    {item.label}
+                    {isActive(item.href) && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
+                  </Link>
+                ))}
+                {role === "super_admin" && (
+                  <Link href="/client-updates?view=internal" className={linkClass("/client-updates?view=internal")}>
+                    <History className="w-4 h-4 shrink-0" />
+                    Internal View
+                    <span className="ml-auto text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono">
+                      DEV
+                    </span>
+                  </Link>
+                )}
+              </>
             )}
+          </>
+        ) : (
+          <>
+            {guestNavItems.map((item) => (
+              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
+                <item.icon className="w-4 h-4 shrink-0" />
+                {item.label}
+              </Link>
+            ))}
           </>
         )}
       </nav>
 
       {/* User profile + sign out */}
-      <div className="p-3 border-t border-border shrink-0">
-        <div className="flex items-center gap-3 px-3 py-2 mb-1">
-          <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center shrink-0">
-            {displayName.charAt(0).toUpperCase()}
+      {!loading && user && (
+        <div className="p-3 border-t border-border shrink-0">
+          <div className="flex items-center gap-3 px-3 py-2 mb-1">
+            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center shrink-0">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground capitalize">{role || "user"}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{displayName}</p>
-            <p className="text-xs text-muted-foreground capitalize">{role || "User"}</p>
-          </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            Sign Out
+          </button>
         </div>
-        <button
-          onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-        >
-          <LogOut className="w-4 h-4 shrink-0" />
-          Sign Out
-        </button>
-      </div>
+      )}
     </aside>
   )
 }
