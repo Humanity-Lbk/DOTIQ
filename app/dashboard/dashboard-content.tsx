@@ -226,9 +226,10 @@ export function DashboardContent({ user, profile, assessments, verifications, su
                     : assessment.overall_score
 
                   return (
-                    <div
+                    <Link
                       key={assessment.id}
-                      className={`p-6 bg-card/50 backdrop-blur-sm border-2 rounded-2xl transition-all duration-200 ${
+                      href={`/report/${assessment.id}`}
+                      className={`block p-6 bg-card/50 backdrop-blur-sm border-2 rounded-2xl transition-all duration-200 hover:bg-card/70 cursor-pointer ${
                         isLatest ? 'border-primary/40' : 'border-border hover:border-border/80'
                       }`}
                     >
@@ -308,15 +309,15 @@ export function DashboardContent({ user, profile, assessments, verifications, su
                         {/* Actions */}
                         <div className="flex sm:flex-col gap-2 shrink-0">
                           {assessment.purchased_at ? (
-                            <Link
-                              href={`/report/${assessment.id}`}
+                            <span
+                              onClick={(e) => e.stopPropagation()}
                               className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
                             >
                               View Report
-                            </Link>
+                            </span>
                           ) : (
                             <button
-                              onClick={() => openPurchaseModal(assessment.id, displayScore)}
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openPurchaseModal(assessment.id, displayScore); }}
                               className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
                             >
                               Unlock Report
@@ -324,7 +325,7 @@ export function DashboardContent({ user, profile, assessments, verifications, su
                           )}
                           {!assessment.is_verified && (
                             <button 
-                              onClick={() => openVerificationModal(assessment.id)}
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openVerificationModal(assessment.id); }}
                               className="px-4 py-2 bg-muted hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
                             >
                               Get Verified
@@ -356,7 +357,7 @@ export function DashboardContent({ user, profile, assessments, verifications, su
                           </div>
                         </div>
                       )}
-                    </div>
+                    </Link>
                   )
                 })}
               </div>

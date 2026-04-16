@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { categories, type Category } from '@/lib/assessment-data'
-import { Share2, Copy, Check, Loader2 } from 'lucide-react'
+import { Share2, Copy, Check, Loader2, Lock } from 'lucide-react'
+import { PurchaseModal } from '@/components/purchase/purchase-modal'
 
 interface Assessment {
   id: string
@@ -52,6 +53,7 @@ interface FullReportProps {
   userName: string
   aiReport: AIReport | null
   shareToken: string | null
+  isPurchased: boolean
 }
 
 const pillarColors: Record<Category, string> = {
@@ -113,11 +115,12 @@ function ScoreRing({ score, size = 160, strokeWidth = 10 }: { score: number; siz
   )
 }
 
-export function FullReport({ assessment, verifications, userName, aiReport, shareToken }: FullReportProps) {
+export function FullReport({ assessment, verifications, userName, aiReport, shareToken, isPurchased }: FullReportProps) {
   const [report, setReport] = useState<AIReport | null>(aiReport)
-  const [loading, setLoading] = useState(!aiReport)
+  const [loading, setLoading] = useState(!aiReport && isPurchased)
   const [copied, setCopied] = useState(false)
   const [currentShareToken, setCurrentShareToken] = useState(shareToken)
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
   
   const scores = assessment.scores as Record<Category, number>
   const sortedPillars = Object.entries(scores).sort((a, b) => b[1] - a[1])
@@ -127,12 +130,12 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   const completedVerifications = verifications.filter(v => v.status === 'completed')
   const displayScore = assessment.is_verified ? (assessment.verified_score || assessment.overall_score) : assessment.overall_score
   
-  // Generate report if not exists
+  // Generate report if purchased and not already exists
   useEffect(() => {
-    if (!aiReport && !report) {
+    if (isPurchased && !aiReport && !report) {
       generateReport()
     }
-  }, [aiReport])
+  }, [aiReport, isPurchased])
   
   const generateReport = async () => {
     setLoading(true)
@@ -215,7 +218,14 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
             <ScoreRing score={displayScore} />
             
             <div className="flex-1 text-center md:text-left">
-              <p className="text-primary font-semibold text-sm tracking-wide mb-2">DOTIQ Report</p>
+              <div className="flex items-center gap-2 mb-2">
+                <p className="text-primary font-semibold text-sm tracking-wide">DOTIQ Report</p>
+                {!isPurchased && (
+                  <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] font-bold rounded-full">
+                    PREVIEW
+                  </span>
+                )}
+              </div>
               <h1 className="text-3xl md:text-4xl font-black mb-2">{userName}</h1>
               <p className="text-muted-foreground mb-4">
                 Generated on {new Date(assessment.created_at).toLocaleDateString('en-US', { 
@@ -246,8 +256,8 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         </div>
       </section>
 
-      {/* Executive Summary */}
-      {report?.executiveSummary && (
+      {/* Executive Summary - only show if purchased */}
+      {isPurchased && report?.executiveSummary && (
         <section className="max-w-5xl mx-auto px-6 py-8">
           <div className="bg-card border border-border rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-3">Executive Summary</h2>
@@ -287,8 +297,50 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         </div>
       </section>
 
-      {/* Detailed Pillar Analysis */}
-      {report?.pillars && (
+      {/* Unlock Full Report CTA for non-purchased */}
+      {!isPurchased && (
+        <section className="max-w-5xl mx-auto px-6 py-12">
+          <div className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-8 text-center">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+            <div className="relative z-10">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/20 flex items-center justify-center">
+                <Lock className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-2xl font-black mb-2">Unlock Your Full Report</h2>
+              <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                Get deep analysis, personalized action plans, habit recommendations, and AI-powered insights to accelerate your athletic development.
+              </p>
+              <ul className="text-sm text-muted-foreground max-w-sm mx-auto mb-6 space-y-2 text-left">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Detailed pillar analysis with strengths and growth areas
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Personalized 30-day action plan
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Custom reset scripts for high-pressure moments
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  Shareable report link
+                </li>
+              </ul>
+              <button
+                onClick={() => setPurchaseModalOpen(true)}
+                className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors"
+              >
+                Unlock Full Report
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Detailed Pillar Analysis - only show if purchased */}
+      {isPurchased && report?.pillars && (
         <section className="max-w-5xl mx-auto px-6 py-8 space-y-6">
           <h2 className="text-xl font-bold">Detailed Analysis</h2>
           
@@ -357,8 +409,8 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         </section>
       )}
 
-      {/* Strongest Signals & Pressure Points */}
-      {report?.strongestSignals && report?.pressurePoints && (
+      {/* Strongest Signals & Pressure Points - only show if purchased */}
+      {isPurchased && report?.strongestSignals && report?.pressurePoints && (
         <section className="max-w-5xl mx-auto px-6 py-8">
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-card border border-border rounded-2xl p-5">
@@ -394,8 +446,8 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         </section>
       )}
 
-      {/* Action Plan */}
-      {report?.actionPlan && (
+      {/* Action Plan - only show if purchased */}
+      {isPurchased && report?.actionPlan && (
         <section className="max-w-5xl mx-auto px-6 py-8">
           <h2 className="text-xl font-bold mb-6">This Week&apos;s Action Plan</h2>
           <div className="grid md:grid-cols-2 gap-6">
@@ -417,8 +469,8 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         </section>
       )}
 
-      {/* Reset Script */}
-      {report?.resetScript && (
+      {/* Reset Script - only show if purchased */}
+      {isPurchased && report?.resetScript && (
         <section className="max-w-5xl mx-auto px-6 py-8">
           <h2 className="text-xl font-bold mb-6">Your 5-Second Reset Script</h2>
           <div className="bg-card border border-border rounded-2xl p-6">
@@ -511,6 +563,17 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
           </p>
         </div>
       </footer>
+
+      {/* Purchase Modal */}
+      <PurchaseModal
+        isOpen={purchaseModalOpen}
+        onClose={() => setPurchaseModalOpen(false)}
+        assessmentId={assessment.id}
+        score={displayScore}
+        onPurchaseComplete={() => {
+          window.location.reload()
+        }}
+      />
     </div>
   )
 }

@@ -28,10 +28,8 @@ export default async function ReportPage({ params }: PageProps) {
     notFound()
   }
   
-  // Check if purchased
-  if (!assessment.purchased_at) {
-    redirect(`/dashboard`)
-  }
+  // Note: We no longer redirect non-purchased assessments - the FullReport component
+  // will show preview data with an option to purchase
   
   // Get verification requests
   const { data: verifications } = await supabase
@@ -61,6 +59,7 @@ export default async function ReportPage({ params }: PageProps) {
       userName={profile?.full_name || 'Athlete'}
       aiReport={report?.content || null}
       shareToken={report?.share_token || null}
+      isPurchased={!!assessment.purchased_at}
     />
   )
 }
