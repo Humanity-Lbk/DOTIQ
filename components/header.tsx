@@ -4,76 +4,29 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
-import type { User } from "@supabase/supabase-js"
-import { useRouter } from "next/navigation"
+import useSWR from "swr"
 
-interface Profile {
-  full_name: string | null
-  role: 'user' | 'admin' | 'super_admin'
+const supabase = createClient()
+
+async function fetchUser() {
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
 }
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
-  const supabase = createClient()
+  
+  // Use same SWR cache key as sidebar for consistency
+  const { data: user, isLoading } = useSWR("header-user", fetchUser, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  })
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-    }
-    if (dropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [dropdownOpen])
-
-  useEffect(() => {
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, role')
-          .eq('id', user.id)
-          .single()
-        setProfile(profile)
-      }
-      setLoading(false)
-    }
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (!session?.user) {
-        setProfile(null)
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [supabase])
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
-  }
-
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || user?.phone || 'User'
 
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border' : 'bg-transparent'}`}>
@@ -90,7 +43,7 @@ export default function Header() {
         </Link>
         
         <nav className="flex items-center gap-6">
-          {loading ? (
+          {isLoading ? (
             <div className="w-20 h-4 bg-muted animate-pulse rounded" />
           ) : user ? (
             <>
@@ -191,23 +144,26 @@ export default function Header() {
           ) : (
             <>
               <Link 
-                href="/auth/login" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                href="/auth/login"
+                prefetch={true}
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 Sign In
               </Link>
               <Link 
-                href="/auth/sign-up" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                href="/auth/sign-up"
+                prefetch={true}
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 Sign Up
               </Link>
               <Link 
                 href="/assessment"
-                className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                prefetch={true}
+                className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 Assessment
-                <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                <span className="group-hover:translate-x-0.5 transition-transform duration-150">→</span>
               </Link>
             </>
           )}

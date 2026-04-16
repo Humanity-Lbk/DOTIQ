@@ -132,6 +132,22 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Smooth page transitions */
+  main {
+    animation: page-fade-in 0.2s ease-out;
+  }
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0.8;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Custom Animations */
@@ -365,12 +381,41 @@
 
 /* Premium card hover effects */
 .card-hover {
-  @apply relative overflow-hidden transition-all duration-300;
+  @apply relative overflow-hidden;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
 }
 
 .card-hover:hover {
   @apply border-primary/50;
   box-shadow: 0 0 25px rgba(230, 185, 60, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Smooth content area */
+.content-smooth {
+  animation: content-enter 0.25s ease-out;
+}
+
+@keyframes content-enter {
+  from {
+    opacity: 0.6;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fast button transitions */
+button, a {
+  transition-property: color, background-color, border-color, opacity, transform, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+button:active, a:active {
+  transform: scale(0.98);
 }
 
 /* Subtle grid background */
