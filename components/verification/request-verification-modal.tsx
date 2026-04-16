@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, Send, Phone, User, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -34,6 +34,14 @@ export function RequestVerificationModal({
   const [evaluatorName, setEvaluatorName] = useState("")
   const [evaluatorPhone, setEvaluatorPhone] = useState("")
   const [error, setError] = useState<string | null>(null)
+
+  // Update state when preselectedType changes
+  useEffect(() => {
+    if (isOpen && preselectedType) {
+      setSelectedType(preselectedType)
+      setStep("details")
+    }
+  }, [isOpen, preselectedType])
 
   const handleSendRequest = async () => {
     if (!selectedType || !evaluatorName || !evaluatorPhone) {
