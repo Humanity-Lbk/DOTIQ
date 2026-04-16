@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { categories, type Category } from '@/lib/assessment-data'
-import AppSidebar from '@/components/app-sidebar'
+import Header from '@/components/header'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import type { User } from '@supabase/supabase-js'
 
@@ -118,10 +118,9 @@ export function AssessmentsContent({
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
-      <AppSidebar />
+    <div className="min-h-screen bg-background text-foreground">
+      <Header />
 
-      <div className="flex-1 ml-64">
       <main className="max-w-5xl mx-auto px-6 py-10">
         {/* Header */}
         <div className="mb-8">
@@ -334,7 +333,6 @@ export function AssessmentsContent({
           window.location.reload()
         }}
       />
-      </div>
     </div>
   )
 }

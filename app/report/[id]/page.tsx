@@ -27,30 +27,17 @@ export default async function ReportPage({ params }: PageProps) {
   if (assessmentError || !assessment) {
     notFound()
   }
-  
-  // Note: We no longer redirect non-purchased assessments - the FullReport component
-  // will show preview data with an option to purchase
-  
-  // Get verification requests
-  const { data: verifications } = await supabase
-    .from('verification_requests')
-    .select('*')
-    .eq('assessment_id', id)
-    .order('created_at', { ascending: true })
-  
-  // Get user profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .single()
-  
-  // Get existing report (if any)
-  const { data: report } = await supabase
-    .from('reports')
-    .select('*')
-    .eq('assessment_id', id)
-    .single()
+
+  // Fetch verifications, profile, and report in parallel
+  const [{ data: verifications }, { data: profile }, { data: report }] = await Promise.all([
+    supabase
+      .from('verification_requests')
+      .select('*')
+      .eq('assessment_id', id)
+      .order('created_at', { ascending: true }),
+    supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+    supabase.from('reports').select('*').eq('assessment_id', id).single(),
+  ])
   
   return (
     <FullReport 

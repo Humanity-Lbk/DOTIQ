@@ -1,6 +1,3 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Header from '@/components/header'
@@ -36,12 +33,6 @@ const apparel = [
 ]
 
 export default function HomePage() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -57,7 +48,7 @@ export default function HomePage() {
           
           <div className="max-w-4xl mx-auto text-center relative z-10">
             {/* Status Pill */}
-            <div className={`mb-8 transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="mb-8 animate-fade-in">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-card/60 border border-border rounded-full backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-xs text-muted-foreground font-medium">Now in beta</span>
@@ -65,19 +56,19 @@ export default function HomePage() {
             </div>
             
             {/* Headline */}
-            <h1 className={`text-5xl sm:text-6xl md:text-7xl font-black leading-[0.95] tracking-tight mb-6 text-balance transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black leading-[0.95] tracking-tight mb-6 text-balance animate-fade-in-up" style={{ animationDelay: '100ms' }}>
               The scoreboard shows what you did.{' '}
               <span className="text-primary">We measure who you are.</span>
             </h1>
             
             {/* Subhead */}
-            <p className={`text-xl text-muted-foreground max-w-2xl mx-auto mb-8 transition-all duration-700 delay-200 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
               DOTIQ quantifies the intangibles that separate good athletes from great ones. 
               Discipline. Ownership. Toughness. Sports IQ.
             </p>
             
             {/* CTAs */}
-            <div className={`flex flex-col sm:flex-row gap-3 justify-center transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in-up" style={{ animationDelay: '300ms' }}>
               <Link 
                 href="/assessment"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors"
@@ -92,7 +83,7 @@ export default function HomePage() {
                 Sign In
               </Link>
             </div>
-            <p className={`text-sm text-muted-foreground mt-4 transition-all duration-700 delay-400 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <p className="text-sm text-muted-foreground mt-4 animate-fade-in" style={{ animationDelay: '400ms' }}>
               Free. 10 minutes. No credit card required.
             </p>
           </div>
@@ -116,8 +107,8 @@ export default function HomePage() {
               {pillars.map((pillar, i) => (
                 <div
                   key={pillar.letter}
-                  className={`p-5 ${pillar.bg} border-2 ${pillar.border} rounded-xl hover:scale-[1.02] transition-all duration-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                  style={{ transitionDelay: `${400 + i * 100}ms` }}
+                  className={`p-5 ${pillar.bg} border-2 ${pillar.border} rounded-xl hover:scale-[1.02] transition-transform duration-300 animate-fade-in-up`}
+                  style={{ animationDelay: `${400 + i * 100}ms` }}
                 >
                   <div className={`w-10 h-10 rounded-lg bg-background/50 flex items-center justify-center mb-3`}>
                     <span className={`font-bold text-sm ${pillar.color}`}>{pillar.letter}</span>
@@ -157,8 +148,8 @@ export default function HomePage() {
               {steps.map((step, i) => (
                 <div
                   key={step.num}
-                  className={`p-5 bg-card/50 backdrop-blur-sm border-2 ${step.border} rounded-xl hover:scale-[1.02] transition-all duration-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                  style={{ transitionDelay: `${600 + i * 100}ms` }}
+                  className={`p-5 bg-card/50 backdrop-blur-sm border-2 ${step.border} rounded-xl hover:scale-[1.02] transition-transform duration-300 animate-fade-in-up`}
+                  style={{ animationDelay: `${600 + i * 100}ms` }}
                 >
                   <span className={`text-3xl font-black ${step.color}`}>{step.num}</span>
                   <h3 className="font-semibold mt-3 mb-1">{step.title}</h3>
@@ -195,10 +186,10 @@ export default function HomePage() {
             
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {videos.map((video, i) => (
-                <div 
+                <div
                   key={video.id}
-                  className={`group cursor-pointer transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                  style={{ transitionDelay: `${800 + i * 100}ms` }}
+                  className="group cursor-pointer animate-fade-in-up"
+                  style={{ animationDelay: `${800 + i * 100}ms` }}
                 >
                   <div className={`relative aspect-video rounded-lg overflow-hidden border-2 ${video.border} mb-3`}>
                     <Image 
@@ -242,10 +233,10 @@ export default function HomePage() {
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {apparel.map((item, i) => (
-                <div 
+                <div
                   key={item.id}
-                  className={`group cursor-pointer transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                  style={{ transitionDelay: `${900 + i * 80}ms` }}
+                  className="group cursor-pointer animate-fade-in-up"
+                  style={{ animationDelay: `${900 + i * 80}ms` }}
                 >
                   <div className="relative aspect-square rounded-lg overflow-hidden bg-card border border-border group-hover:border-primary/40 transition-colors mb-2">
                     <Image 

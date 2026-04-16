@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import AppSidebar from '@/components/app-sidebar'
+import Header from '@/components/header'
 import Checkout from '@/components/checkout'
 import { PRODUCTS } from '@/lib/products'
 
@@ -53,9 +53,9 @@ export default function PurchasePage() {
 
   if (showCheckout) {
     return (
-      <div className="min-h-screen bg-background grid-pattern flex">
-        <AppSidebar />
-        <main className="flex-1 ml-64 px-6 py-12">
+      <div className="min-h-screen bg-background grid-pattern">
+        <Header />
+        <main className="pt-16 px-6 py-12">
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => setShowCheckout(false)}
@@ -90,10 +90,10 @@ export default function PurchasePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex grid-pattern">
-      <AppSidebar />
+    <div className="min-h-screen bg-background flex flex-col grid-pattern">
+      <Header />
       
-      <main className="flex-1 ml-64">
+      <main className="flex-1">
         {/* Hero */}
         <section className="py-20 px-6 border-b border-border">
           <div className="max-w-4xl mx-auto space-y-6">
