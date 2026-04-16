@@ -205,9 +205,20 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
     if (isPurchased && !aiReport && !report) {
       generateReport()
     }
-  }, [aiReport, isPurchased])
+    
+    // Failsafe: if still loading after 30 seconds, stop loading and show preview
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.log('[v0] Report generation timeout - showing preview')
+        setLoading(false)
+      }
+    }, 30000)
+    
+    return () => clearTimeout(timeout)
+  }, [aiReport, isPurchased, loading])
   
   const generateReport = async () => {
+    console.log('[v0] generateReport called for assessment:', assessment.id)
     setLoading(true)
     try {
       const response = await fetch('/api/report/generate', {
@@ -215,13 +226,21 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assessmentId: assessment.id }),
       })
-      if (response.ok) {
-        const data = await response.json()
+      console.log('[v0] Report API response status:', response.status)
+      const data = await response.json()
+      console.log('[v0] Report API response data:', data)
+      
+      if (response.ok && data.report) {
         setReport(data.report)
         setCurrentShareToken(data.shareToken)
+      } else {
+        console.error('[v0] Report generation failed:', data.error)
+        // Don't leave user stuck on loading - show preview instead
+        setLoading(false)
       }
     } catch (error) {
-      console.error('Error generating report:', error)
+      console.error('[v0] Error generating report:', error)
+      setLoading(false)
     } finally {
       setLoading(false)
     }
@@ -247,6 +266,12 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
             <h2 className="text-2xl font-black mb-2">Building Your Report</h2>
             <p className="text-muted-foreground">Analyzing your athletic mindset...</p>
           </div>
+          <button
+            onClick={() => setLoading(false)}
+            className="text-sm text-muted-foreground hover:text-foreground underline"
+          >
+            Skip to preview
+          </button>
         </div>
       </div>
     )
