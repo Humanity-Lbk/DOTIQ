@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
-import { Share2, Copy, Check, Loader2, Lock, ChevronRight, Mail, Zap, Target, Brain, Trophy, TrendingUp, Flame, ArrowRight, Sparkles } from 'lucide-react'
+import { Share2, Copy, Check, Loader2, Lock, ChevronRight, Mail, Zap, Target, Brain, Trophy, TrendingUp, Flame, ArrowRight, Sparkles, Users, User, CheckCircle2, Clock, Plus } from 'lucide-react'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
+import { RequestVerificationModal, type EvaluatorType } from '@/components/verification/request-verification-modal'
 
 interface Assessment {
   id: string
@@ -156,6 +157,8 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   const [sendingEmail, setSendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [activePillar, setActivePillar] = useState<Category | null>(null)
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false)
+  const [selectedVerificationType, setSelectedVerificationType] = useState<EvaluatorType | null>(null)
   
   useEffect(() => {
     setMounted(true)
@@ -676,6 +679,111 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
             </div>
           </section>
         )}
+        {/* Verification Section */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-1">Get Verified</h2>
+              <p className="text-muted-foreground">Strengthen your report with third-party evaluations</p>
+            </div>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { type: 'coach' as EvaluatorType, label: 'Coach', icon: <Users className="w-5 h-5" />, desc: 'Have your coach evaluate you' },
+              { type: 'parent' as EvaluatorType, label: 'Parent', icon: <User className="w-5 h-5" />, desc: 'Get a parent\'s perspective' },
+              { type: 'peer' as EvaluatorType, label: 'Teammate', icon: <Users className="w-5 h-5" />, desc: 'Ask a teammate to rate you' },
+              { type: 'mentor' as EvaluatorType, label: 'Mentor', icon: <User className="w-5 h-5" />, desc: 'Trainer or advisor feedback' },
+            ].map(({ type, label, icon, desc }) => {
+              const existing = verifications.find(v => v.evaluator_type === type)
+              const isVerified = existing?.status === 'completed'
+              const isPending = existing?.status === 'sent' || existing?.status === 'pending'
+              
+              return (
+                <button
+                  key={type}
+                  onClick={() => {
+                    if (!isVerified) {
+                      setSelectedVerificationType(type)
+                      setVerificationModalOpen(true)
+                    }
+                  }}
+                  className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-300 group ${
+                    isVerified 
+                      ? 'border-emerald-500/50 bg-emerald-500/10 cursor-default' 
+                      : isPending
+                        ? 'border-amber-500/50 bg-amber-500/10 hover:border-amber-500 hover:bg-amber-500/20'
+                        : 'border-border bg-card hover:border-primary/50 hover:bg-primary/5 hover:scale-[1.02]'
+                  }`}
+                >
+                  {/* Status badge */}
+                  <div className="absolute -top-2 -right-2">
+                    {isVerified && (
+                      <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
+                        <CheckCircle2 className="w-5 h-5 text-white" />
+                      </div>
+                    )}
+                    {isPending && (
+                      <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center shadow-lg">
+                        <Clock className="w-5 h-5 text-white" />
+                      </div>
+                    )}
+                    {!isVerified && !isPending && (
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Plus className="w-5 h-5 text-primary" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      isVerified ? 'bg-emerald-500/20 text-emerald-400' : isPending ? 'bg-amber-500/20 text-amber-400' : 'bg-primary/10 text-primary'
+                    }`}>
+                      {icon}
+                    </div>
+                    <div>
+                      <p className="font-bold">{label}</p>
+                      {existing?.evaluator_name && (
+                        <p className="text-xs text-muted-foreground">{existing.evaluator_name}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-3">{desc}</p>
+                  
+                  {isVerified && existing?.overall_score && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-emerald-400 font-medium">Score:</span>
+                      <span className="text-lg font-bold text-emerald-400">{existing.overall_score.toFixed(1)}</span>
+                    </div>
+                  )}
+                  
+                  {isPending && (
+                    <p className="text-xs text-amber-400 font-medium">Awaiting response...</p>
+                  )}
+                  
+                  {!isVerified && !isPending && (
+                    <p className="text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                      Click to send request →
+                    </p>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          
+          {verifications.filter(v => v.status === 'completed').length > 0 && (
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <p className="text-sm">
+                  <span className="font-bold text-emerald-400">{verifications.filter(v => v.status === 'completed').length} verification(s)</span>
+                  {' '}completed - your report is more credible!
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
       </main>
 
       {/* Footer */}
@@ -697,6 +805,21 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
         onPurchaseComplete={() => {
           setPurchaseModalOpen(false)
           generateReport()
+        }}
+      />
+      
+      {/* Verification Modal */}
+      <RequestVerificationModal
+        isOpen={verificationModalOpen}
+        onClose={() => {
+          setVerificationModalOpen(false)
+          setSelectedVerificationType(null)
+        }}
+        assessmentId={assessment.id}
+        athleteName={userName}
+        preselectedType={selectedVerificationType}
+        onSuccess={() => {
+          // Could refresh verifications here
         }}
       />
     </div>
