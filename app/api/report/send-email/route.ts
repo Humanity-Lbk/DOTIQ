@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail, generateReportEmailHtml } from '@/lib/email'
-import { jsPDF } from 'jspdf'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { categories, type Category } from '@/lib/assessment-data'
 
 interface AIReport {
@@ -32,304 +32,419 @@ interface AIReport {
   coachTalkingPoints?: string[]
 }
 
-function generatePDF(
+const PRIMARY_COLOR = rgb(0.96, 0.65, 0.14) // #f5a623
+const TEXT_COLOR = rgb(0.2, 0.2, 0.2)
+const MUTED_COLOR = rgb(0.5, 0.5, 0.5)
+const SUCCESS_COLOR = rgb(0.2, 0.83, 0.6)
+const DANGER_COLOR = rgb(0.98, 0.44, 0.52)
+
+async function generatePDF(
   report: AIReport, 
   scores: Record<string, number>, 
   overallScore: number, 
   userName: string
-): Buffer {
-  const doc = new jsPDF()
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const margin = 20
+): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create()
+  const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  
+  const pageWidth = 612 // Letter size
+  const pageHeight = 792
+  const margin = 50
   const contentWidth = pageWidth - margin * 2
-  let y = 20
+  
+  let page = pdfDoc.addPage([pageWidth, pageHeight])
+  let y = pageHeight - margin
 
-  // Helper to add page break if needed
+  // Helper to add new page
+  const addNewPage = () => {
+    page = pdfDoc.addPage([pageWidth, pageHeight])
+    y = pageHeight - margin
+  }
+
+  // Helper to check page break
   const checkPageBreak = (neededSpace: number) => {
-    if (y + neededSpace > 270) {
-      doc.addPage()
-      y = 20
+    if (y - neededSpace < margin + 30) {
+      addNewPage()
     }
   }
 
-  // Helper to wrap text
-  const addWrappedText = (text: string, fontSize: number, maxWidth: number): number => {
-    doc.setFontSize(fontSize)
-    const lines = doc.splitTextToSize(text, maxWidth)
-    const lineHeight = fontSize * 0.5
-    lines.forEach((line: string) => {
+  // Helper to wrap and draw text
+  const drawWrappedText = (text: string, x: number, fontSize: number, maxWidth: number, font = helvetica, color = TEXT_COLOR) => {
+    const words = text.split(' ')
+    let line = ''
+    const lines: string[] = []
+    
+    for (const word of words) {
+      const testLine = line + (line ? ' ' : '') + word
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize)
+      
+      if (testWidth > maxWidth && line) {
+        lines.push(line)
+        line = word
+      } else {
+        line = testLine
+      }
+    }
+    if (line) lines.push(line)
+    
+    const lineHeight = fontSize * 1.4
+    for (const l of lines) {
       checkPageBreak(lineHeight)
-      doc.text(line, margin, y)
-      y += lineHeight
-    })
+      page.drawText(l, { x, y, size: fontSize, font, color })
+      y -= lineHeight
+    }
+    
     return lines.length * lineHeight
   }
 
-  // Header
-  doc.setFillColor(245, 166, 35) // Primary color
-  doc.rect(0, 0, pageWidth, 40, 'F')
-  
-  doc.setTextColor(0, 0, 0)
-  doc.setFontSize(24)
-  doc.setFont('helvetica', 'bold')
-  doc.text('DOTIQ', margin, 25)
-  
-  doc.setFontSize(12)
-  doc.setFont('helvetica', 'normal')
-  doc.text('Athletic Performance Intelligence Report', margin, 33)
-  
-  y = 55
-
-  // Athlete Info & Score
-  doc.setTextColor(50, 50, 50)
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'bold')
-  doc.text(`Report for: ${userName}`, margin, y)
-  y += 8
-  
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, margin, y)
-  y += 15
-
-  // Overall Score Box
-  doc.setFillColor(245, 166, 35)
-  doc.roundedRect(margin, y, 60, 30, 3, 3, 'F')
-  doc.setTextColor(0, 0, 0)
-  doc.setFontSize(24)
-  doc.setFont('helvetica', 'bold')
-  doc.text(overallScore.toFixed(1), margin + 10, y + 20)
-  doc.setFontSize(10)
-  doc.text('/ 10', margin + 38, y + 20)
-  
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'normal')
-  doc.text('DOTIQ SCORE', margin + 10, y + 8)
-  
-  y += 40
-
-  // Pillar Scores
-  doc.setTextColor(50, 50, 50)
-  doc.setFontSize(12)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Pillar Scores', margin, y)
-  y += 10
-
-  const pillarColors: Record<string, [number, number, number]> = {
-    discipline: [245, 166, 35],
-    ownership: [52, 211, 153],
-    toughness: [251, 113, 133],
-    sportsiq: [34, 211, 238],
-  }
-
-  Object.keys(scores).forEach((pillar) => {
-    const score = scores[pillar]
-    const color = pillarColors[pillar] || [100, 100, 100]
-    
-    doc.setFillColor(...color)
-    doc.roundedRect(margin, y, 8, 8, 1, 1, 'F')
-    
-    doc.setTextColor(50, 50, 50)
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'normal')
-    doc.text(`${categories[pillar as Category]?.name || pillar}: ${score.toFixed(1)}`, margin + 12, y + 6)
-    y += 12
+  // Header background
+  page.drawRectangle({
+    x: 0,
+    y: pageHeight - 80,
+    width: pageWidth,
+    height: 80,
+    color: PRIMARY_COLOR,
   })
 
-  y += 10
+  // Title
+  page.drawText('DOTIQ', {
+    x: margin,
+    y: pageHeight - 45,
+    size: 28,
+    font: helveticaBold,
+    color: rgb(0, 0, 0),
+  })
+
+  page.drawText('Athletic Performance Intelligence Report', {
+    x: margin,
+    y: pageHeight - 65,
+    size: 12,
+    font: helvetica,
+    color: rgb(0, 0, 0),
+  })
+
+  y = pageHeight - 110
+
+  // Athlete name and date
+  page.drawText(`Report for: ${userName}`, {
+    x: margin,
+    y,
+    size: 14,
+    font: helveticaBold,
+    color: TEXT_COLOR,
+  })
+  y -= 20
+
+  page.drawText(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, {
+    x: margin,
+    y,
+    size: 10,
+    font: helvetica,
+    color: MUTED_COLOR,
+  })
+  y -= 35
+
+  // Overall Score Box
+  page.drawRectangle({
+    x: margin,
+    y: y - 45,
+    width: 100,
+    height: 50,
+    color: PRIMARY_COLOR,
+    borderRadius: 5,
+  })
+
+  page.drawText('DOTIQ SCORE', {
+    x: margin + 10,
+    y: y - 15,
+    size: 8,
+    font: helvetica,
+    color: rgb(0, 0, 0),
+  })
+
+  page.drawText(overallScore.toFixed(1), {
+    x: margin + 15,
+    y: y - 40,
+    size: 24,
+    font: helveticaBold,
+    color: rgb(0, 0, 0),
+  })
+
+  page.drawText('/ 10', {
+    x: margin + 60,
+    y: y - 40,
+    size: 12,
+    font: helvetica,
+    color: rgb(0, 0, 0),
+  })
+
+  y -= 70
+
+  // Pillar Scores
+  page.drawText('Pillar Scores', {
+    x: margin,
+    y,
+    size: 14,
+    font: helveticaBold,
+    color: TEXT_COLOR,
+  })
+  y -= 20
+
+  const pillarRgbColors: Record<string, ReturnType<typeof rgb>> = {
+    discipline: PRIMARY_COLOR,
+    ownership: SUCCESS_COLOR,
+    toughness: DANGER_COLOR,
+    sportsiq: rgb(0.13, 0.83, 0.93),
+  }
+
+  for (const pillar of Object.keys(scores)) {
+    const score = scores[pillar]
+    const color = pillarRgbColors[pillar] || MUTED_COLOR
+    
+    page.drawRectangle({
+      x: margin,
+      y: y - 8,
+      width: 10,
+      height: 10,
+      color,
+    })
+
+    page.drawText(`${categories[pillar as Category]?.name || pillar}: ${score.toFixed(1)}`, {
+      x: margin + 16,
+      y: y - 6,
+      size: 11,
+      font: helvetica,
+      color: TEXT_COLOR,
+    })
+    y -= 18
+  }
+
+  y -= 20
 
   // Executive Summary
-  checkPageBreak(40)
-  doc.setTextColor(50, 50, 50)
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Executive Summary', margin, y)
-  y += 8
-  
-  doc.setFont('helvetica', 'normal')
-  addWrappedText(report.executiveSummary, 10, contentWidth)
-  y += 10
+  checkPageBreak(60)
+  page.drawText('Executive Summary', {
+    x: margin,
+    y,
+    size: 16,
+    font: helveticaBold,
+    color: TEXT_COLOR,
+  })
+  y -= 20
+
+  drawWrappedText(report.executiveSummary, margin, 11, contentWidth)
+  y -= 15
 
   // Mindset Profile
   if (report.mindsetProfile) {
-    checkPageBreak(40)
-    doc.setFontSize(14)
-    doc.setFont('helvetica', 'bold')
-    doc.text('Your Mindset Profile', margin, y)
-    y += 8
-    
-    doc.setFont('helvetica', 'normal')
-    addWrappedText(report.mindsetProfile, 10, contentWidth)
-    y += 10
+    checkPageBreak(60)
+    page.drawText('Your Mindset Profile', {
+      x: margin,
+      y,
+      size: 16,
+      font: helveticaBold,
+      color: TEXT_COLOR,
+    })
+    y -= 20
+
+    drawWrappedText(report.mindsetProfile, margin, 11, contentWidth)
+    y -= 15
   }
 
   // Pillar Analysis
-  (Object.keys(report.pillars) as Category[]).forEach((pillar) => {
+  for (const pillar of Object.keys(report.pillars) as Category[]) {
     const pillarData = report.pillars[pillar]
-    const color = pillarColors[pillar] || [100, 100, 100]
-    
-    checkPageBreak(60)
-    
+    const color = pillarRgbColors[pillar] || MUTED_COLOR
+    const pillarScore = scores[pillar]
+
+    checkPageBreak(100)
+
     // Pillar header
-    doc.setFillColor(...color)
-    doc.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F')
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(12)
-    doc.setFont('helvetica', 'bold')
-    doc.text(`${categories[pillar]?.name || pillar} - ${scores[pillar]?.toFixed(1) || 'N/A'}`, margin + 5, y + 8)
-    y += 18
-    
+    page.drawRectangle({
+      x: margin,
+      y: y - 18,
+      width: contentWidth,
+      height: 25,
+      color,
+    })
+
+    page.drawText(`${categories[pillar]?.name || pillar} - ${pillarScore?.toFixed(1) || 'N/A'}`, {
+      x: margin + 10,
+      y: y - 12,
+      size: 13,
+      font: helveticaBold,
+      color: rgb(1, 1, 1),
+    })
+    y -= 35
+
     // Interpretation
-    doc.setTextColor(50, 50, 50)
-    doc.setFont('helvetica', 'normal')
-    addWrappedText(pillarData.interpretation, 10, contentWidth)
-    y += 5
-    
+    drawWrappedText(pillarData.interpretation, margin, 10, contentWidth)
+    y -= 10
+
     // Strengths
-    checkPageBreak(30)
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(52, 211, 153)
-    doc.text('Strengths:', margin, y)
-    y += 6
-    
-    doc.setTextColor(50, 50, 50)
-    doc.setFont('helvetica', 'normal')
-    pillarData.strengths.forEach((strength) => {
-      checkPageBreak(10)
-      doc.text(`• ${strength}`, margin + 5, y)
-      const lines = doc.splitTextToSize(strength, contentWidth - 10)
-      y += lines.length * 5 + 2
+    checkPageBreak(40)
+    page.drawText('Strengths:', {
+      x: margin,
+      y,
+      size: 12,
+      font: helveticaBold,
+      color: SUCCESS_COLOR,
     })
-    y += 3
-    
+    y -= 16
+
+    for (const strength of pillarData.strengths) {
+      checkPageBreak(20)
+      page.drawText('•', { x: margin + 5, y, size: 10, font: helvetica, color: SUCCESS_COLOR })
+      drawWrappedText(strength, margin + 18, 10, contentWidth - 18)
+    }
+    y -= 8
+
     // Improvements
-    checkPageBreak(30)
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(251, 113, 133)
-    doc.text('Growth Areas:', margin, y)
-    y += 6
-    
-    doc.setTextColor(50, 50, 50)
-    doc.setFont('helvetica', 'normal')
-    pillarData.improvements.forEach((improvement) => {
-      checkPageBreak(10)
-      doc.text(`• ${improvement}`, margin + 5, y)
-      const lines = doc.splitTextToSize(improvement, contentWidth - 10)
-      y += lines.length * 5 + 2
+    checkPageBreak(40)
+    page.drawText('Growth Areas:', {
+      x: margin,
+      y,
+      size: 12,
+      font: helveticaBold,
+      color: DANGER_COLOR,
     })
-    y += 3
-    
+    y -= 16
+
+    for (const improvement of pillarData.improvements) {
+      checkPageBreak(20)
+      page.drawText('•', { x: margin + 5, y, size: 10, font: helvetica, color: DANGER_COLOR })
+      drawWrappedText(improvement, margin + 18, 10, contentWidth - 18)
+    }
+    y -= 8
+
     // Recommendations
-    checkPageBreak(30)
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(50, 50, 50)
-    doc.text('Recommendations:', margin, y)
-    y += 6
-    
-    doc.setFont('helvetica', 'normal')
+    checkPageBreak(40)
+    page.drawText('Recommendations:', {
+      x: margin,
+      y,
+      size: 12,
+      font: helveticaBold,
+      color: TEXT_COLOR,
+    })
+    y -= 16
+
     pillarData.recommendations.forEach((rec, i) => {
-      checkPageBreak(10)
-      doc.text(`${i + 1}. ${rec}`, margin + 5, y)
-      const lines = doc.splitTextToSize(rec, contentWidth - 15)
-      y += lines.length * 5 + 2
+      checkPageBreak(20)
+      page.drawText(`${i + 1}.`, { x: margin + 5, y, size: 10, font: helveticaBold, color: TEXT_COLOR })
+      drawWrappedText(rec, margin + 22, 10, contentWidth - 22)
     })
-    y += 10
-  })
-
-  // Action Plan
-  checkPageBreak(50)
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(50, 50, 50)
-  doc.text("This Week's Action Plan", margin, y)
-  y += 10
-  
-  doc.setFontSize(11)
-  doc.setFont('helvetica', 'bold')
-  doc.text(`1. ${report.actionPlan.habit1.title}`, margin, y)
-  y += 6
-  doc.setFont('helvetica', 'normal')
-  addWrappedText(report.actionPlan.habit1.description, 10, contentWidth - 10)
-  y += 5
-  
-  doc.setFont('helvetica', 'bold')
-  doc.text(`2. ${report.actionPlan.habit2.title}`, margin, y)
-  y += 6
-  doc.setFont('helvetica', 'normal')
-  addWrappedText(report.actionPlan.habit2.description, 10, contentWidth - 10)
-  y += 10
-
-  // Reset Script
-  checkPageBreak(50)
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Your 5-Second Reset Script', margin, y)
-  y += 10
-  
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Breath:', margin, y)
-  doc.setFont('helvetica', 'normal')
-  doc.text(report.resetScript.breath, margin + 20, y)
-  y += 6
-  
-  doc.setFont('helvetica', 'bold')
-  doc.text('Body:', margin, y)
-  doc.setFont('helvetica', 'normal')
-  doc.text(report.resetScript.body, margin + 20, y)
-  y += 6
-  
-  doc.setFont('helvetica', 'bold')
-  doc.text('Words:', margin, y)
-  doc.setFont('helvetica', 'normal')
-  doc.text(report.resetScript.words, margin + 20, y)
-  y += 6
-  
-  doc.setFont('helvetica', 'bold')
-  doc.text('Task:', margin, y)
-  doc.setFont('helvetica', 'normal')
-  doc.text(report.resetScript.task, margin + 20, y)
-  y += 15
-
-  // Journal Prompts
-  checkPageBreak(60)
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'bold')
-  doc.text('7-Day Journal Prompts', margin, y)
-  y += 10
-  
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  report.selfCheckPrompts.forEach((prompt, i) => {
-    checkPageBreak(15)
-    const lines = doc.splitTextToSize(`${i + 1}. ${prompt}`, contentWidth)
-    lines.forEach((line: string) => {
-      doc.text(line, margin, y)
-      y += 5
-    })
-    y += 2
-  })
-
-  // Footer on last page
-  const pageCount = doc.internal.pages.length - 1
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i)
-    doc.setFontSize(8)
-    doc.setTextColor(150, 150, 150)
-    doc.text(
-      `DOTIQ Report - Page ${i} of ${pageCount}`,
-      pageWidth / 2,
-      285,
-      { align: 'center' }
-    )
+    y -= 20
   }
 
-  // Convert to buffer
-  const arrayBuffer = doc.output('arraybuffer')
-  return Buffer.from(arrayBuffer)
+  // Action Plan
+  checkPageBreak(80)
+  page.drawText("This Week's Action Plan", {
+    x: margin,
+    y,
+    size: 16,
+    font: helveticaBold,
+    color: TEXT_COLOR,
+  })
+  y -= 25
+
+  page.drawText(`1. ${report.actionPlan.habit1.title}`, {
+    x: margin,
+    y,
+    size: 12,
+    font: helveticaBold,
+    color: TEXT_COLOR,
+  })
+  y -= 16
+  drawWrappedText(report.actionPlan.habit1.description, margin + 10, 10, contentWidth - 10)
+  y -= 10
+
+  page.drawText(`2. ${report.actionPlan.habit2.title}`, {
+    x: margin,
+    y,
+    size: 12,
+    font: helveticaBold,
+    color: TEXT_COLOR,
+  })
+  y -= 16
+  drawWrappedText(report.actionPlan.habit2.description, margin + 10, 10, contentWidth - 10)
+  y -= 20
+
+  // Reset Script
+  checkPageBreak(80)
+  page.drawText('Your 5-Second Reset Script', {
+    x: margin,
+    y,
+    size: 16,
+    font: helveticaBold,
+    color: TEXT_COLOR,
+  })
+  y -= 25
+
+  const scriptItems = [
+    { label: 'Breath:', value: report.resetScript.breath },
+    { label: 'Body:', value: report.resetScript.body },
+    { label: 'Words:', value: report.resetScript.words },
+    { label: 'Task:', value: report.resetScript.task },
+  ]
+
+  for (const item of scriptItems) {
+    checkPageBreak(20)
+    page.drawText(item.label, {
+      x: margin,
+      y,
+      size: 10,
+      font: helveticaBold,
+      color: TEXT_COLOR,
+    })
+    page.drawText(item.value, {
+      x: margin + 45,
+      y,
+      size: 10,
+      font: helvetica,
+      color: TEXT_COLOR,
+    })
+    y -= 16
+  }
+  y -= 15
+
+  // Journal Prompts
+  checkPageBreak(100)
+  page.drawText('7-Day Journal Prompts', {
+    x: margin,
+    y,
+    size: 16,
+    font: helveticaBold,
+    color: TEXT_COLOR,
+  })
+  y -= 25
+
+  report.selfCheckPrompts.forEach((prompt, i) => {
+    checkPageBreak(30)
+    page.drawText(`${i + 1}.`, {
+      x: margin,
+      y,
+      size: 10,
+      font: helveticaBold,
+      color: TEXT_COLOR,
+    })
+    drawWrappedText(prompt, margin + 18, 10, contentWidth - 18)
+    y -= 5
+  })
+
+  // Add page numbers to all pages
+  const pages = pdfDoc.getPages()
+  pages.forEach((p, i) => {
+    p.drawText(`DOTIQ Report - Page ${i + 1} of ${pages.length}`, {
+      x: pageWidth / 2 - 50,
+      y: 25,
+      size: 8,
+      font: helvetica,
+      color: MUTED_COLOR,
+    })
+  })
+
+  return pdfDoc.save()
 }
 
 export async function POST(request: Request) {
@@ -386,7 +501,8 @@ export async function POST(request: Request) {
     const recipientEmail = email || user.email
     
     // Generate PDF
-    const pdfBuffer = generatePDF(report, scores, overallScore, userName)
+    const pdfBytes = await generatePDF(report, scores, overallScore, userName)
+    const pdfBuffer = Buffer.from(pdfBytes)
     
     // Build report URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dotiq.com'
