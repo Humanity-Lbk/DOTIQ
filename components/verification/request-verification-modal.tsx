@@ -13,13 +13,12 @@ interface RequestVerificationModalProps {
   preselectedType?: EvaluatorType | null
 }
 
-export type EvaluatorType = "coach" | "parent" | "peer" | "mentor"
+export type EvaluatorType = "coach" | "parent" | "peer"
 
 const evaluatorTypes: { type: EvaluatorType; label: string; description: string; icon: React.ReactNode }[] = [
   { type: "coach", label: "Coach", description: "Your current or former coach", icon: <Users className="w-5 h-5" /> },
   { type: "parent", label: "Parent", description: "A parent or guardian", icon: <User className="w-5 h-5" /> },
   { type: "peer", label: "Peer", description: "A teammate or fellow athlete", icon: <Users className="w-5 h-5" /> },
-  { type: "mentor", label: "Mentor", description: "A trainer or advisor", icon: <User className="w-5 h-5" /> },
 ]
 
 export function RequestVerificationModal({ 
