@@ -40,43 +40,65 @@ interface TimeEntry {
 function generateUserFriendlyTitle(message: string, category: string): string {
   const raw = message.split('\n')[0].trim().toLowerCase()
   
-  // Handle merge commits - these are system updates
+  // Handle merge commits - these are releases
   if (raw.startsWith('merge pull request') || raw.startsWith('merge branch')) {
-    return 'System Update'
+    const prMatch = raw.match(/#(\d+)/)
+    return prMatch ? `Release #${prMatch[1]}` : 'Release Update'
   }
   
-  // Map technical terms to user-friendly titles based on content
+  // Highly specific title mappings
   const mappings: Array<{ patterns: RegExp[], title: string }> = [
-    // Authentication & Security
-    { patterns: [/auth/i, /login/i, /sign.?in/i, /sign.?out/i, /password/i], title: 'Authentication Improvements' },
-    { patterns: [/security/i, /rls/i, /permission/i, /access control/i], title: 'Security Enhancements' },
+    // DOTIQ-specific features
+    { patterns: [/dotiq.*score/i, /overall.*score/i], title: 'DOTIQ Score Enhancement' },
+    { patterns: [/pillar.*order/i], title: 'Pillar Display Order' },
+    { patterns: [/discipline/i], title: 'Discipline Pillar Update' },
+    { patterns: [/ownership/i], title: 'Ownership Pillar Update' },
+    { patterns: [/toughness/i], title: 'Toughness Pillar Update' },
+    { patterns: [/sports.?iq/i], title: 'Sports IQ Pillar Update' },
+    { patterns: [/verification.*modal/i, /request.*verification/i], title: 'Verification Request System' },
+    { patterns: [/coach.*eval|peer.*eval|parent.*eval/i], title: 'Third-Party Evaluations' },
+    { patterns: [/report.*generat/i], title: 'AI Report Generation' },
+    { patterns: [/full.*report/i], title: 'Full Report Enhancement' },
+    { patterns: [/preview.*report/i], title: 'Report Preview Update' },
+    { patterns: [/strength|growth.*area/i], title: 'Strengths & Growth Analysis' },
+    { patterns: [/action.*item/i], title: 'Action Items Feature' },
+    { patterns: [/journal.*prompt/i], title: 'Journal Prompts' },
+    { patterns: [/5.?second.*reset/i], title: '5-Second Reset Tool' },
+    
+    // Assessment flow
+    { patterns: [/assessment.*question/i], title: 'Assessment Questions' },
+    { patterns: [/quick.?fill/i], title: 'Quick Fill Testing Tool' },
+    { patterns: [/assessment.*complet/i], title: 'Assessment Completion Flow' },
+    
+    // Authentication
+    { patterns: [/login.*flow/i, /sign.?in.*flow/i], title: 'Login Experience' },
+    { patterns: [/auth.*redirect/i], title: 'Authentication Routing' },
+    { patterns: [/session|token/i], title: 'Session Management' },
+    
+    // Email & PDF
+    { patterns: [/email.*pdf/i, /pdf.*email/i], title: 'PDF Email Delivery' },
+    { patterns: [/smtp/i], title: 'Email Configuration' },
+    { patterns: [/pdf.*generat/i], title: 'PDF Generation' },
     
     // UI/Visual
-    { patterns: [/color/i, /theme/i, /dark mode/i, /light mode/i, /lightness/i], title: 'Visual Theme Update' },
-    { patterns: [/text visibility/i, /readability/i, /contrast/i], title: 'Improved Readability' },
-    { patterns: [/layout/i, /responsive/i, /mobile/i], title: 'Layout Improvements' },
-    { patterns: [/button/i, /click/i, /hover/i, /dropdown/i], title: 'Interface Enhancements' },
-    { patterns: [/avatar/i, /profile/i, /user menu/i], title: 'Profile Updates' },
-    { patterns: [/header/i, /nav/i, /menu/i, /sidebar/i], title: 'Navigation Updates' },
+    { patterns: [/color|theme/i], title: 'Visual Theme' },
+    { patterns: [/mobile|responsive/i], title: 'Mobile Experience' },
+    { patterns: [/loading|spinner/i], title: 'Loading States' },
+    { patterns: [/animation|transition/i], title: 'UI Animations' },
+    { patterns: [/modal|dialog/i], title: 'Modal Interactions' },
+    { patterns: [/header|navbar/i], title: 'Header & Navigation' },
+    { patterns: [/sidebar/i], title: 'Sidebar Navigation' },
+    { patterns: [/dashboard/i], title: 'Dashboard' },
     
-    // Features
-    { patterns: [/dashboard/i], title: 'Dashboard Improvements' },
-    { patterns: [/video/i, /media/i, /stream/i], title: 'Video Content Updates' },
-    { patterns: [/apparel/i, /shop/i, /store/i, /product/i], title: 'Shop Updates' },
-    { patterns: [/premium/i, /subscription/i, /upgrade/i], title: 'Premium Features' },
-    { patterns: [/program/i, /course/i, /training/i], title: 'Training Program Updates' },
-    { patterns: [/assessment/i, /score/i, /evaluation/i], title: 'Assessment Updates' },
-    { patterns: [/request/i, /ticket/i, /feedback/i], title: 'Feedback System' },
-    { patterns: [/change.?log/i, /time.?log/i, /history/i], title: 'Activity Log Updates' },
-    { patterns: [/upload/i, /image/i, /file/i, /attachment/i], title: 'File Handling Improvements' },
-    { patterns: [/email/i, /notification/i, /alert/i], title: 'Notification Updates' },
+    // Admin
+    { patterns: [/admin.*tool/i, /super.?admin/i], title: 'Admin Tools' },
+    { patterns: [/client.*update|change.?log/i], title: 'Change Log System' },
+    { patterns: [/import.*github/i], title: 'GitHub Integration' },
     
-    // Technical (mapped to friendly terms)
-    { patterns: [/jsx/i, /component/i, /render/i], title: 'Display Fix' },
-    { patterns: [/api/i, /endpoint/i, /route/i], title: 'Performance Improvements' },
-    { patterns: [/database/i, /table/i, /schema/i, /migration/i], title: 'Data Structure Updates' },
-    { patterns: [/title/i, /description/i, /generator/i, /clarity/i], title: 'Content Improvements' },
-    { patterns: [/pr description/i, /summary/i], title: 'Documentation Updates' },
+    // Technical
+    { patterns: [/api.*error|error.*handl/i], title: 'Error Handling' },
+    { patterns: [/cache|performance/i], title: 'Performance Optimization' },
+    { patterns: [/database|query/i], title: 'Database Optimization' },
   ]
   
   // Find matching pattern
@@ -86,49 +108,68 @@ function generateUserFriendlyTitle(message: string, category: string): string {
     }
   }
   
-  // Fallback based on category
+  // Smarter fallback based on category
   switch (category) {
-    case 'Bug Fix': return 'Bug Fix'
-    case 'UI/Style': return 'Interface Update'
-    case 'Refactor': return 'Performance Improvement'
-    case 'Feature': return 'New Feature'
-    default: return 'System Update'
+    case 'Bug Fix': return 'Stability Fix'
+    case 'UI/Style': return 'Visual Polish'
+    case 'Refactor': return 'Code Optimization'
+    case 'Feature': return 'New Capability'
+    default: return 'Platform Update'
   }
 }
 
 function generateUserFriendlyDescription(message: string, category: string): string {
   const raw = message.split('\n')[0].trim().toLowerCase()
   
-  // Handle merge commits
+  // Handle merge commits - extract PR number/branch info if possible
   if (raw.startsWith('merge pull request') || raw.startsWith('merge branch')) {
-    return 'Applied the latest improvements and bug fixes to keep your experience smooth and up-to-date.'
+    const prMatch = raw.match(/#(\d+)/)
+    if (prMatch) {
+      return `Merged PR #${prMatch[1]} with improvements and fixes based on testing feedback.`
+    }
+    return 'Integrated tested changes from the development branch into production.'
   }
   
-  // Generate contextual descriptions based on content
+  // Generate highly specific descriptions based on content
   const descMappings: Array<{ patterns: RegExp[], desc: string }> = [
+    // Assessment specific
+    { patterns: [/assessment.*score/i, /score.*calculation/i], desc: 'Refined how your DOTIQ score is calculated for more accurate insights.' },
+    { patterns: [/assessment.*question/i, /question.*order/i], desc: 'Optimized the assessment question flow for a smoother experience.' },
+    { patterns: [/report.*generat/i, /ai.*report/i], desc: 'Enhanced AI-powered report generation for deeper, more personalized analysis.' },
+    { patterns: [/pillar/i, /discipline|ownership|toughness|sports.?iq/i], desc: 'Improved how pillar scores are displayed and analyzed in your report.' },
+    { patterns: [/verification/i, /coach.*eval/i, /peer.*eval/i], desc: 'Added third-party verification to strengthen report credibility.' },
+    
     // Authentication
-    { patterns: [/auth/i, /login/i, /sign.?in/i], desc: 'Improved the sign-in experience for faster and more secure access.' },
+    { patterns: [/auth.*flow/i, /login.*redirect/i], desc: 'Streamlined the login flow to get you to your dashboard faster.' },
+    { patterns: [/session/i, /token/i], desc: 'Improved session handling for more reliable access across devices.' },
+    { patterns: [/password/i, /reset/i], desc: 'Enhanced password security and recovery options.' },
     
-    // Visual
-    { patterns: [/color/i, /theme/i, /lightness/i], desc: 'Adjusted colors and visual styling for a better viewing experience.' },
-    { patterns: [/text visibility/i, /readability/i, /contrast/i], desc: 'Made text easier to read across the application.' },
-    { patterns: [/layout/i, /responsive/i], desc: 'Improved how content displays on different screen sizes.' },
-    { patterns: [/button/i, /hover/i, /dropdown/i, /click/i], desc: 'Enhanced interactive elements for smoother navigation.' },
-    { patterns: [/header/i, /nav/i, /menu/i], desc: 'Updated navigation for easier access to key features.' },
+    // Visual & UI
+    { patterns: [/color.*scheme/i, /theme.*update/i], desc: 'Updated the color palette to improve visual clarity and reduce eye strain.' },
+    { patterns: [/mobile/i, /responsive/i], desc: 'Improved mobile layout so your experience is consistent on any device.' },
+    { patterns: [/loading/i, /spinner/i], desc: 'Added smoother loading transitions throughout the app.' },
+    { patterns: [/animation/i, /transition/i], desc: 'Polished micro-animations for a more premium feel.' },
+    { patterns: [/modal/i, /dialog/i, /popup/i], desc: 'Refined modal interactions for better usability.' },
     
-    // Features
-    { patterns: [/dashboard/i], desc: 'Enhanced your personal dashboard with new insights and features.' },
-    { patterns: [/video/i, /media/i], desc: 'Improved video content delivery and playback experience.' },
-    { patterns: [/premium/i, /subscription/i], desc: 'Added new premium features and content for members.' },
-    { patterns: [/program/i, /training/i], desc: 'Enhanced training programs for better athlete development.' },
-    { patterns: [/request/i, /ticket/i, /feedback/i], desc: 'Improved the feedback and support system.' },
-    { patterns: [/change.?log/i, /time.?log/i], desc: 'Updated how activity and changes are tracked and displayed.' },
-    { patterns: [/upload/i, /image/i, /file/i], desc: 'Improved file upload handling for better reliability.' },
+    // Email & notifications
+    { patterns: [/email.*pdf/i, /send.*report/i], desc: 'Improved report email delivery with better PDF formatting.' },
+    { patterns: [/smtp/i, /email.*config/i], desc: 'Enhanced email delivery reliability for faster report sharing.' },
+    { patterns: [/notification/i], desc: 'Updated notification system to keep you informed of important updates.' },
     
-    // Technical fixes
-    { patterns: [/jsx/i, /component/i, /mismatch/i], desc: 'Fixed a display issue to ensure content renders correctly.' },
-    { patterns: [/api/i, /endpoint/i], desc: 'Improved backend performance for faster load times.' },
-    { patterns: [/generator/i, /clarity/i, /title/i], desc: 'Improved how updates are described for better clarity.' },
+    // Dashboard & navigation
+    { patterns: [/dashboard.*stat/i, /metric/i], desc: 'Added new metrics to your dashboard for deeper performance insights.' },
+    { patterns: [/sidebar/i, /nav.*menu/i], desc: 'Reorganized navigation for quicker access to key features.' },
+    { patterns: [/header/i, /sticky/i], desc: 'Improved header behavior for easier navigation while scrolling.' },
+    
+    // Data & performance
+    { patterns: [/cache/i, /performance/i], desc: 'Optimized data caching for faster page loads.' },
+    { patterns: [/database/i, /query/i], desc: 'Improved database queries for snappier response times.' },
+    { patterns: [/api.*error/i, /error.*handling/i], desc: 'Enhanced error handling for more graceful recovery from issues.' },
+    
+    // Admin features
+    { patterns: [/admin/i, /super.?admin/i], desc: 'Added admin tools for better platform management.' },
+    { patterns: [/quick.?fill/i, /test.*mode/i], desc: 'Added testing tools to accelerate development and QA.' },
+    { patterns: [/import.*github/i, /commit/i], desc: 'Improved development tracking and changelog automation.' },
   ]
   
   // Find matching description
@@ -138,13 +179,13 @@ function generateUserFriendlyDescription(message: string, category: string): str
     }
   }
   
-  // Fallback descriptions
+  // More specific fallback descriptions
   switch (category) {
-    case 'Bug Fix': return 'Fixed an issue to improve stability and reliability.'
-    case 'UI/Style': return 'Made visual improvements to enhance your experience.'
-    case 'Refactor': return 'Optimized performance for a smoother experience.'
-    case 'Feature': return 'Added new functionality to improve your workflow.'
-    default: return 'Applied updates to keep everything running smoothly.'
+    case 'Bug Fix': return 'Squashed a bug that was affecting app stability or user experience.'
+    case 'UI/Style': return 'Polished visual elements for a cleaner, more professional look.'
+    case 'Refactor': return 'Restructured code for better performance and maintainability.'
+    case 'Feature': return 'Shipped a new capability to enhance your DOTIQ experience.'
+    default: return 'Applied behind-the-scenes improvements for better reliability.'
   }
 }
 
@@ -283,16 +324,31 @@ export async function POST(request: NextRequest) {
         const commit = sortedCommits[i]
         if (!existingShas.has(commit.fullSha)) {
           // Calculate hours based on delta from previous commit
-          let hours = 1 // Default 1 hour for first commit or fallback
+          // Much more conservative: typical commits take 5-30 minutes
+          let hours = 0.25 // Default 15 min for first commit
           if (i > 0) {
             const prevTime = new Date(sortedCommits[i - 1].date).getTime()
             const currTime = new Date(commit.date).getTime()
-            const deltaHours = (currTime - prevTime) / (1000 * 60 * 60)
-            // Cap at 3 hours max (avoid overnight gaps)
-            hours = Math.min(Math.max(deltaHours, 0.25), 3)
-            // Round to nearest 0.25
-            hours = Math.round(hours * 4) / 4
+            const deltaMinutes = (currTime - prevTime) / (1000 * 60)
+            
+            // More realistic time estimation:
+            // - < 5 min between commits = 0.1 hr (quick fix)
+            // - 5-15 min = 0.25 hr 
+            // - 15-45 min = 0.5 hr
+            // - 45+ min = cap at 0.75 hr max (longer gaps are likely breaks)
+            if (deltaMinutes < 5) {
+              hours = 0.1
+            } else if (deltaMinutes < 15) {
+              hours = 0.25
+            } else if (deltaMinutes < 45) {
+              hours = 0.5
+            } else {
+              hours = 0.75 // Cap - longer gaps are breaks, not work
+            }
           }
+
+          // Round to nearest 0.05
+          hours = Math.round(hours * 20) / 20
 
           const success = await addTimeEntry({
             id: `commit-${commit.fullSha}`,

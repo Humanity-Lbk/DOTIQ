@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import Header from '@/components/header'
 import { Suspense } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { LayoutDashboard, FileText, ClipboardList, History, LogOut, ChevronRight, RefreshCw } from 'lucide-react'
 
 interface TimeEntry {
   id: string
@@ -20,6 +22,11 @@ interface TimeEntry {
 
 type Role = 'user' | 'admin' | 'super_admin'
 
+interface Profile {
+  full_name: string | null
+  role: Role
+}
+
 function ClientUpdatesContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -29,6 +36,7 @@ function ClientUpdatesContent() {
 
   const [user, setUser] = useState<User | null>(null)
   const [role, setRole] = useState<Role | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [viewMode, setViewMode] = useState<'internal' | 'external'>('external')
   const [authLoading, setAuthLoading] = useState(true)
 
@@ -62,13 +70,14 @@ function ClientUpdatesContent() {
 
       setUser(user)
 
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
-        .select('role')
+        .select('full_name, role')
         .eq('id', user.id)
         .single()
 
-      const userRole = profile?.role as Role || 'user'
+      setProfile(profileData)
+      const userRole = profileData?.role as Role || 'user'
       
       if (userRole !== 'admin' && userRole !== 'super_admin') {
         router.push('/dashboard')
@@ -185,33 +194,151 @@ function ClientUpdatesContent() {
   }
 
   const isInternal = role === 'super_admin' && viewMode === 'internal'
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User'
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/assessments', label: 'My Assessments', icon: FileText },
+    { href: '/assessment', label: 'Take Assessment', icon: ClipboardList },
+  ]
+
+  const adminNavItems = [
+    { href: '/requests', label: 'Requests & Tickets', icon: FileText },
+    { href: '/client-updates', label: 'Change Log', icon: History, active: true },
+  ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background flex">
+      {/* Left Sidebar */}
+      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border flex flex-col z-50">
+        {/* Logo */}
+        <div className="h-16 flex items-center px-6 border-b border-border">
+          <Link href="/dashboard">
+            <Image 
+              src="/logo.png" 
+              alt="DOTIQ" 
+              width={120} 
+              height={40} 
+              className="h-8 w-auto invert brightness-0"
+              priority
+            />
+          </Link>
+        </div>
 
-      {/* Grid background */}
-      <div className="fixed inset-0 grid-subtle pointer-events-none" />
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </Link>
+          ))}
 
-      <main className="relative max-w-4xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-full">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs text-muted-foreground font-medium">Live Updates</span>
+          {(role === 'admin' || role === 'super_admin') && (
+            <>
+              <div className="pt-4 pb-2">
+                <p className="px-3 text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider">Admin</p>
+              </div>
+              {adminNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    item.active 
+                      ? 'bg-primary/10 text-primary font-medium' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                  {item.active && <ChevronRight className="w-4 h-4 ml-auto" />}
+                </Link>
+              ))}
+              {role === 'super_admin' && (
+                <Link
+                  href="/client-updates?view=internal"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    isInternal 
+                      ? 'bg-primary/10 text-primary font-medium' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  <History className="w-4 h-4" />
+                  Internal View
+                  <span className="ml-auto text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono">DEV</span>
+                </Link>
+              )}
+            </>
+          )}
+        </nav>
+
+        {/* User section */}
+        <div className="p-3 border-t border-border">
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center">
+              {displayName.charAt(0).toUpperCase()}
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground capitalize">{role || 'User'}</p>
+            </div>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors mt-1"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="flex-1 ml-64">
+        {/* Sticky Header */}
+        <header className="sticky top-0 z-40 h-16 bg-background/95 backdrop-blur-md border-b border-border flex items-center justify-between px-8">
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-bold">Change Log</h1>
             {isInternal && (
-              <span className="px-3 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-medium rounded-full">
-                Internal View
+              <span className="px-2 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-medium rounded-full">
+                Internal
               </span>
             )}
           </div>
-          <h1 className="text-4xl font-black tracking-tight mb-2">What we&apos;ve been building</h1>
-          <p className="text-muted-foreground text-lg">
-            Real-time development progress. Every feature, fix, and improvement.
-          </p>
-        </div>
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1.5 bg-muted hover:bg-muted/80 border border-border rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </header>
+
+        {/* Grid background */}
+        <div className="fixed inset-0 ml-64 grid-subtle pointer-events-none" />
+
+        <main className="relative max-w-4xl mx-auto px-8 py-8">
+          {/* Hero section */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs text-muted-foreground font-medium">Live Updates</span>
+            </div>
+            <h2 className="text-3xl font-black tracking-tight mb-2">What we&apos;ve been building</h2>
+            <p className="text-muted-foreground">
+              Real-time development progress. Every feature, fix, and improvement.
+            </p>
+          </div>
 
         {/* GitHub Error */}
         {githubError && isInternal && (
@@ -220,28 +347,22 @@ function ClientUpdatesContent() {
           </div>
         )}
 
-        {/* Stats Card */}
-        <div className="mb-10 p-8 bg-card/50 backdrop-blur-sm border border-border rounded-2xl">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Total Development Time</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-black text-primary">{totalHours.toFixed(0)}</span>
-                <span className="text-xl text-muted-foreground">hours</span>
+          {/* Stats Card */}
+          <div className="mb-8 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-2xl">
+            <div className="flex items-end justify-between gap-6">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">Total Development Time</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-primary">{totalHours.toFixed(1)}</span>
+                  <span className="text-lg text-muted-foreground">hours</span>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                {timeLog.length} updates shipped
-              </p>
+              <div className="text-right">
+                <p className="text-2xl font-bold">{timeLog.length}</p>
+                <p className="text-xs text-muted-foreground">updates shipped</p>
+              </div>
             </div>
-            <button
-              onClick={fetchData}
-              disabled={loading}
-              className="px-4 py-2 bg-muted hover:bg-muted/80 border border-border rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
           </div>
-        </div>
 
         {/* Internal Tools */}
         {isInternal && (
@@ -357,7 +478,8 @@ function ClientUpdatesContent() {
             })
           )}
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
