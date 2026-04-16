@@ -2,10 +2,10 @@ import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
 // Routes that require authentication
-const protectedRoutes = ['/assessment', '/dashboard', '/report']
+const protectedRoutes = ['/assessment', '/assessments', '/dashboard', '/report']
 
 // Routes exempt from the site-wide password gate
-const gateExemptRoutes = ['/coming-soon', '/api/gate-auth', '/_next', '/favicon']
+const gateExemptRoutes = ['/coming-soon', '/api/gate-auth', '/_next', '/favicon', '/api']
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
@@ -18,6 +18,12 @@ export async function middleware(request: NextRequest) {
       const gateUrl = new URL('/coming-soon', request.url)
       return NextResponse.redirect(gateUrl)
     }
+  }
+
+  // Skip auth check for non-protected routes to improve performance
+  const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
+  if (!isProtectedRoute) {
+    return NextResponse.next()
   }
 
   let supabaseResponse = NextResponse.next({ request })
@@ -48,9 +54,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
-
-  if (isProtectedRoute && !user) {
+  if (!user) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('redirect', path)
     const redirectResponse = NextResponse.redirect(loginUrl)
