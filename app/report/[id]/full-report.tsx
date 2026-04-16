@@ -76,15 +76,94 @@ const pillarBgs: Record<Category, string> = {
   sportsiq: 'bg-cyan-400/15 border-cyan-400/30',
 }
 
-function ScoreRing({ score, size = 160, strokeWidth = 10 }: { score: number; size?: number; strokeWidth?: number }) {
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const percentage = (score / 10) * 100
-  const offset = circumference - (percentage / 100) * circumference
+// Animated number counter hook
+function useAnimatedNumber(target: number, duration: number = 1500, delay: number = 0) {
+  const [value, setValue] = useState(0)
+  const [started, setStarted] = useState(false)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setStarted(true), delay)
+    return () => clearTimeout(timer)
+  }, [delay])
+  
+  useEffect(() => {
+    if (!started) return
+    
+    const startTime = Date.now()
+    const startValue = 0
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      
+      // Ease out cubic
+      const easeOut = 1 - Math.pow(1 - progress, 3)
+      const current = startValue + (target - startValue) * easeOut
+      
+      setValue(current)
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      }
+    }
+    
+    requestAnimationFrame(animate)
+  }, [target, duration, started])
+  
+  return value
+}
+
+// Animated progress bar component
+function AnimatedProgressBar({ 
+  value, 
+  max = 10, 
+  color, 
+  delay = 0 
+}: { 
+  value: number
+  max?: number
+  color: string
+  delay?: number 
+}) {
+  const [width, setWidth] = useState(0)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setWidth((value / max) * 100)
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [value, max, delay])
   
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg className="transform -rotate-90" width={size} height={size}>
+    <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+      <div 
+        className={`h-full ${color} rounded-full transition-all duration-1000 ease-out`}
+        style={{ width: `${width}%` }}
+      />
+    </div>
+  )
+}
+
+function ScoreRing({ score, size = 160, strokeWidth = 10, delay = 0 }: { score: number; size?: number; strokeWidth?: number; delay?: number }) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = radius * 2 * Math.PI
+  const animatedScore = useAnimatedNumber(score, 1500, delay)
+  const [animatedOffset, setAnimatedOffset] = useState(circumference)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const percentage = (score / 10) * 100
+      setAnimatedOffset(circumference - (percentage / 100) * circumference)
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [score, circumference, delay])
+  
+  return (
+    <div className="relative group" style={{ width: size, height: size }}>
+      {/* Glow effect on hover */}
+      <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      
+      <svg className="transform -rotate-90 relative z-10" width={size} height={size}>
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -103,8 +182,8 @@ function ScoreRing({ score, size = 160, strokeWidth = 10 }: { score: number; siz
           fill="none"
           strokeLinecap="round"
           strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
+          strokeDashoffset={animatedOffset}
+          className="transition-all duration-[1500ms] ease-out"
         />
         <defs>
           <linearGradient id="scoreGradientFull" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -113,8 +192,8 @@ function ScoreRing({ score, size = 160, strokeWidth = 10 }: { score: number; siz
           </linearGradient>
         </defs>
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-black">{score.toFixed(1)}</span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+        <span className="text-5xl font-black transition-transform duration-300 group-hover:scale-110">{animatedScore.toFixed(1)}</span>
         <span className="text-xs text-muted-foreground font-medium">/ 10</span>
       </div>
     </div>
@@ -331,27 +410,36 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       <section className="max-w-5xl mx-auto px-6 py-8">
         <h2 className="text-xl font-bold mb-6">Pillar Breakdown</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {(Object.keys(scores) as Category[]).map((category) => {
+          {(Object.keys(scores) as Category[]).map((category, index) => {
             const score = scores[category]
             const letter = category === 'sportsiq' ? 'IQ' : category.charAt(0).toUpperCase()
+            const animatedScore = useAnimatedNumber(score, 1200, 300 + index * 150)
             
             return (
-              <div key={category} className={`p-5 rounded-2xl border ${pillarBgs[category]}`}>
+              <div 
+                key={category} 
+                className={`p-5 rounded-2xl border ${pillarBgs[category]} transition-all duration-500 hover:scale-[1.02] hover:shadow-lg cursor-pointer group ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                style={{ transitionDelay: `${index * 100}ms` }}
+                onClick={() => {
+                  // Scroll to pillar section
+                  const element = document.getElementById(`pillar-${category}`)
+                  element?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }}
+              >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-lg shadow-lg`}>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-lg shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
                     {letter}
                   </div>
                   <div>
                     <p className="font-semibold">{categories[category].name}</p>
-                    <p className="text-2xl font-black">{score.toFixed(1)}</p>
+                    <p className="text-2xl font-black">{animatedScore.toFixed(1)}</p>
                   </div>
                 </div>
-                <div className="h-2 bg-background/50 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full bg-gradient-to-r ${pillarColors[category]}`}
-                    style={{ width: `${(score / 10) * 100}%` }}
-                  />
-                </div>
+                <AnimatedProgressBar 
+                  value={score} 
+                  color={`bg-gradient-to-r ${pillarColors[category]}`}
+                  delay={500 + index * 150}
+                />
               </div>
             )
           })}
@@ -391,11 +479,18 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
               return 'Processes information quickly under time constraints...'
             }
             
+            const categoryIndex = (Object.keys(scores) as Category[]).indexOf(category)
+            
             return (
-              <div key={category} className="bg-card border border-border rounded-2xl overflow-hidden">
+              <div 
+                key={category} 
+                id={`pillar-${category}`}
+                className={`bg-card border border-border rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-lg ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                style={{ transitionDelay: `${categoryIndex * 100}ms` }}
+              >
                 <div className={`p-5 ${pillarBgs[category]}`}>
                   <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-xl shadow-lg`}>
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-xl shadow-lg transition-transform duration-300 hover:scale-110`}>
                       {letter}
                     </div>
                     <div className="flex-1">
@@ -505,16 +600,17 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
             
             return (
               <div 
-                key={category} 
-                className={`bg-card border border-border rounded-2xl overflow-hidden transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                key={category}
+                id={`pillar-${category}`}
+                className={`bg-card border border-border rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-xl ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                 style={{ transitionDelay: `${categoryIndex * 150}ms` }}
               >
                 <button 
                   onClick={() => setExpandedPillars(prev => ({ ...prev, [category]: !prev[category] }))}
-                  className={`w-full p-5 ${isExpanded ? 'border-b' : ''} ${pillarBgs[category]} transition-all duration-300 hover:brightness-110`}
+                  className={`w-full p-5 ${isExpanded ? 'border-b border-border' : ''} ${pillarBgs[category]} transition-all duration-300 hover:brightness-110`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-xl shadow-lg transition-transform duration-300 ${isExpanded ? 'scale-100' : 'scale-95'}`}>
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${pillarColors[category]} flex items-center justify-center text-white font-black text-xl shadow-lg transition-all duration-500 ${isExpanded ? 'scale-100 rotate-0' : 'scale-90 -rotate-6'}`}>
                       {letter}
                     </div>
                     <div className="flex-1 text-left">
