@@ -56,7 +56,7 @@ export default function ComingSoonPage() {
 
       if (res.ok) {
         setRevealed(true)
-        setTimeout(() => router.push('/dashboard'), 1800)
+        setTimeout(() => router.push('/'), 1800)
       } else {
         setError('ACCESS DENIED — incorrect passphrase')
         setPassword('')
