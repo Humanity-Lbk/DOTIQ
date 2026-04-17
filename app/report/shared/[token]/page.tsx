@@ -2,14 +2,15 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import SharedReportView from './shared-report-view'
 
-export async function generateMetadata({ params }: { params: { token: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {
   return {
     title: 'DOTIQ Assessment Report - Shared',
     description: 'View a shared DOTIQ athletic performance assessment report.',
   }
 }
 
-export default async function SharedReportPage({ params }: { params: { token: string } }) {
+export default async function SharedReportPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
   const supabase = await createClient()
 
   try {
@@ -33,7 +34,7 @@ export default async function SharedReportPage({ params }: { params: { token: st
           )
         )
       `)
-      .eq('share_token', params.token)
+      .eq('share_token', token)
       .single()
 
     if (shareError || !shareRecord) {

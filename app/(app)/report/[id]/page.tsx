@@ -3,11 +3,11 @@ import { redirect, notFound } from 'next/navigation'
 import { FullReport } from '@/app/report/[id]/full-report'
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function ReportPage({ params }: PageProps) {
-  const { id } = params
+  const { id } = await params
   const supabase = await createClient()
 
   const {

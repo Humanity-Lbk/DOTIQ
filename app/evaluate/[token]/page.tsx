@@ -3,11 +3,11 @@ import { notFound } from 'next/navigation'
 import { EvaluationForm } from './evaluation-form'
 
 interface PageProps {
-  params: { token: string }
+  params: Promise<{ token: string }>
 }
 
 export default async function EvaluatePage({ params }: PageProps) {
-  const { token } = params
+  const { token } = await params
   const supabase = await createClient()
   
   // Get verification request by token

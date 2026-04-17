@@ -375,14 +375,33 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
                   Get detailed analysis and personalized development plans.
                 </p>
               </div>
-              <button
-                onClick={() => setShowPurchaseModal(true)}
-                disabled={isGuest || !assessmentId}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:brightness-110 transition-all disabled:opacity-50"
-              >
-                Unlock for $9.99
-                <span>→</span>
-              </button>
+              {saveStatus === 'saving' ? (
+                <div className="flex items-center gap-2 px-6 py-3 bg-muted rounded-lg text-sm text-muted-foreground">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Saving assessment...
+                </div>
+              ) : saveStatus === 'error' ? (
+                <div className="space-y-2 text-center">
+                  <p className="text-xs text-destructive">Save failed — please refresh and try again</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-muted text-sm rounded-lg hover:bg-muted/80 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : isGuest ? (
+                <p className="text-xs text-muted-foreground">Sign in to unlock your full report</p>
+              ) : (
+                <button
+                  onClick={() => setShowPurchaseModal(true)}
+                  disabled={!assessmentId}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Unlock for $9.99
+                  <span>→</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
