@@ -244,8 +244,9 @@ function ClientUpdatesContent() {
           </div>
         )}
 
+        {/* Summary KPIs */}
         <div className="mb-8 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-2xl">
-          <div className="flex items-end justify-between gap-6">
+          <div className="flex items-end justify-between gap-6 mb-6">
             <div>
               <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">Total Development Time</p>
               <div className="flex items-baseline gap-2">
@@ -258,6 +259,30 @@ function ClientUpdatesContent() {
               <p className="text-xs text-muted-foreground">updates shipped</p>
             </div>
           </div>
+
+          {/* Type breakdown */}
+          {timeLog.length > 0 && (() => {
+            const counts = timeLog.reduce<Record<string, number>>((acc, e) => {
+              acc[e.category] = (acc[e.category] || 0) + 1
+              return acc
+            }, {})
+            const kpis = [
+              { label: 'Features', key: 'Feature', color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/30' },
+              { label: 'Bug Fixes', key: 'Bug Fix', color: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-400/30' },
+              { label: 'UI/Style', key: 'UI/Style', color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/30' },
+              { label: 'Refactors', key: 'Refactor', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30' },
+            ]
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-border">
+                {kpis.map(({ label, key, color, bg, border }) => (
+                  <div key={key} className={`p-3 ${bg} border ${border} rounded-xl text-center`}>
+                    <p className={`text-2xl font-black ${color}`}>{counts[key] || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
         </div>
 
         {isInternal && (
@@ -348,14 +373,24 @@ function ClientUpdatesContent() {
                         </span>
                       </div>
                       <h3 className={`font-semibold mb-1 ${colors.text}`}>{entry.title}</h3>
-                      <p className="text-sm text-muted-foreground/80 line-clamp-2">{entry.description}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-3">
-                        {new Date(entry.date).toLocaleDateString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
+                      <p className="text-sm text-muted-foreground/80 leading-relaxed">{entry.description}</p>
+                      <div className="flex items-center gap-3 mt-3 flex-wrap">
+                        <p className="text-xs text-muted-foreground/70">
+                          {new Date(entry.date).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        {isInternal && entry.commitSha && (
+                          <span className="font-mono text-[10px] text-muted-foreground/50 bg-muted/30 px-2 py-0.5 rounded">
+                            {entry.commitSha.slice(0, 7)}
+                          </span>
+                        )}
+                        {entry.type === 'manual' && isInternal && (
+                          <span className="text-[10px] text-muted-foreground/50 px-2 py-0.5 bg-muted/30 rounded">manual</span>
+                        )}
+                      </div>
                     </div>
                     {isInternal && (
                       <div className="text-right shrink-0">

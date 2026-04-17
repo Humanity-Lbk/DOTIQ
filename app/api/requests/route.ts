@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email'
 
 export async function GET() {
   const supabase = await createClient()
@@ -85,13 +87,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Get all super admins for notification
-  const { data: superAdmins } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .eq('role', 'super_admin')
-
-  // Send email notification to super admins
   const typeLabels: Record<string, string> = {
     feature: 'Feature Request',
     change: 'Change Request',
@@ -99,15 +94,77 @@ export async function POST(request: NextRequest) {
     error: 'Error Ticket',
   }
 
-  // Log notification (in production, integrate with email service)
-  console.log(`[DOTIQ] New ${typeLabels[type]} from ${profile.full_name || user.email}:`)
-  console.log(`Title: ${title}`)
-  console.log(`Description: ${description}`)
-  console.log(`Super admins to notify: ${superAdmins?.map(a => a.full_name).join(', ')}`)
+  const typeColors: Record<string, string> = {
+    feature: '#f5a623',
+    change: '#22d3ee',
+    bug: '#fb7185',
+    error: '#ef4444',
+  }
 
-  return NextResponse.json({ 
+  // Get super admin IDs then resolve emails via admin client
+  const { data: superAdminProfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .eq('role', 'super_admin')
+
+  let superAdminEmails: { id: string; full_name: string | null; email: string }[] = []
+  if (superAdminProfiles && superAdminProfiles.length > 0) {
+    try {
+      const adminClient = createAdminClient()
+      const emailResults = await Promise.all(
+        superAdminProfiles.map(async (p) => {
+          const { data } = await adminClient.auth.admin.getUserById(p.id)
+          return { id: p.id, full_name: p.full_name, email: data.user?.email ?? '' }
+        })
+      )
+      superAdminEmails = emailResults.filter((e) => !!e.email)
+    } catch {
+      // Admin client unavailable — skip email notifications
+    }
+  }
+
+  // Send email to each super admin
+  if (superAdminEmails.length > 0) {
+    const submitterName = profile.full_name || user.email || 'Unknown'
+    const color = typeColors[type] || '#f5a623'
+    const label = typeLabels[type] || 'Request'
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin:0;padding:0;background:#0a0a0a;font-family:system-ui,sans-serif;color:#e5e5e5;">
+        <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+          <div style="margin-bottom:24px;">
+            <span style="font-family:monospace;font-size:11px;color:${color};">DOTIQ · NEW ${label.toUpperCase()}</span>
+          </div>
+          <h1 style="font-size:22px;font-weight:900;margin:0 0 8px;color:#fff;">${title}</h1>
+          <div style="display:inline-block;padding:4px 10px;background:${color}22;border:1px solid ${color}66;border-radius:99px;font-size:11px;font-weight:700;color:${color};margin-bottom:20px;">${label}</div>
+          <div style="background:#111;border:1px solid #222;border-radius:12px;padding:16px;margin-bottom:20px;">
+            <p style="margin:0;font-size:14px;color:#aaa;line-height:1.6;">${description.replace(/\n/g, '<br>')}</p>
+          </div>
+          <p style="font-size:12px;color:#666;margin:0;">Submitted by <strong style="color:#999;">${submitterName}</strong></p>
+          <div style="margin-top:24px;padding-top:20px;border-top:1px solid #222;">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://dotiq.com'}/requests" style="display:inline-block;padding:10px 20px;background:${color};color:#000;font-weight:700;font-size:13px;border-radius:8px;text-decoration:none;">View in App →</a>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+
+    await Promise.allSettled(
+      superAdminEmails.map((admin) =>
+          sendEmail({
+            to: admin.email,
+            subject: `[DOTIQ] New ${label}: ${title}`,
+            html: emailHtml,
+          })
+        )
+    )
+  }
+
+  return NextResponse.json({
     request: newRequest,
-    message: 'Request submitted successfully'
+    message: 'Request submitted successfully',
   })
 }
 

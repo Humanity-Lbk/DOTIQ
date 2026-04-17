@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 type RequestType = 'feature' | 'change' | 'bug' | 'error'
 type RequestStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
@@ -43,7 +44,6 @@ export default function RequestsPage() {
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
 
   const [type, setType] = useState<RequestType>('feature')
   const [title, setTitle] = useState('')
@@ -87,6 +87,32 @@ export default function RequestsPage() {
     setRole(profile.role)
     await fetchRequests()
     setLoading(false)
+
+    // Realtime: notify super_admins of incoming requests
+    if (profile.role === 'super_admin' && supabase) {
+      const channel = supabase
+        .channel('requests-notifications')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'requests' },
+          (payload) => {
+            const req = payload.new as { type: string; title: string }
+            const labels: Record<string, string> = {
+              feature: 'Feature Request',
+              change: 'Change Request',
+              bug: 'Bug Report',
+              error: 'Error Ticket',
+            }
+            toast(`New ${labels[req.type] || 'Request'}: ${req.title}`, {
+              description: 'A new request was just submitted.',
+              duration: 6000,
+            })
+            fetchRequests()
+          }
+        )
+        .subscribe()
+      return () => { supabase.removeChannel(channel) }
+    }
   }
 
   async function fetchRequests() {
@@ -153,15 +179,13 @@ export default function RequestsPage() {
         throw new Error(data.error || 'Failed to submit')
       }
 
-      setSuccess(true)
+      toast.success('Request submitted successfully')
       setTitle('')
       setDescription('')
       setAttachments([])
       setType('feature')
       setShowForm(false)
       await fetchRequests()
-
-      setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit')
     } finally {
@@ -197,13 +221,6 @@ export default function RequestsPage() {
       <div className="fixed inset-0 grid-subtle pointer-events-none" />
 
       <main className="relative max-w-4xl mx-auto px-6 md:px-8 lg:px-12 py-10 md:py-12">
-        {/* Success Toast */}
-        {success && (
-          <div className="fixed top-6 right-6 z-50 px-4 py-3 bg-primary text-primary-foreground rounded-lg shadow-lg animate-slide-up">
-            Request submitted successfully
-          </div>
-        )}
-
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-4">
