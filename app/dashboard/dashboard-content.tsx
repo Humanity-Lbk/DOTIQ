@@ -216,9 +216,8 @@ export function DashboardContent({ user, profile, latestAssessment, verification
                   : latestAssessment.overall_score
 
                 return (
-                  <Link
-                    href={`/report/${latestAssessment.id}`}
-                    className="block p-6 bg-card/50 backdrop-blur-sm border-2 border-primary/40 rounded-2xl transition-all duration-200 hover:bg-card/70 cursor-pointer"
+                  <div
+                    className="p-6 bg-card/50 backdrop-blur-sm border-2 border-primary/40 rounded-2xl transition-all duration-200 hover:bg-card/70"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start gap-5">
                       <div className="shrink-0">
@@ -297,12 +296,15 @@ export function DashboardContent({ user, profile, latestAssessment, verification
 
                       <div className="flex sm:flex-col gap-2 shrink-0">
                         {latestAssessment.purchased_at ? (
-                          <span className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
+                          <Link
+                            href={`/report/${latestAssessment.id}`}
+                            className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap text-center"
+                          >
                             View Report
-                          </span>
+                          </Link>
                         ) : (
                           <button
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openPurchaseModal(latestAssessment.id, displayScore); }}
+                            onClick={() => openPurchaseModal(latestAssessment.id, displayScore)}
                             className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
                           >
                             Unlock Report
@@ -310,7 +312,7 @@ export function DashboardContent({ user, profile, latestAssessment, verification
                         )}
                         {!latestAssessment.is_verified && (
                           <button
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openVerificationModal(latestAssessment.id); }}
+                            onClick={() => openVerificationModal(latestAssessment.id)}
                             className="px-4 py-2 bg-muted hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
                           >
                             Get Verified
@@ -345,13 +347,12 @@ export function DashboardContent({ user, profile, latestAssessment, verification
                     <div className="mt-4 pt-4 border-t border-border flex justify-end">
                       <Link
                         href="/assessments"
-                        onClick={(e) => e.stopPropagation()}
                         className="text-xs text-muted-foreground hover:text-primary transition-colors"
                       >
                         View all assessments →
                       </Link>
                     </div>
-                  </Link>
+                  </div>
                 )
               })()}
             </section>
