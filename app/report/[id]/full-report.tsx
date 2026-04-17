@@ -283,9 +283,9 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   return (
     <div className="min-h-screen bg-background flex">
       <AppSidebar />
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-64 flex flex-col items-center">
       {/* Hero Header */}
-      <header className="relative overflow-hidden">
+      <header className="relative overflow-hidden w-full">
         {/* Animated background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
@@ -329,9 +329,6 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
                   {copied ? 'Copied!' : 'Share'}
                 </button>
               )}
-              <Link href="/dashboard" className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Dashboard
-              </Link>
             </div>
           </nav>
           

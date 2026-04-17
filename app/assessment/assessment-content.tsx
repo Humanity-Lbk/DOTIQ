@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { Assessment } from "@/components/assessment/assessment"
 import { useAssessmentStore } from "@/lib/assessment-store"
 import { PreviewReport } from "@/components/assessment/preview-report"
@@ -45,6 +46,19 @@ export function AssessmentContent({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Back button for logged-in users */}
+      {!isGuest && (
+        <div className="absolute top-6 left-6 z-50">
+          <Link 
+            href="/dashboard"
+            className="flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-full text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+        </div>
+      )}
+
       {/* Grid background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div

@@ -161,7 +161,7 @@ export function DashboardContent({ user, profile, assessments, verifications, su
       {/* Grid background */}
       <div className="fixed inset-0 ml-64 grid-subtle pointer-events-none" />
 
-      <main className="relative max-w-5xl mx-auto px-6 py-12">
+      <main className="relative max-w-5xl mx-auto px-8 lg:px-12 py-12">
         {/* Welcome */}
         <section className="mb-10">
           <div className="flex items-center gap-3 mb-4">
