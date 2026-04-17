@@ -1,11 +1,12 @@
 "use client"
 
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import useSWR from "swr"
+import { fetchUserAndProfile, type Profile, USER_PROFILE_CACHE_KEY } from "@/lib/auth/user-profile"
 import {
   LayoutDashboard,
   ClipboardList,
@@ -16,34 +17,13 @@ import {
   ChevronRight,
 } from "lucide-react"
 
-interface Profile {
-  full_name: string | null
-  role: "user" | "admin" | "super_admin"
-}
-
-// Singleton supabase client for sidebar
-const supabase = createClient()
-
-// SWR fetcher for user + profile - cached globally
-async function fetchUserAndProfile() {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { user: null, profile: null }
-  
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("id", user.id)
-    .single()
-  
-  return { user, profile }
-}
-
-export default function AppSidebar() {
+export default function AppSidebar({ variant = "fixed" }: { variant?: "fixed" | "sheet" }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [isInternalActive, setIsInternalActive] = useState(false)
   
   // SWR caches this globally - won't refetch on every page navigation
-  const { data, mutate } = useSWR("sidebar-user", fetchUserAndProfile, {
+  const { data, mutate } = useSWR(USER_PROFILE_CACHE_KEY, fetchUserAndProfile, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     dedupingInterval: 60000, // 1 minute deduplication
@@ -53,7 +33,10 @@ export default function AppSidebar() {
   const profile = data?.profile as Profile | null
 
   const handleSignOut = useCallback(async () => {
-    await supabase.auth.signOut()
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+    }
     mutate({ user: null, profile: null }, false) // Clear cache immediately
     router.push("/")
     router.refresh()
@@ -78,8 +61,19 @@ export default function AppSidebar() {
     { href: "/client-updates", label: "Change Log", icon: History },
   ], [])
 
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const view = new URLSearchParams(window.location.search).get("view")
+    setIsInternalActive(pathname === "/client-updates" && view === "internal")
+  }, [pathname])
+
+  const asideClassName =
+    variant === "fixed"
+      ? "fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border flex flex-col z-50 will-change-transform"
+      : "h-full w-full bg-card border-r border-border flex flex-col"
+
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border flex flex-col z-50 will-change-transform">
+    <aside className={asideClassName}>
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-border shrink-0">
         <Link href="/dashboard" className="transition-opacity hover:opacity-80">
@@ -141,7 +135,7 @@ export default function AppSidebar() {
                 href="/client-updates?view=internal"
                 prefetch={true}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
-                  pathname === "/client-updates" && typeof window !== "undefined" && window.location.search.includes("internal")
+                  isInternalActive
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}

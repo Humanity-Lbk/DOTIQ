@@ -1,17 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { DashboardContent } from './dashboard-content'
+import { DashboardContent } from '@/app/dashboard/dashboard-content'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  
-  // Get current user
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
   if (userError || !user) {
     redirect('/auth/login')
   }
-  
-  // Fetch profile, assessments, and submitted evaluations in parallel
+
   const [{ data: profile }, { data: assessments }, { data: submittedEvaluations }] = await Promise.all([
     supabase.from('profiles').select('*, role').eq('id', user.id).single(),
     supabase
@@ -27,15 +29,14 @@ export default async function DashboardPage() {
       .order('completed_at', { ascending: false }),
   ])
 
-  // Get verification requests for user's assessments (needs assessmentIds from above)
-  const assessmentIds = assessments?.map(a => a.id) || []
+  const assessmentIds = assessments?.map((a) => a.id) || []
   const { data: verifications } = await supabase
     .from('verification_requests')
     .select('*')
     .in('assessment_id', assessmentIds.length > 0 ? assessmentIds : ['none'])
-  
+
   return (
-    <DashboardContent 
+    <DashboardContent
       user={user}
       profile={profile}
       assessments={assessments || []}
@@ -44,3 +45,4 @@ export default async function DashboardPage() {
     />
   )
 }
+

@@ -3,33 +3,32 @@
 import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import AppSidebar from '@/components/app-sidebar'
 import Checkout from '@/components/checkout'
 import { PRODUCTS } from '@/lib/products'
 
 const features = [
-  { 
+  {
     num: '01',
     label: 'ANALYSIS',
-    title: 'Detailed Pillar Breakdown', 
+    title: 'Detailed Pillar Breakdown',
     desc: 'Deep dive into each DOTIQ pillar with specific insights and sub-scores.',
   },
-  { 
+  {
     num: '02',
     label: 'ACTION',
-    title: 'Personalized Action Plan', 
+    title: 'Personalized Action Plan',
     desc: 'Weekly focus areas, reset scripts, and growth targets tailored to you.',
   },
-  { 
+  {
     num: '03',
     label: 'RESOURCES',
-    title: 'Development Materials', 
+    title: 'Development Materials',
     desc: 'Guides, exercises, and tools to support your development journey.',
   },
-  { 
+  {
     num: '04',
     label: 'ACCESS',
-    title: '30-Day Full Access', 
+    title: '30-Day Full Access',
     desc: 'Complete access to your results, reports, and resources.',
   },
 ]
@@ -47,15 +46,14 @@ export default function PurchasePage() {
 
   const handlePaymentComplete = useCallback(async () => {
     setIsProcessing(true)
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1500))
     router.push('/dashboard')
   }, [router])
 
   if (showCheckout) {
     return (
-      <div className="min-h-screen bg-background grid-pattern flex">
-        <AppSidebar />
-        <main className="flex-1 ml-64 px-6 py-12">
+      <div className="min-h-screen bg-background grid-pattern">
+        <main className="px-6 py-12">
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => setShowCheckout(false)}
@@ -64,7 +62,7 @@ export default function PurchasePage() {
               <span>←</span>
               Back to details
             </button>
-            
+
             <div className="text-center mb-8 space-y-2">
               <p className="font-mono text-xs text-muted-foreground tracking-widest">{'>> CHECKOUT'}</p>
               <h1 className="text-3xl font-black">Complete Your Purchase</h1>
@@ -78,10 +76,7 @@ export default function PurchasePage() {
                 <p className="text-muted-foreground text-sm mt-1">Unlocking your full report...</p>
               </div>
             ) : (
-              <Checkout 
-                productId={product.id} 
-                onComplete={handlePaymentComplete}
-              />
+              <Checkout productId={product.id} onComplete={handlePaymentComplete} />
             )}
           </div>
         </main>
@@ -90,21 +85,32 @@ export default function PurchasePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex grid-pattern">
-      <AppSidebar />
-      
-      <main className="flex-1 ml-64">
+    <div className="min-h-screen bg-background grid-pattern">
+      <main>
         {/* Hero */}
         <section className="py-20 px-6 border-b border-border">
           <div className="max-w-4xl mx-auto space-y-6">
-            <p className={`font-mono text-xs text-muted-foreground tracking-widest transition-all duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <p
+              className={`font-mono text-xs text-muted-foreground tracking-widest transition-all duration-700 ${
+                mounted ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
               {'>> PRODUCT: FULL_REPORT_ACCESS'}
             </p>
-            <h1 className={`text-5xl md:text-6xl font-black leading-tight transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              Unlock Your Complete<br />
+            <h1
+              className={`text-5xl md:text-6xl font-black leading-tight transition-all duration-1000 ${
+                mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+            >
+              Unlock Your Complete
+              <br />
               <span className="text-primary">DOTIQ Analysis</span>
             </h1>
-            <p className={`text-xl text-muted-foreground max-w-2xl transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <p
+              className={`text-xl text-muted-foreground max-w-2xl transition-all duration-700 delay-200 ${
+                mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+            >
               Get detailed insights, personalized action plans, and development resources based on your assessment results.
             </p>
           </div>
@@ -116,12 +122,10 @@ export default function PurchasePage() {
             {/* Features */}
             <div className="lg:col-span-3 space-y-8">
               <div className="space-y-2">
-                <p className="font-mono text-xs text-muted-foreground tracking-widest">
-                  {'>> PACKAGE_CONTENTS'}
-                </p>
+                <p className="font-mono text-xs text-muted-foreground tracking-widest">{'>> PACKAGE_CONTENTS'}</p>
                 <h2 className="text-2xl font-black">What&apos;s Included</h2>
               </div>
-              
+
               <div className="grid sm:grid-cols-2 gap-4">
                 {features.map((feature, i) => (
                   <div
@@ -131,7 +135,10 @@ export default function PurchasePage() {
                   >
                     <div className="flex items-baseline gap-2">
                       <span className="text-xl font-black text-primary">{feature.num}</span>
-                      <span className="font-mono text-[10px] text-muted-foreground">// {feature.label}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {'// '}
+                        {feature.label}
+                      </span>
                     </div>
                     <h3 className="font-bold">{feature.title}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
@@ -142,7 +149,8 @@ export default function PurchasePage() {
               {/* Quote */}
               <div className="py-8 border-t border-border">
                 <blockquote className="text-lg italic text-muted-foreground">
-                  &quot;Most training focuses on what an athlete can DO. <span className="text-foreground font-medium">We develop who an athlete IS.</span>&quot;
+                  &quot;Most training focuses on what an athlete can DO.{' '}
+                  <span className="text-foreground font-medium">We develop who an athlete IS.</span>&quot;
                 </blockquote>
               </div>
             </div>
@@ -154,12 +162,12 @@ export default function PurchasePage() {
                   <p className="font-mono text-[10px] text-muted-foreground tracking-widest">{'>> PRICING'}</p>
                   <h2 className="font-bold">{product.name}</h2>
                 </div>
-                
+
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black">
-                    ${(product.priceInCents / 100).toFixed(0)}
+                  <span className="text-5xl font-black">${(product.priceInCents / 100).toFixed(0)}</span>
+                  <span className="text-muted-foreground">
+                    .{String(product.priceInCents % 100).padStart(2, '0')}
                   </span>
-                  <span className="text-muted-foreground">.{String(product.priceInCents % 100).padStart(2, '0')}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">One-time payment</p>
 
@@ -171,16 +179,14 @@ export default function PurchasePage() {
                 </button>
 
                 <div className="space-y-2 pt-4 border-t border-border">
-                  {[
-                    'Instant access after payment',
-                    'Secure checkout via Stripe',
-                    '30-day access to full report',
-                  ].map((item) => (
-                    <div key={item} className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
+                  {['Instant access after payment', 'Secure checkout via Stripe', '30-day access to full report'].map(
+                    (item) => (
+                      <div key={item} className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                        <span>{item}</span>
+                      </div>
+                    ),
+                  )}
                 </div>
 
                 <p className="text-xs text-center text-muted-foreground pt-4 border-t border-border">
@@ -194,19 +200,7 @@ export default function PurchasePage() {
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="font-bold text-sm tracking-wider">DOTIQ</span>
-          </div>
-          <p className="font-mono text-xs text-muted-foreground">
-            D · O · T · IQ
-          </p>
-        </div>
-      </footer>
     </div>
   )
 }
+

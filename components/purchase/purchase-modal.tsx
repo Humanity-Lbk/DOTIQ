@@ -8,6 +8,7 @@ import {
   EmbeddedCheckoutProvider,
 } from "@stripe/react-stripe-js"
 import { startReportCheckoutSession, completeReportPurchase } from "@/app/actions/stripe"
+import { useRouter } from "next/navigation"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -56,6 +57,7 @@ export function PurchaseModal({
   userEmail,
   onPurchaseComplete 
 }: PurchaseModalProps) {
+  const router = useRouter()
   const [step, setStep] = useState<"overview" | "checkout" | "processing" | "complete">("overview")
   const [email, setEmail] = useState(userEmail || "")
   const [error, setError] = useState<string | null>(null)
@@ -312,7 +314,7 @@ export function PurchaseModal({
               <button
                 onClick={() => {
                   onClose()
-                  window.location.reload()
+                  router.refresh()
                 }}
                 className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors"
               >

@@ -8,10 +8,14 @@ const REPO_NAME = 'DOTIQ'
 // Internal password for adding manual time entries
 const INTERNAL_PASSWORD = 'dotiq-internal-2026'
 
-// Supabase admin client for time_log table
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Supabase admin env vars are not configured')
+  }
+  return createClient(supabaseUrl, supabaseServiceKey)
+}
 
 // In-memory cache for commits only (not time log)
 let cachedCommits: Commit[] = []
@@ -236,37 +240,49 @@ async function fetchCommitsFromGitHub(): Promise<{ commits: Commit[], error?: st
 }
 
 async function getTimeLog(): Promise<TimeEntry[]> {
-  const { data, error } = await supabase
-    .from('time_log')
-    .select('*')
-    .order('date', { ascending: false })
+  try {
+    const supabase = getSupabaseAdmin()
+    const { data, error } = await supabase
+      .from('time_log')
+      .select('*')
+      .order('date', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching time log:', error)
+    if (error) {
+      console.error('Error fetching time log:', error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error('Error initializing Supabase admin client:', error)
     return []
   }
-
-  return data || []
 }
 
 async function addTimeEntry(entry: TimeEntry): Promise<boolean> {
-  const { error } = await supabase
-    .from('time_log')
-    .upsert({
-      id: entry.id,
-      type: entry.type,
-      title: entry.title,
-      description: entry.description,
-      hours: entry.hours,
-      date: entry.date,
-      commit_sha: entry.commit_sha || null,
-    }, { onConflict: 'id' })
+  try {
+    const supabase = getSupabaseAdmin()
+    const { error } = await supabase
+      .from('time_log')
+      .upsert({
+        id: entry.id,
+        type: entry.type,
+        title: entry.title,
+        description: entry.description,
+        hours: entry.hours,
+        date: entry.date,
+        commit_sha: entry.commit_sha || null,
+      }, { onConflict: 'id' })
 
-  if (error) {
-    console.error('Error adding time entry:', error)
+    if (error) {
+      console.error('Error adding time entry:', error)
+      return false
+    }
+    return true
+  } catch (error) {
+    console.error('Error initializing Supabase admin client:', error)
     return false
   }
-  return true
 }
 
 export async function GET() {
@@ -383,6 +399,7 @@ export async function POST(request: NextRequest) {
       const entry: TimeEntry = {
         id: `manual-${Date.now()}`,
         type: 'manual',
+        title: description.length > 60 ? `${description.slice(0, 57)}...` : description,
         description,
         hours,
         date: date || new Date().toISOString(),

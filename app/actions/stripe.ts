@@ -46,7 +46,7 @@ export async function startReportCheckoutSession({ productId, assessmentId, emai
     }
 
     const session = await stripe.checkout.sessions.create({
-      ui_mode: 'embedded',
+      ui_mode: 'embedded' as any,
       redirect_on_completion: 'never',
       customer_email: email,
       line_items: [
@@ -178,7 +178,7 @@ export async function startCheckoutSession(productId: string) {
   }
 
   const session = await stripe.checkout.sessions.create({
-    ui_mode: 'embedded',
+    ui_mode: 'embedded' as any,
     redirect_on_completion: 'never',
     line_items: [
       {

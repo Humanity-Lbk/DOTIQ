@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
-import AppSidebar from '@/components/app-sidebar'
 
 type RequestType = 'feature' | 'change' | 'bug' | 'error'
 type RequestStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
@@ -46,33 +44,40 @@ export default function RequestsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  
+
   const [type, setType] = useState<RequestType>('feature')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [attachments, setAttachments] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
+
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null
+    return createClient()
+  }, [])
 
   useEffect(() => {
     checkAuthAndFetch()
   }, [])
 
   async function checkAuthAndFetch() {
-    const { data: { user } } = await supabase.auth.getUser()
+    if (!supabase) {
+      setError('App is not configured. Missing Supabase environment variables.')
+      setLoading(false)
+      return
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       router.push('/auth/login?redirect=/requests')
       return
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
 
     if (!profile || !['admin', 'super_admin'].includes(profile.role)) {
       router.push('/dashboard')
@@ -115,7 +120,7 @@ export default function RequestsPage() {
         }
 
         const data = await res.json()
-        setAttachments(prev => [...prev, data.url])
+        setAttachments((prev) => [...prev, data.url])
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
@@ -128,7 +133,7 @@ export default function RequestsPage() {
   }
 
   function removeAttachment(url: string) {
-    setAttachments(prev => prev.filter(a => a !== url))
+    setAttachments((prev) => prev.filter((a) => a !== url))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -155,7 +160,7 @@ export default function RequestsPage() {
       setType('feature')
       setShowForm(false)
       await fetchRequests()
-      
+
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit')
@@ -188,14 +193,10 @@ export default function RequestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <AppSidebar />
+    <div className="min-h-screen bg-background">
+      <div className="fixed inset-0 grid-subtle pointer-events-none" />
 
-      <div className="flex-1 ml-64">
-      {/* Grid background */}
-      <div className="fixed inset-0 ml-64 grid-subtle pointer-events-none" />
-
-      <main className="relative max-w-4xl mx-auto px-8 lg:px-12 py-12">
+      <main className="relative max-w-4xl mx-auto px-6 md:px-8 lg:px-12 py-10 md:py-12">
         {/* Success Toast */}
         {success && (
           <div className="fixed top-6 right-6 z-50 px-4 py-3 bg-primary text-primary-foreground rounded-lg shadow-lg animate-slide-up">
@@ -217,10 +218,9 @@ export default function RequestsPage() {
                 {role === 'super_admin' ? 'All Requests' : 'Submit Feedback'}
               </h1>
               <p className="text-muted-foreground text-lg">
-                {role === 'super_admin' 
+                {role === 'super_admin'
                   ? 'Review and manage incoming requests from the team.'
-                  : 'Help us improve. Report bugs, request features, or suggest changes.'
-                }
+                  : 'Help us improve. Report bugs, request features, or suggest changes.'}
               </p>
             </div>
             <button
@@ -236,7 +236,7 @@ export default function RequestsPage() {
         {showForm && (
           <div className="mb-10 p-6 bg-card/50 backdrop-blur-sm border border-border rounded-2xl">
             <h2 className="text-lg font-semibold mb-6">What would you like to share?</h2>
-            
+
             {error && (
               <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-sm text-destructive">{error}</p>
@@ -248,15 +248,13 @@ export default function RequestsPage() {
               <div>
                 <label className="block text-sm text-muted-foreground mb-2">Type</label>
                 <div className="flex flex-wrap gap-2">
-                  {(Object.keys(typeConfig) as RequestType[]).map(t => (
+                  {(Object.keys(typeConfig) as RequestType[]).map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setType(t)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                        type === t 
-                          ? typeConfig[t].color
-                          : 'bg-muted/30 text-muted-foreground border-transparent hover:bg-muted/50'
+                        type === t ? typeConfig[t].color : 'bg-muted/30 text-muted-foreground border-transparent hover:bg-muted/50'
                       }`}
                     >
                       {typeConfig[t].label}
@@ -271,7 +269,7 @@ export default function RequestsPage() {
                 <input
                   type="text"
                   value={title}
-                  onChange={e => setTitle(e.target.value)}
+                  onChange={(e) => setTitle(e.target.value)}
                   required
                   placeholder="Brief summary"
                   className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -283,7 +281,7 @@ export default function RequestsPage() {
                 <label className="block text-sm text-muted-foreground mb-2">Description</label>
                 <textarea
                   value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  onChange={(e) => setDescription(e.target.value)}
                   required
                   rows={4}
                   placeholder="Provide as much detail as possible..."
@@ -353,15 +351,12 @@ export default function RequestsPage() {
           {requests.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-muted-foreground mb-2">No requests yet</p>
-              <button
-                onClick={() => setShowForm(true)}
-                className="text-primary hover:underline text-sm"
-              >
+              <button onClick={() => setShowForm(true)} className="text-primary hover:underline text-sm">
                 Submit your first request
               </button>
             </div>
           ) : (
-            requests.map(req => (
+            requests.map((req) => (
               <div
                 key={req.id}
                 className="group p-5 bg-card/50 backdrop-blur-sm border border-border hover:border-primary/30 rounded-xl transition-all duration-200"
@@ -379,10 +374,8 @@ export default function RequestsPage() {
                     <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
                       {req.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {req.description}
-                    </p>
-                    
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{req.description}</p>
+
                     {req.attachments && req.attachments.length > 0 && (
                       <div className="flex gap-2 mb-3">
                         {req.attachments.map((url, idx) => (
@@ -403,22 +396,22 @@ export default function RequestsPage() {
                       {new Date(req.created_at).toLocaleDateString('en-US', {
                         month: 'long',
                         day: 'numeric',
-                        year: 'numeric'
+                        year: 'numeric',
                       })}
-                      {role === 'super_admin' && req.profiles?.full_name && (
-                        <span> · {req.profiles.full_name}</span>
-                      )}
+                      {role === 'super_admin' && req.profiles?.full_name && <span> · {req.profiles.full_name}</span>}
                     </p>
                   </div>
 
                   {role === 'super_admin' && (
                     <select
                       value={req.status}
-                      onChange={e => updateStatus(req.id, e.target.value as RequestStatus)}
+                      onChange={(e) => updateStatus(req.id, e.target.value as RequestStatus)}
                       className="shrink-0 px-3 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/50"
                     >
-                      {(Object.keys(statusConfig) as RequestStatus[]).map(s => (
-                        <option key={s} value={s}>{statusConfig[s].label}</option>
+                      {(Object.keys(statusConfig) as RequestStatus[]).map((s) => (
+                        <option key={s} value={s}>
+                          {statusConfig[s].label}
+                        </option>
                       ))}
                     </select>
                   )}
@@ -428,7 +421,7 @@ export default function RequestsPage() {
           )}
         </div>
       </main>
-      </div>
     </div>
   )
 }
+
