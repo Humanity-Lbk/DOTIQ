@@ -12,12 +12,25 @@ interface SendEmailOptions {
 export async function sendEmail({ to, subject, html, attachments }: SendEmailOptions) {
   console.log('[v0] sendEmail called for:', to)
   
-  const apiKey = process.env.EMAIL_API_KEY
-  const fromEmail = process.env.EMAIL_FROM_ADDRESS
+  // SMTP2Go API key format: api-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX (36 chars total)
+  // Try multiple env var names that might contain the SMTP2Go key
+  const apiKey = process.env.SMTP2GO_API_KEY || process.env.EMAIL_API_KEY
+  const fromEmail = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_FROM_EMAIL
+
+  console.log('[v0] Checking for API key in SMTP2GO_API_KEY:', !!process.env.SMTP2GO_API_KEY)
+  console.log('[v0] Checking for API key in EMAIL_API_KEY:', !!process.env.EMAIL_API_KEY)
+  console.log('[v0] API key length:', apiKey?.length)
+  console.log('[v0] API key prefix:', apiKey?.substring(0, 8))
 
   if (!apiKey) {
-    console.error('[v0] EMAIL_API_KEY not configured')
-    return { success: false, error: 'Email service not configured - missing EMAIL_API_KEY' }
+    console.error('[v0] No SMTP2Go API key found in SMTP2GO_API_KEY or EMAIL_API_KEY')
+    return { success: false, error: 'Email service not configured - missing SMTP2GO_API_KEY or EMAIL_API_KEY' }
+  }
+  
+  // Validate API key format
+  if (!apiKey.startsWith('api-') || apiKey.length !== 36) {
+    console.error('[v0] Invalid API key format. Expected: api-XXXXXXXX... (36 chars), Got:', apiKey.substring(0, 10), '... length:', apiKey.length)
+    return { success: false, error: `Invalid SMTP2Go API key format. Key should start with "api-" and be 36 characters long.` }
   }
 
   if (!fromEmail) {
