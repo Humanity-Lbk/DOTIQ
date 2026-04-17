@@ -139,21 +139,260 @@
   }
 }
 
-/* Print styles for PDF download */
+/* ============================================================
+   PRINT / PDF STYLES  —  8.5 × 11 in, white with color accents
+   ============================================================ */
 @media print {
+  /* ── Page setup ── */
+  @page {
+    size: letter portrait;
+    margin: 0.65in 0.7in;
+  }
+
+  /* ── Hide everything that isn't the report ── */
   aside,
-  nav,
-  header nav,
   [data-sidebar],
-  .no-print {
+  .no-print,
+  header nav,
+  header button,
+  .sticky {
     display: none !important;
   }
+
+  /* ── Reset layout so content fills the page ── */
+  html,
   body {
-    background: white !important;
-    color: black !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .flex-1.ml-64 {
+
+  /* Remove sidebar margin */
+  .flex-1.ml-64,
+  .flex-1 {
     margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* ── Backgrounds: strip dark, keep white ── */
+  *,
+  *::before,
+  *::after {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* ── Hero header section ── */
+  header {
+    background: #ffffff !important;
+    border-bottom: 2pt solid #e5e7eb !important;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hero score circle → white with amber border */
+  header .rounded-full[class*="border-primary"] {
+    border: 3pt solid #d97706 !important;
+    background: #fff !important;
+  }
+
+  /* Score text stays amber */
+  header .bg-gradient-to-r {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: #d97706 !important;
+    color: #d97706 !important;
+  }
+
+  /* Full Report badge */
+  header .bg-primary\/20 {
+    background: #fef3c7 !important;
+    border: 1pt solid #d97706 !important;
+    color: #92400e !important;
+  }
+
+  /* ── Quick stats bar ── */
+  .sticky {
+    position: static !important;
+    border-top: 1pt solid #e5e7eb !important;
+    border-bottom: 1pt solid #e5e7eb !important;
+    page-break-inside: avoid;
+  }
+
+  /* ── Main content ── */
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* ── Each pillar section: always start on new page ── */
+  section[id^="pillar-"] {
+    page-break-before: always;
+    page-break-inside: avoid;
+  }
+
+  /* First pillar can follow the header */
+  section[id^="pillar-"]:first-of-type {
+    page-break-before: auto;
+  }
+
+  /* ── Pillar header card: gradient → white with colored left border ── */
+  section[id^="pillar-"] > div:first-child {
+    background: #ffffff !important;
+    border: 1.5pt solid #e5e7eb !important;
+    border-left: 5pt solid #d97706 !important;
+    border-radius: 8pt !important;
+    color: #111111 !important;
+    margin-bottom: 10pt !important;
+    padding: 16pt 20pt !important;
+  }
+
+  section[id^="pillar-"] > div:first-child * {
+    color: #111111 !important;
+    opacity: 1 !important;
+  }
+
+  /* Score circle inside pillar card */
+  section[id^="pillar-"] .rounded-full {
+    border: 2.5pt solid #d97706 !important;
+    background: #fffbeb !important;
+    color: #92400e !important;
+  }
+
+  /* Pillar icon boxes */
+  section[id^="pillar-"] .rounded-xl[class*="bg-white"] {
+    background: #fef3c7 !important;
+  }
+
+  /* ── Strengths & Growth grid ── */
+  .grid.md\:grid-cols-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12pt !important;
+  }
+
+  /* Strengths card */
+  .border-emerald-500\/20 {
+    border: 1.5pt solid #10b981 !important;
+    border-radius: 8pt !important;
+    padding: 12pt !important;
+    page-break-inside: avoid;
+  }
+
+  .text-emerald-400 {
+    color: #059669 !important;
+  }
+
+  .bg-emerald-500 {
+    background: #059669 !important;
+    color: #ffffff !important;
+  }
+
+  .bg-emerald-500\/20 {
+    background: #d1fae5 !important;
+  }
+
+  .bg-emerald-500\/5 {
+    background: #f0fdf4 !important;
+  }
+
+  /* Growth card */
+  .border-rose-500\/20 {
+    border: 1.5pt solid #f43f5e !important;
+    border-radius: 8pt !important;
+    padding: 12pt !important;
+    page-break-inside: avoid;
+  }
+
+  .text-rose-400 {
+    color: #e11d48 !important;
+  }
+
+  .bg-rose-500 {
+    background: #e11d48 !important;
+    color: #ffffff !important;
+  }
+
+  .bg-rose-500\/20 {
+    background: #ffe4e6 !important;
+  }
+
+  .bg-rose-500\/5 {
+    background: #fff1f2 !important;
+  }
+
+  /* Action items card */
+  .border-primary\/20 {
+    border: 1.5pt solid #d97706 !important;
+    border-radius: 8pt !important;
+    padding: 12pt !important;
+    page-break-inside: avoid;
+  }
+
+  .bg-primary {
+    background: #d97706 !important;
+    color: #ffffff !important;
+  }
+
+  .bg-primary\/5 {
+    background: #fffbeb !important;
+  }
+
+  .text-primary {
+    color: #d97706 !important;
+  }
+
+  /* ── Performance Signals & other sections ── */
+  .space-y-16 > section {
+    page-break-before: always;
+    page-break-inside: avoid;
+  }
+
+  /* ── Numbered list items ── */
+  li {
+    page-break-inside: avoid;
+  }
+
+  /* ── Decorative blobs / blurs / particles → hide ── */
+  .blur-3xl,
+  .blur-2xl,
+  .animate-pulse,
+  [class*="absolute"][class*="bg-white/"],
+  [class*="absolute"][class*="bg-black/"],
+  [class*="absolute w-1 h-1"] {
+    display: none !important;
+  }
+
+  /* ── Lock / upsell blocks ── */
+  .rounded-2xl.border.border-border {
+    border: 1pt dashed #9ca3af !important;
+    background: #f9fafb !important;
+  }
+
+  /* ── Muted text gets readable dark gray ── */
+  .text-muted-foreground {
+    color: #4b5563 !important;
+  }
+
+  /* ── Links remove underline ── */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  /* ── No orphan headings at page bottom ── */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  p, li {
+    orphans: 3;
+    widows: 3;
   }
 }
 
