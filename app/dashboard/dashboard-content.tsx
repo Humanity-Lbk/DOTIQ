@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
-import AppSidebar from '@/components/app-sidebar'
 import { RequestVerificationModal } from '@/components/verification/request-verification-modal'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import type { User } from '@supabase/supabase-js'
@@ -129,6 +129,7 @@ function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size
 }
 
 export function DashboardContent({ user, profile, assessments, verifications, submittedEvaluations }: DashboardContentProps) {
+  const router = useRouter()
   const [verificationModalOpen, setVerificationModalOpen] = useState(false)
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
@@ -154,14 +155,11 @@ export function DashboardContent({ user, profile, assessments, verifications, su
   }
   
   return (
-    <div className="min-h-screen bg-background flex">
-      <AppSidebar />
-
-      <div className="flex-1 ml-64">
+    <div className="min-h-screen bg-background">
       {/* Grid background */}
-      <div className="fixed inset-0 ml-64 grid-subtle pointer-events-none" />
+      <div className="fixed inset-0 grid-subtle pointer-events-none" />
 
-      <main className="relative max-w-5xl mx-auto px-8 lg:px-12 py-12">
+      <main className="relative max-w-5xl mx-auto px-6 md:px-8 lg:px-12 py-10 md:py-12">
         {/* Welcome */}
         <section className="mb-10">
           <div className="flex items-center gap-3 mb-4">
@@ -568,8 +566,7 @@ export function DashboardContent({ user, profile, assessments, verifications, su
         assessmentId={selectedAssessmentId || ''}
         athleteName={profile?.full_name || 'Athlete'}
         onSuccess={() => {
-          // Refresh page to show updated verification status
-          window.location.reload()
+          router.refresh()
         }}
       />
 
@@ -584,7 +581,6 @@ export function DashboardContent({ user, profile, assessments, verifications, su
           // Page will refresh after purchase completes
         }}
       />
-      </div>
     </div>
   )
 }

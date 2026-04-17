@@ -152,7 +152,6 @@ async function generatePDF(
     width: 100,
     height: 50,
     color: PRIMARY_COLOR,
-    borderRadius: 5,
   })
 
   page.drawText('DOTIQ SCORE', {

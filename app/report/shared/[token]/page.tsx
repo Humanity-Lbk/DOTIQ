@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: { token: string } }
 }
 
 export default async function SharedReportPage({ params }: { params: { token: string } }) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   try {
     // Fetch the assessment using the share token
@@ -41,7 +41,8 @@ export default async function SharedReportPage({ params }: { params: { token: st
       notFound()
     }
 
-    const assessment = shareRecord.assessments
+    const rawAssessment = (shareRecord as any).assessments
+    const assessment = Array.isArray(rawAssessment) ? rawAssessment[0] : rawAssessment
     if (!assessment) {
       notFound()
     }
@@ -49,7 +50,12 @@ export default async function SharedReportPage({ params }: { params: { token: st
     return (
       <div className="min-h-screen bg-background">
         <SharedReportView 
-          assessment={assessment}
+          assessment={{
+            ...assessment,
+            profiles: Array.isArray((assessment as any).profiles)
+              ? (assessment as any).profiles[0]
+              : (assessment as any).profiles,
+          }}
           shareRecord={shareRecord}
         />
       </div>

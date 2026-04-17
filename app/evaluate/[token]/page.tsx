@@ -3,11 +3,11 @@ import { notFound } from 'next/navigation'
 import { EvaluationForm } from './evaluation-form'
 
 interface PageProps {
-  params: Promise<{ token: string }>
+  params: { token: string }
 }
 
 export default async function EvaluatePage({ params }: PageProps) {
-  const { token } = await params
+  const { token } = params
   const supabase = await createClient()
   
   // Get verification request by token
@@ -75,7 +75,11 @@ export default async function EvaluatePage({ params }: PageProps) {
     )
   }
   
-  const athleteName = request.athlete_name || (request.profiles as { full_name: string | null } | null)?.full_name || 'the athlete'
+  const profile = Array.isArray((request as any).profiles)
+    ? ((request as any).profiles[0] as { full_name: string | null } | undefined)
+    : ((request as any).profiles as { full_name: string | null } | null | undefined)
+
+  const athleteName = request.athlete_name || profile?.full_name || 'the athlete'
   
   return (
     <div className="min-h-screen bg-background">

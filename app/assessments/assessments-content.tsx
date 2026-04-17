@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { categories, type Category } from '@/lib/assessment-data'
-import AppSidebar from '@/components/app-sidebar'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import type { User } from '@supabase/supabase-js'
 
@@ -101,6 +101,7 @@ export function AssessmentsContent({
   verifications,
   reports,
 }: AssessmentsContentProps) {
+  const router = useRouter()
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
   const [selectedScore, setSelectedScore] = useState<number>(0)
@@ -121,7 +122,7 @@ export function AssessmentsContent({
       
       if (response.ok) {
         toast.success('Assessment deleted successfully')
-        window.location.reload()
+        router.refresh()
       } else {
         const data = await response.json()
         toast.error(data.error || 'Failed to delete assessment')
@@ -148,10 +149,8 @@ export function AssessmentsContent({
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
-      <AppSidebar />
-
-      <main className="flex-1 ml-64 max-w-5xl mx-auto px-8 lg:px-12 py-10">
+    <div className="min-h-screen bg-background text-foreground">
+      <main className="max-w-5xl mx-auto px-6 md:px-8 lg:px-12 py-10">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
@@ -371,7 +370,7 @@ export function AssessmentsContent({
         score={selectedScore}
         userEmail={user.email}
         onPurchaseComplete={() => {
-          window.location.reload()
+          router.refresh()
         }}
       />
     </div>

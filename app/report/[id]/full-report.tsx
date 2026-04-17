@@ -8,7 +8,6 @@ import { Share2, Check, Loader2, Lock, ChevronRight, Download, Zap, Target, Brai
 import { toast } from 'sonner'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import { RequestVerificationModal, type EvaluatorType } from '@/components/verification/request-verification-modal'
-import AppSidebar from '@/components/app-sidebar'
 
 interface Assessment {
   id: string
@@ -247,6 +246,8 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
     })
   }
   
+  const overallAnimated = useCounter(loading ? 0 : displayScore, 2000, 300)
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -270,12 +271,8 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
     )
   }
 
-  const overallAnimated = useCounter(displayScore, 2000, 300)
-
   return (
-    <div className="min-h-screen bg-background flex">
-      <AppSidebar />
-      <div className="flex-1 ml-64 flex flex-col items-center">
+    <div className="min-h-screen bg-background">
       {/* Hero Header */}
       <header className="relative overflow-hidden w-full">
         {/* Animated background gradient */}
@@ -825,9 +822,10 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
 
       {/* Purchase Modal */}
       <PurchaseModal
-        open={purchaseModalOpen}
-        onOpenChange={setPurchaseModalOpen}
+        isOpen={purchaseModalOpen}
+        onClose={() => setPurchaseModalOpen(false)}
         assessmentId={assessment.id}
+        score={assessment.overall_score}
         userEmail={userEmail || ''}
         onPurchaseComplete={() => {
           setPurchaseModalOpen(false)
@@ -849,7 +847,6 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
           // Could refresh verifications here
         }}
       />
-      </div>
     </div>
   )
 }

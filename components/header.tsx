@@ -3,24 +3,18 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
 import useSWR from "swr"
-
-const supabase = createClient()
-
-async function fetchUser() {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
+import { fetchUserAndProfile, USER_PROFILE_CACHE_KEY } from "@/lib/auth/user-profile"
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   
   // Use same SWR cache key as sidebar for consistency
-  const { data: user, isLoading } = useSWR("header-user", fetchUser, {
+  const { data, isLoading } = useSWR(USER_PROFILE_CACHE_KEY, fetchUserAndProfile, {
     revalidateOnFocus: false,
     dedupingInterval: 60000,
   })
+  const user = data?.user ?? null
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)

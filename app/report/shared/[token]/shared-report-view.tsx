@@ -32,7 +32,20 @@ interface SharedReportViewProps {
 export default function SharedReportView({ assessment, shareRecord }: SharedReportViewProps) {
   const scores = assessment.scores || {}
   const dotiScore = scores.overall || 7.0
-  const categoryScores = categories.reduce((acc, cat) => {
+
+  const categoryList: Array<{
+    key: Category
+    label: string
+    description: string
+    icon: React.ComponentType<{ className?: string }>
+  }> = [
+    { key: 'discipline', label: categories.discipline.name, description: categories.discipline.description, icon: Flame },
+    { key: 'ownership', label: categories.ownership.name, description: categories.ownership.description, icon: Target },
+    { key: 'toughness', label: categories.toughness.name, description: categories.toughness.description, icon: Trophy },
+    { key: 'sportsiq', label: categories.sportsiq.name, description: categories.sportsiq.description, icon: Brain },
+  ]
+
+  const categoryScores = categoryList.reduce((acc, cat) => {
     acc[cat.key] = scores[cat.key] || 0
     return acc
   }, {} as Record<string, number>)
@@ -87,7 +100,7 @@ export default function SharedReportView({ assessment, shareRecord }: SharedRepo
               
               {/* Quick Stats */}
               <div className="grid grid-cols-4 gap-4 mt-8">
-                {categories.slice(0, 4).map((cat) => (
+                {categoryList.map((cat) => (
                   <div key={cat.key} className="p-4 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
                     <cat.icon className="w-6 h-6 text-primary mb-2" />
                     <p className="text-2xl font-bold">{categoryScores[cat.key].toFixed(1)}</p>
@@ -105,7 +118,7 @@ export default function SharedReportView({ assessment, shareRecord }: SharedRepo
         <h2 className="text-3xl font-bold mb-12">Performance Breakdown</h2>
         
         <div className="space-y-6">
-          {categories.map((category) => {
+          {categoryList.map((category) => {
             const score = categoryScores[category.key]
             const progress = (score / 10) * 100
             
