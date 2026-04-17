@@ -70,8 +70,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Create the request
-  const { data: newRequest, error } = await supabase
+  // Use admin client for the INSERT to bypass RLS — auth is already verified above
+  let adminClient: ReturnType<typeof createAdminClient> | null = null
+  try {
+    adminClient = createAdminClient()
+  } catch {
+    // Fall back to user client if service role key is not configured
+  }
+
+  const insertClient = adminClient ?? supabase
+  const { data: newRequest, error } = await insertClient
     .from('requests')
     .insert({
       user_id: user.id,
@@ -110,7 +118,7 @@ export async function POST(request: NextRequest) {
   let superAdminEmails: { id: string; full_name: string | null; email: string }[] = []
   if (superAdminProfiles && superAdminProfiles.length > 0) {
     try {
-      const adminClient = createAdminClient()
+      const adminClient = createAdminClient() // throws if SUPABASE_SERVICE_ROLE_KEY is missing
       const emailResults = await Promise.all(
         superAdminProfiles.map(async (p) => {
           const { data } = await adminClient.auth.admin.getUserById(p.id)
