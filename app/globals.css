@@ -169,6 +169,15 @@
     print-color-adjust: exact;
   }
 
+  /* Force all text to be dark or readable colors */
+  * {
+    color: #111111 !important;
+  }
+
+  p, li, span, div, h1, h2, h3, h4, h5, h6 {
+    color: #111111 !important;
+  }
+
   /* Remove sidebar margin */
   .flex-1.ml-64,
   .flex-1 {
@@ -195,22 +204,40 @@
     page-break-inside: avoid;
   }
 
-  /* Hero score circle → white with amber border */
-  header .rounded-full[class*="border-primary"] {
-    border: 3pt solid #d97706 !important;
-    background: #fff !important;
+  /* Strip all gradient backgrounds from hero */
+  header [class*="bg-gradient"],
+  header .absolute[class*="bg-"] {
+    background: transparent !important;
+    display: none !important;
   }
 
-  /* Score text stays amber */
-  header .bg-gradient-to-r {
-    background: none !important;
-    -webkit-background-clip: unset !important;
-    -webkit-text-fill-color: #d97706 !important;
+  /* Hero description text → dark gray */
+  header p {
+    color: #4b5563 !important;
+  }
+
+  /* Hero score circle → white with amber border */
+  header .rounded-full {
+    border: 3pt solid #d97706 !important;
+    background: #ffffff !important;
     color: #d97706 !important;
   }
 
+  /* Score text stays amber */
+  header .text-\[clamp\(3rem\,10vw\,6rem\)\],
+  header [class*="text-6xl"],
+  header [class*="text-5xl"] {
+    color: #d97706 !important;
+  }
+
+  /* Hero title → dark text */
+  header h1,
+  header .text-3xl {
+    color: #111111 !important;
+  }
+
   /* Full Report badge */
-  header .bg-primary\/20 {
+  header .rounded-full[class*="bg"] {
     background: #fef3c7 !important;
     border: 1pt solid #d97706 !important;
     color: #92400e !important;
@@ -288,62 +315,13 @@
     color: #059669 !important;
   }
 
-  .bg-emerald-500 {
-    background: #059669 !important;
-    color: #ffffff !important;
-  }
-
-  .bg-emerald-500\/20 {
-    background: #d1fae5 !important;
-  }
-
-  .bg-emerald-500\/5 {
-    background: #f0fdf4 !important;
-  }
-
-  /* Growth card */
-  .border-rose-500\/20 {
-    border: 1.5pt solid #f43f5e !important;
-    border-radius: 8pt !important;
-    padding: 12pt !important;
-    page-break-inside: avoid;
-  }
-
   .text-rose-400 {
     color: #e11d48 !important;
   }
 
-  .bg-rose-500 {
-    background: #e11d48 !important;
-    color: #ffffff !important;
-  }
-
-  .bg-rose-500\/20 {
-    background: #ffe4e6 !important;
-  }
-
-  .bg-rose-500\/5 {
-    background: #fff1f2 !important;
-  }
-
-  /* Action items card */
-  .border-primary\/20 {
-    border: 1.5pt solid #d97706 !important;
-    border-radius: 8pt !important;
-    padding: 12pt !important;
-    page-break-inside: avoid;
-  }
-
-  .bg-primary {
-    background: #d97706 !important;
-    color: #ffffff !important;
-  }
-
-  .bg-primary\/5 {
-    background: #fffbeb !important;
-  }
-
-  .text-primary {
+  .text-primary,
+  .text-amber-400,
+  .text-amber-500 {
     color: #d97706 !important;
   }
 
