@@ -17,12 +17,11 @@ export default async function AssessmentsPage() {
     .eq('id', user.id)
     .single()
 
-  // Get all completed assessments
+  // Get all assessments for this user
   const { data: assessments } = await supabase
     .from('assessments')
     .select('*')
     .eq('user_id', user.id)
-    .eq('is_complete', true)
     .order('created_at', { ascending: false })
 
   // Get verification requests for each assessment
