@@ -13,17 +13,11 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
   console.log('[v0] sendEmail called for:', to)
   
   const apiKey = process.env.EMAIL_API_KEY
-  const apiUrl = process.env.EMAIL_API_URL
   const fromEmail = process.env.EMAIL_FROM_ADDRESS
 
   if (!apiKey) {
     console.error('[v0] EMAIL_API_KEY not configured')
     return { success: false, error: 'Email service not configured - missing EMAIL_API_KEY' }
-  }
-
-  if (!apiUrl) {
-    console.error('[v0] EMAIL_API_URL not configured')
-    return { success: false, error: 'Email service not configured - missing EMAIL_API_URL' }
   }
 
   if (!fromEmail) {
@@ -32,9 +26,9 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
   }
 
   try {
-    console.log('[v0] Preparing email via Email API')
+    console.log('[v0] Preparing email via SMTP2Go API')
     
-    // Convert attachments to base64 for API
+    // Convert attachments to base64 for SMTP2Go (fileblob format)
     const apiAttachments = attachments?.map((attachment) => {
       const content = typeof attachment.content === 'string' 
         ? attachment.content 
@@ -43,38 +37,42 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
       return {
         filename: attachment.filename,
         mimetype: attachment.contentType || 'application/octet-stream',
-        content: content,
+        fileblob: content,
       }
     })
 
+    // SMTP2Go expects specific format with sender, to array, html_body
     const payload = {
-      to,
-      from: `DOTIQ Reports <${fromEmail}>`,
+      to: [to],
+      sender: `DOTIQ Reports <${fromEmail}>`,
       subject,
-      html,
+      html_body: html,
       attachments: apiAttachments,
+      fastaccept: true, // SMTP2Go recommends this for faster sending
     }
 
-    console.log('[v0] Sending via Email API to:', to)
+    const apiUrl = 'https://api.smtp2go.com/v3/email/send'
+    console.log('[v0] Sending via SMTP2Go API to:', to)
 
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'X-Smtp2go-Api-Key': apiKey, // SMTP2Go uses this header, not Bearer token
       },
       body: JSON.stringify(payload),
     })
 
     // Get response text first to handle non-JSON responses
     const responseText = await response.text()
-    console.log('[v0] Email API raw response:', responseText.substring(0, 200))
+    console.log('[v0] SMTP2Go response status:', response.status)
+    console.log('[v0] SMTP2Go raw response:', responseText.substring(0, 500))
     
     let data
     try {
       data = JSON.parse(responseText)
     } catch {
-      console.error('[v0] Email API returned non-JSON response:', responseText)
+      console.error('[v0] SMTP2Go returned non-JSON response:', responseText)
       return { 
         success: false, 
         error: `Email API error: ${responseText.substring(0, 100)}` 
@@ -82,15 +80,21 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
     }
 
     if (!response.ok) {
-      console.error('[v0] Email API error:', data)
+      console.error('[v0] SMTP2Go error - Status:', response.status)
+      console.error('[v0] SMTP2Go error - Data:', data)
+      
+      // Extract error from SMTP2Go response structure
+      const errorMsg = data.data?.error || data.error || 'Failed to send email'
       return { 
         success: false, 
-        error: data.error || data.message || 'Failed to send email via API' 
+        error: `Email API error: ${errorMsg}` 
       }
     }
 
-    console.log('[v0] Email sent successfully! MessageId:', data.id || data.messageId || 'unknown')
-    return { success: true, messageId: data.id || data.messageId }
+    // SMTP2Go returns data.data.email_id on success
+    const emailId = data.data?.email_id || data.email_id
+    console.log('[v0] Email sent successfully! EmailId:', emailId)
+    return { success: true, messageId: emailId }
   } catch (error) {
     console.error('[v0] Failed to send email:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
