@@ -96,22 +96,31 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
       }
     }
 
-    if (!response.ok) {
-      console.error('[v0] SMTP2Go error - Status:', response.status)
-      console.error('[v0] SMTP2Go error - Data:', data)
-      
-      // Extract error from SMTP2Go response structure
-      const errorMsg = data.data?.error || data.error || 'Failed to send email'
+    // SMTP2Go returns request_id on success, and error/errors on failure
+    // Even with HTTP 200, check if there's an error in the response
+    if (data.error || data.errors || (data.data && data.data.error)) {
+      const errorMsg = data.error || data.errors?.[0] || data.data?.error || 'Unknown error'
+      console.error('[v0] SMTP2Go API error:', errorMsg)
       return { 
         success: false, 
         error: `Email API error: ${errorMsg}` 
       }
     }
 
-    // SMTP2Go returns data.data.email_id on success
-    const emailId = data.data?.email_id || data.email_id
-    console.log('[v0] Email sent successfully! EmailId:', emailId)
-    return { success: true, messageId: emailId }
+    // Check for HTTP-level errors too
+    if (!response.ok) {
+      console.error('[v0] SMTP2Go HTTP error - Status:', response.status)
+      console.error('[v0] SMTP2Go response:', data)
+      return { 
+        success: false, 
+        error: `Email API error: HTTP ${response.status}` 
+      }
+    }
+
+    // SMTP2Go returns request_id on success
+    const requestId = data.request_id
+    console.log('[v0] Email sent successfully! Request ID:', requestId)
+    return { success: true, messageId: requestId }
   } catch (error) {
     console.error('[v0] Failed to send email:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
