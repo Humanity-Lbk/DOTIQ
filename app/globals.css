@@ -139,6 +139,24 @@
   }
 }
 
+/* Print styles for PDF download */
+@media print {
+  aside,
+  nav,
+  header nav,
+  [data-sidebar],
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .flex-1.ml-64 {
+    margin-left: 0 !important;
+  }
+}
+
 @keyframes page-fade-in {
   from {
     opacity: 0.8;
