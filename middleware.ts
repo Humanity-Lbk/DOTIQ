@@ -2,7 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
 // Routes that require authentication
-const protectedRoutes = ['/assessment', '/assessments', '/dashboard', '/report']
+// Note: /assessment is intentionally excluded — guests can take the assessment
+// and are prompted to create an account after completion
+const protectedRoutes = ['/assessments', '/dashboard', '/report', '/requests', '/purchase']
 
 // Routes exempt from the site-wide password gate
 const gateExemptRoutes = ['/coming-soon', '/api/gate-auth', '/_next', '/favicon', '/api']
