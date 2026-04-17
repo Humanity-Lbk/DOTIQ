@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { categories, type Category } from '@/lib/assessment-data'
-import { Share2, Copy, Check, Loader2, Lock, ChevronRight, Mail, Zap, Target, Brain, Trophy, TrendingUp, Flame, ArrowRight, Sparkles, Users, User, CheckCircle2, Clock, Plus } from 'lucide-react'
+import { Share2, Check, Loader2, Lock, ChevronRight, Download, Zap, Target, Brain, Trophy, TrendingUp, Flame, ArrowRight, Sparkles, Users, User, CheckCircle2, Clock, Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
 import { RequestVerificationModal, type EvaluatorType } from '@/components/verification/request-verification-modal'
 import AppSidebar from '@/components/app-sidebar'
@@ -158,8 +159,7 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   const [currentShareToken, setCurrentShareToken] = useState(shareToken)
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [sendingEmail, setSendingEmail] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [activePillar, setActivePillar] = useState<Category | null>(null)
   const [verificationModalOpen, setVerificationModalOpen] = useState(false)
   const [selectedVerificationType, setSelectedVerificationType] = useState<EvaluatorType | null>(null)
@@ -168,31 +168,18 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
     setMounted(true)
   }, [])
   
-  const sendReportEmail = async () => {
-    if (sendingEmail || !isPurchased) return
-    setSendingEmail(true)
-    console.log('[v0] Sending report email for assessment:', assessment.id, 'to:', userEmail)
+  const downloadPDF = async () => {
+    if (downloading || !isPurchased) return
+    setDownloading(true)
+    toast.loading('Preparing your PDF report...', { id: 'pdf-download' })
     try {
-      const res = await fetch('/api/report/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assessmentId: assessment.id, email: userEmail }),
-      })
-      const data = await res.json()
-      console.log('[v0] Email API response:', data)
-      
-      if (res.ok && data.success) {
-        setEmailSent(true)
-        setTimeout(() => setEmailSent(false), 5000)
-      } else {
-        console.error('[v0] Email failed:', data.error)
-        alert(`Failed to send email: ${data.error || 'Unknown error'}`)
-      }
+      // Use browser print dialog to save as PDF
+      window.print()
+      toast.success('Print dialog opened — save as PDF from your browser.', { id: 'pdf-download' })
     } catch (error) {
-      console.error('[v0] Failed to send email:', error)
-      alert('Failed to send email. Please try again.')
+      toast.error('Failed to open print dialog. Please try again.', { id: 'pdf-download' })
     } finally {
-      setSendingEmail(false)
+      setDownloading(false)
     }
   }
   
@@ -250,9 +237,13 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   const copyShareLink = () => {
     if (!currentShareToken) return
     const shareUrl = `${window.location.origin}/report/shared/${currentShareToken}`
-    navigator.clipboard.writeText(shareUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true)
+      toast.success('Share link copied to clipboard!')
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {
+      toast.error('Failed to copy link. Please try again.')
+    })
   }
   
   if (loading) {
@@ -283,9 +274,9 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
   return (
     <div className="min-h-screen bg-background flex">
       <AppSidebar />
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-64 flex flex-col items-center">
       {/* Hero Header */}
-      <header className="relative overflow-hidden">
+      <header className="relative overflow-hidden w-full">
         {/* Animated background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
@@ -315,12 +306,12 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
             <div className="flex items-center gap-3">
               {isPurchased && (
                 <button
-                  onClick={sendReportEmail}
-                  disabled={sendingEmail}
+                  onClick={downloadPDF}
+                  disabled={downloading}
                   className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-semibold hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-50"
                 >
-                  {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : emailSent ? <Check className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
-                  {emailSent ? 'Sent!' : 'Email PDF'}
+                  {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  Download PDF
                 </button>
               )}
               {currentShareToken && (
@@ -329,9 +320,6 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
                   {copied ? 'Copied!' : 'Share'}
                 </button>
               )}
-              <Link href="/dashboard" className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Dashboard
-              </Link>
             </div>
           </nav>
           

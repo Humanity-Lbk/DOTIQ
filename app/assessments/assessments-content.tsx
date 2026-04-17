@@ -121,7 +121,7 @@ export function AssessmentsContent({
     <div className="min-h-screen bg-background text-foreground flex">
       <AppSidebar />
 
-      <main className="flex-1 ml-64 max-w-5xl mx-auto px-6 py-10">
+      <main className="flex-1 ml-64 max-w-5xl mx-auto px-8 lg:px-12 py-10">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">

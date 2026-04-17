@@ -195,7 +195,7 @@ export default function RequestsPage() {
       {/* Grid background */}
       <div className="fixed inset-0 ml-64 grid-subtle pointer-events-none" />
 
-      <main className="relative max-w-4xl mx-auto px-6 py-12">
+      <main className="relative max-w-4xl mx-auto px-8 lg:px-12 py-12">
         {/* Success Toast */}
         {success && (
           <div className="fixed top-6 right-6 z-50 px-4 py-3 bg-primary text-primary-foreground rounded-lg shadow-lg animate-slide-up">
