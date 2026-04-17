@@ -167,10 +167,15 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
     
     // Save assessment to database (only once, and only for logged in users)
     async function saveAssessment() {
-      if (hasSaved.current || isGuest) return
+      console.log('[v0] saveAssessment called - hasSaved:', hasSaved.current, 'isGuest:', isGuest)
+      if (hasSaved.current || isGuest) {
+        console.log('[v0] Skipping save - already saved or guest')
+        return
+      }
       hasSaved.current = true
       
       setSaveStatus('saving')
+      console.log('[v0] Saving assessment with', Object.keys(answers).length, 'answers, score:', overallScore)
       try {
         const response = await fetch('/api/assessment/save', {
           method: 'POST',
@@ -182,18 +187,24 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
           }),
         })
         
+        const data = await response.json()
+        console.log('[v0] Save response:', response.status, data)
+        
         if (response.ok) {
-          const data = await response.json()
           setAssessmentId(data.assessment_id)
           setSaveStatus('saved')
+          console.log('[v0] Assessment saved successfully with ID:', data.assessment_id)
         } else {
+          console.error('[v0] Save failed:', data.error)
           setSaveStatus('error')
         }
-      } catch {
+      } catch (err) {
+        console.error('[v0] Save error:', err)
         setSaveStatus('error')
       }
     }
     
+    console.log('[v0] useEffect triggered - answers count:', Object.keys(answers).length, 'isGuest:', isGuest)
     if (Object.keys(answers).length > 0 && !isGuest) {
       saveAssessment()
     }
