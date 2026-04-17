@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    // 30 days — they won't need to re-enter constantly
-    maxAge: 60 * 60 * 24 * 30,
+    // 24 hours — user must re-enter password daily
+    maxAge: 60 * 60 * 24,
     path: '/',
   })
 
