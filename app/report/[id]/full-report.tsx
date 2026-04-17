@@ -221,6 +221,8 @@ export function FullReport({ assessment, verifications, userName, aiReport, shar
       if (response.ok && data.report) {
         setReport(data.report)
         setCurrentShareToken(data.shareToken)
+        // Refresh the page to load the new report data
+        setTimeout(() => window.location.reload(), 500)
       } else {
         console.error('[v0] Report generation failed:', data.error)
         // Don't leave user stuck on loading - show preview instead
