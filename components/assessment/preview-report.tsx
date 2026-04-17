@@ -162,53 +162,34 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
   const scores = scoreData.categories
   const overallScore = scoreData.total
 
+  // Mount animation
   useEffect(() => {
     setMounted(true)
-    
-    // Save assessment to database (only once, and only for logged in users)
-    async function saveAssessment() {
-      console.log('[v0] saveAssessment called - hasSaved:', hasSaved.current, 'isGuest:', isGuest)
-      if (hasSaved.current || isGuest) {
-        console.log('[v0] Skipping save - already saved or guest')
-        return
-      }
-      hasSaved.current = true
-      
-      setSaveStatus('saving')
-      console.log('[v0] Saving assessment with', Object.keys(answers).length, 'answers, score:', overallScore)
-      try {
-        const response = await fetch('/api/assessment/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            answers,
-            scores,
-            overall_score: overallScore,
-          }),
-        })
-        
-        const data = await response.json()
-        console.log('[v0] Save response:', response.status, data)
-        
-        if (response.ok) {
+  }, [])
+
+  // Save once on mount for logged-in users
+  useEffect(() => {
+    if (isGuest || hasSaved.current || Object.keys(answers).length === 0) return
+    hasSaved.current = true
+
+    setSaveStatus('saving')
+    fetch('/api/assessment/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers, scores, overall_score: overallScore }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.assessment_id) {
           setAssessmentId(data.assessment_id)
           setSaveStatus('saved')
-          console.log('[v0] Assessment saved successfully with ID:', data.assessment_id)
         } else {
-          console.error('[v0] Save failed:', data.error)
           setSaveStatus('error')
         }
-      } catch (err) {
-        console.error('[v0] Save error:', err)
-        setSaveStatus('error')
-      }
-    }
-    
-    console.log('[v0] useEffect triggered - answers count:', Object.keys(answers).length, 'isGuest:', isGuest)
-    if (Object.keys(answers).length > 0 && !isGuest) {
-      saveAssessment()
-    }
-  }, [answers, isGuest])
+      })
+      .catch(() => setSaveStatus('error'))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   
   const insights = useMemo(() => generateInsights(scores, overallScore, answers), [scores, overallScore, answers])
   
