@@ -1,3 +1,5 @@
+// SMTP2Go email service
+// Uses SMTP2GO_API_KEY from environment variables
 interface SendEmailOptions {
   to: string
   subject: string
