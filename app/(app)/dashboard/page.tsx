@@ -14,14 +14,15 @@ export default async function DashboardPage() {
     redirect('/auth/login')
   }
 
-  const [{ data: profile }, { data: assessments }, { data: submittedEvaluations }] = await Promise.all([
-    supabase.from('profiles').select('*, role').eq('id', user.id).single(),
+  const [{ data: profile }, { data: latestAssessmentArr }, { data: submittedEvaluations }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase
       .from('assessments')
       .select('*')
       .eq('user_id', user.id)
       .eq('is_complete', true)
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(1),
     supabase
       .from('verification_requests')
       .select('*')
@@ -29,17 +30,19 @@ export default async function DashboardPage() {
       .order('completed_at', { ascending: false }),
   ])
 
-  const assessmentIds = assessments?.map((a) => a.id) || []
-  const { data: verifications } = await supabase
-    .from('verification_requests')
-    .select('*')
-    .in('assessment_id', assessmentIds.length > 0 ? assessmentIds : ['none'])
+  const latestAssessment = latestAssessmentArr?.[0] ?? null
+  const { data: verifications } = latestAssessment
+    ? await supabase
+        .from('verification_requests')
+        .select('*')
+        .eq('assessment_id', latestAssessment.id)
+    : { data: [] }
 
   return (
     <DashboardContent
       user={user}
       profile={profile}
-      assessments={assessments || []}
+      latestAssessment={latestAssessment}
       verifications={verifications || []}
       submittedEvaluations={submittedEvaluations || []}
     />

@@ -26,62 +26,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
     
-    // Check if user already has an incomplete assessment to update
-    const { data: existingAssessment } = await supabase
+    console.log('[v0] Creating new assessment for user:', user.id)
+    const { data: assessment, error: insertError } = await supabase
       .from('assessments')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('is_complete', false)
-      .order('created_at', { ascending: false })
-      .limit(1)
+      .insert({
+        user_id: user.id,
+        answers,
+        scores,
+        overall_score,
+        is_complete: true,
+      })
+      .select()
       .single()
-    
-    let assessment
-    
-    if (existingAssessment) {
-      console.log('[v0] Updating existing incomplete assessment:', existingAssessment.id)
-      // Update existing assessment
-      const { data, error } = await supabase
-        .from('assessments')
-        .update({
-          answers,
-          scores,
-          overall_score,
-          is_complete: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingAssessment.id)
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('[v0] Update error:', error)
-        throw error
-      }
-      assessment = data
-      console.log('[v0] Updated assessment:', assessment.id)
-    } else {
-      console.log('[v0] Creating new assessment for user:', user.id)
-      // Create new assessment
-      const { data, error } = await supabase
-        .from('assessments')
-        .insert({
-          user_id: user.id,
-          answers,
-          scores,
-          overall_score,
-          is_complete: true,
-        })
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('[v0] Insert error:', error)
-        throw error
-      }
-      assessment = data
-      console.log('[v0] Created assessment:', assessment.id)
+
+    if (insertError) {
+      console.error('[v0] Insert error:', insertError)
+      throw insertError
     }
+    console.log('[v0] Created assessment:', assessment.id)
     
     return NextResponse.json({ 
       success: true, 

@@ -51,7 +51,7 @@ interface SubmittedEvaluation {
 interface DashboardContentProps {
   user: User
   profile: Profile | null
-  assessments: Assessment[]
+  latestAssessment: Assessment | null
   verifications: Verification[]
   submittedEvaluations: SubmittedEvaluation[]
 }
@@ -128,20 +128,15 @@ function ScoreRing({ score, size = 120, strokeWidth = 8 }: { score: number; size
   )
 }
 
-export function DashboardContent({ user, profile, assessments, verifications, submittedEvaluations }: DashboardContentProps) {
+export function DashboardContent({ user, profile, latestAssessment, verifications, submittedEvaluations }: DashboardContentProps) {
   const router = useRouter()
   const [verificationModalOpen, setVerificationModalOpen] = useState(false)
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
   const [selectedAssessmentScore, setSelectedAssessmentScore] = useState<number>(0)
-  
-  const latestAssessment = assessments[0]
-  const hasAssessments = assessments.length > 0
+
+  const hasAssessments = !!latestAssessment
   const hasSubmittedEvaluations = submittedEvaluations.length > 0
-  
-  const getVerificationsForAssessment = (assessmentId: string) => {
-    return verifications.filter(v => v.assessment_id === assessmentId)
-  }
   
   const openVerificationModal = (assessmentId: string) => {
     setSelectedAssessmentId(assessmentId)
@@ -179,19 +174,18 @@ export function DashboardContent({ user, profile, assessments, verifications, su
           </p>
         </section>
 
-        {hasAssessments ? (
+        {hasAssessments && latestAssessment ? (
           <>
-            {/* Assessment History — all assessments as cards */}
+            {/* Latest Assessment */}
             <section className="mb-10">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <span className="text-xs text-primary font-medium tracking-wider">ASSESSMENTS</span>
-                  <h2 className="text-lg font-semibold">Your History</h2>
+                  <h2 className="text-lg font-semibold">Latest Assessment</h2>
                 </div>
                 {(() => {
                   const THREE_MONTHS_MS = 1000 * 60 * 60 * 24 * 90
                   const lastDate = new Date(latestAssessment.created_at).getTime()
-                  // Admins, super_admins, and trey@gethumanity.ai can always retake
                   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin' || user.email === 'trey@gethumanity.ai'
                   const canRetake = isAdmin || (Date.now() - lastDate >= THREE_MONTHS_MS)
                   const nextEligible = new Date(lastDate + THREE_MONTHS_MS)
@@ -215,157 +209,151 @@ export function DashboardContent({ user, profile, assessments, verifications, su
                 })()}
               </div>
 
-              <div className="space-y-4">
-                {assessments.map((assessment, index) => {
-                  const isLatest = index === 0
-                  const assessmentVerifications = getVerificationsForAssessment(assessment.id)
-                  const completedVerifications = assessmentVerifications.filter(v => v.status === 'completed').length
-                  const displayScore = assessment.is_verified
-                    ? (assessment.verified_score ?? assessment.overall_score)
-                    : assessment.overall_score
+              {(() => {
+                const completedVerifications = verifications.filter(v => v.status === 'completed').length
+                const displayScore = latestAssessment.is_verified
+                  ? (latestAssessment.verified_score ?? latestAssessment.overall_score)
+                  : latestAssessment.overall_score
 
-                  return (
-                    <Link
-                      key={assessment.id}
-                      href={`/report/${assessment.id}`}
-                      className={`block p-6 bg-card/50 backdrop-blur-sm border-2 rounded-2xl transition-all duration-200 hover:bg-card/70 cursor-pointer ${
-                        isLatest ? 'border-primary/40' : 'border-border hover:border-border/80'
-                      }`}
-                    >
-                      {/* Card header */}
-                      <div className="flex flex-col sm:flex-row sm:items-start gap-5">
-                        {/* Score ring */}
-                        <div className="shrink-0">
-                          <ScoreRing score={displayScore} size={96} strokeWidth={7} />
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            {isLatest && (
-                              <span className="px-2.5 py-1 bg-primary/15 text-primary text-[11px] font-bold rounded-full">
-                                LATEST
-                              </span>
-                            )}
-                            {assessment.is_verified && (
-                              <span className="px-2.5 py-1 bg-emerald-400/15 text-emerald-400 text-[11px] font-bold rounded-full flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                </svg>
-                                VERIFIED
-                              </span>
-                            )}
-                            {!assessment.purchased_at && (
-                              <span className="px-2.5 py-1 bg-muted text-muted-foreground text-[11px] font-bold rounded-full">
-                                PREVIEW
-                              </span>
-                            )}
-                          </div>
-
-                          <p className="font-semibold text-foreground">
-                            {new Date(assessment.created_at).toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            {new Date(assessment.created_at).toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </p>
-
-                          {/* Pillar mini bars with hover tooltips */}
-                          {assessment.scores && (
-                            <div className="grid grid-cols-4 gap-2 mt-4">
-                              {(Object.keys(assessment.scores) as Category[]).map((cat) => {
-                                const cfg = pillarConfig[cat]
-                                const score = assessment.scores[cat]
-                                return (
-                                  <div key={cat} className="group relative cursor-pointer">
-                                    {/* Hover tooltip */}
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-card border border-border rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
-                                      <p className={`text-sm font-bold ${cfg.color}`}>{categories[cat].name}</p>
-                                      <p className="text-lg font-black">{score.toFixed(1)} <span className="text-xs text-muted-foreground font-normal">/ 10</span></p>
-                                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1">
-                                        <div className="w-2 h-2 bg-card border-r border-b border-border rotate-45" />
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center justify-between mb-1">
-                                      <span className={`text-xs font-bold ${cfg.color} group-hover:scale-110 transition-transform`}>{cfg.letter}</span>
-                                      <span className="text-xs text-muted-foreground font-medium">{score.toFixed(1)}</span>
-                                    </div>
-                                    <div className="h-2 bg-muted rounded-full overflow-hidden group-hover:h-2.5 transition-all">
-                                      <div
-                                        className={`h-full rounded-full transition-all group-hover:brightness-110 ${
-                                          cat === 'discipline' ? 'bg-primary' :
-                                          cat === 'ownership' ? 'bg-emerald-400' :
-                                          cat === 'toughness' ? 'bg-rose-400' : 'bg-cyan-400'
-                                        }`}
-                                        style={{ width: `${(score / 10) * 100}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex sm:flex-col gap-2 shrink-0">
-                          {assessment.purchased_at ? (
-                            <span className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
-                              View Report
-                            </span>
-                          ) : (
-                            <button
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openPurchaseModal(assessment.id, displayScore); }}
-                              className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
-                            >
-                              Unlock Report
-                            </button>
-                          )}
-                          {!assessment.is_verified && (
-                            <button 
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openVerificationModal(assessment.id); }}
-                              className="px-4 py-2 bg-muted hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-                            >
-                              Get Verified
-                            </button>
-                          )}
-                        </div>
+                return (
+                  <Link
+                    href={`/report/${latestAssessment.id}`}
+                    className="block p-6 bg-card/50 backdrop-blur-sm border-2 border-primary/40 rounded-2xl transition-all duration-200 hover:bg-card/70 cursor-pointer"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                      <div className="shrink-0">
+                        <ScoreRing score={displayScore} size={96} strokeWidth={7} />
                       </div>
 
-                      {/* Verification bar (if in progress) */}
-                      {assessmentVerifications.length > 0 && !assessment.is_verified && (
-                        <div className="mt-4 pt-4 border-t border-border">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-muted-foreground font-medium">Verification progress</span>
-                            <span className="text-xs font-bold text-primary">{completedVerifications}/3</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            {['coach', 'peer', 'mentor'].map((type) => {
-                              const v = assessmentVerifications.find(v => v.evaluator_type === type)
-                              const done = v?.status === 'completed'
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="px-2.5 py-1 bg-primary/15 text-primary text-[11px] font-bold rounded-full">
+                            LATEST
+                          </span>
+                          {latestAssessment.is_verified && (
+                            <span className="px-2.5 py-1 bg-emerald-400/15 text-emerald-400 text-[11px] font-bold rounded-full flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                              VERIFIED
+                            </span>
+                          )}
+                          {!latestAssessment.purchased_at && (
+                            <span className="px-2.5 py-1 bg-muted text-muted-foreground text-[11px] font-bold rounded-full">
+                              PREVIEW
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="font-semibold text-foreground">
+                          {new Date(latestAssessment.created_at).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {new Date(latestAssessment.created_at).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </p>
+
+                        {latestAssessment.scores && (
+                          <div className="grid grid-cols-4 gap-2 mt-4">
+                            {(Object.keys(latestAssessment.scores) as Category[]).map((cat) => {
+                              const cfg = pillarConfig[cat]
+                              const score = latestAssessment.scores[cat]
                               return (
-                                <div key={type} className={`p-2 rounded-lg text-center text-xs font-medium ${done ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                  <span className="capitalize">{type}</span>
-                                  <p className="text-[10px] font-normal mt-0.5 opacity-70">
-                                    {done ? 'Done' : v ? 'Pending' : 'Not sent'}
-                                  </p>
+                                <div key={cat} className="group relative cursor-pointer">
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-card border border-border rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
+                                    <p className={`text-sm font-bold ${cfg.color}`}>{categories[cat].name}</p>
+                                    <p className="text-lg font-black">{score.toFixed(1)} <span className="text-xs text-muted-foreground font-normal">/ 10</span></p>
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1">
+                                      <div className="w-2 h-2 bg-card border-r border-b border-border rotate-45" />
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className={`text-xs font-bold ${cfg.color} group-hover:scale-110 transition-transform`}>{cfg.letter}</span>
+                                    <span className="text-xs text-muted-foreground font-medium">{score.toFixed(1)}</span>
+                                  </div>
+                                  <div className="h-2 bg-muted rounded-full overflow-hidden group-hover:h-2.5 transition-all">
+                                    <div
+                                      className={`h-full rounded-full transition-all group-hover:brightness-110 ${
+                                        cat === 'discipline' ? 'bg-primary' :
+                                        cat === 'ownership' ? 'bg-emerald-400' :
+                                        cat === 'toughness' ? 'bg-rose-400' : 'bg-cyan-400'
+                                      }`}
+                                      style={{ width: `${(score / 10) * 100}%` }}
+                                    />
+                                  </div>
                                 </div>
                               )
                             })}
                           </div>
+                        )}
+                      </div>
+
+                      <div className="flex sm:flex-col gap-2 shrink-0">
+                        {latestAssessment.purchased_at ? (
+                          <span className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
+                            View Report
+                          </span>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openPurchaseModal(latestAssessment.id, displayScore); }}
+                            className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+                          >
+                            Unlock Report
+                          </button>
+                        )}
+                        {!latestAssessment.is_verified && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openVerificationModal(latestAssessment.id); }}
+                            className="px-4 py-2 bg-muted hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            Get Verified
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {verifications.length > 0 && !latestAssessment.is_verified && (
+                      <div className="mt-4 pt-4 border-t border-border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-muted-foreground font-medium">Verification progress</span>
+                          <span className="text-xs font-bold text-primary">{completedVerifications}/3</span>
                         </div>
-                      )}
-                    </Link>
-                  )
-                })}
-              </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {['coach', 'peer', 'mentor'].map((type) => {
+                            const v = verifications.find(v => v.evaluator_type === type)
+                            const done = v?.status === 'completed'
+                            return (
+                              <div key={type} className={`p-2 rounded-lg text-center text-xs font-medium ${done ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                <span className="capitalize">{type}</span>
+                                <p className="text-[10px] font-normal mt-0.5 opacity-70">
+                                  {done ? 'Done' : v ? 'Pending' : 'Not sent'}
+                                </p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4 pt-4 border-t border-border flex justify-end">
+                      <Link
+                        href="/assessments"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        View all assessments →
+                      </Link>
+                    </div>
+                  </Link>
+                )
+              })()}
             </section>
           </>
         ) : (
