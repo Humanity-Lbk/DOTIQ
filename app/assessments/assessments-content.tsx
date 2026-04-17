@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { categories, type Category } from '@/lib/assessment-data'
 import AppSidebar from '@/components/app-sidebar'
 import { PurchaseModal } from '@/components/purchase/purchase-modal'
@@ -102,6 +104,34 @@ export function AssessmentsContent({
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false)
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
   const [selectedScore, setSelectedScore] = useState<number>(0)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  
+  const isSuperAdmin = profile?.role === 'super_admin'
+  
+  const handleDeleteAssessment = async (assessmentId: string) => {
+    if (!confirm('Are you sure you want to delete this assessment? This action cannot be undone.')) {
+      return
+    }
+    
+    setDeletingId(assessmentId)
+    try {
+      const response = await fetch(`/api/assessment/delete?id=${assessmentId}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        toast.success('Assessment deleted successfully')
+        window.location.reload()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to delete assessment')
+      }
+    } catch (error) {
+      toast.error('Failed to delete assessment')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const getVerificationsForAssessment = (assessmentId: string) => {
     return verifications.filter(v => v.assessment_id === assessmentId)
@@ -304,6 +334,7 @@ export function AssessmentsContent({
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(`${window.location.origin}/report/share/${report.share_token}`)
+                            toast.success('Share link copied!')
                           }}
                           className="px-5 py-2.5 bg-muted/50 hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
                         >
@@ -311,6 +342,16 @@ export function AssessmentsContent({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                           </svg>
                           Copy Share Link
+                        </button>
+                      )}
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => handleDeleteAssessment(assessment.id)}
+                          disabled={deletingId === assessment.id}
+                          className="px-5 py-2.5 bg-destructive/10 hover:bg-destructive/20 text-destructive text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {deletingId === assessment.id ? 'Deleting...' : 'Delete'}
                         </button>
                       )}
                     </div>
