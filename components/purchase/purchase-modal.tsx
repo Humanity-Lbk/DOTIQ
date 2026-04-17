@@ -98,14 +98,18 @@ export function PurchaseModal({
         setError("Unable to start checkout. Please try again.")
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to start checkout"
-      // Make error message more user-friendly
-      if (message.includes("not authenticated")) {
+      const raw = err instanceof Error ? err.message : ""
+      if (raw.includes("not authenticated") || raw.includes("sign in")) {
         setError("Please sign in to purchase a report")
-      } else if (message.includes("not found")) {
+      } else if (raw.includes("not found")) {
         setError("Assessment not found. Please refresh and try again.")
+      } else if (raw.includes("permission")) {
+        setError("You don't have permission to purchase this report.")
+      } else if (raw.includes("Stripe") || raw.includes("configured")) {
+        setError("Payment system is not available. Please try again later.")
       } else {
-        setError(message)
+        // Next.js redacts server action error messages in production — show generic
+        setError("Unable to start checkout. Please try again.")
       }
     }
   }, [email, assessmentId])

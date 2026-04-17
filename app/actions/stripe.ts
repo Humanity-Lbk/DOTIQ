@@ -3,6 +3,7 @@
 import { stripe } from '@/lib/stripe'
 import { PRODUCTS } from '@/lib/products'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 interface StartReportCheckoutParams {
   productId: string
@@ -23,24 +24,25 @@ export async function startReportCheckoutSession({ productId, assessmentId, emai
     }
 
     const supabase = await createClient()
-    
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       throw new Error('Please sign in to purchase a report')
     }
 
-    // Verify assessment belongs to user
-    const { data: assessment, error: assessmentError } = await supabase
+    // Use admin client for assessment lookup to bypass RLS
+    const admin = createAdminClient()
+    const { data: assessment, error: assessmentError } = await admin
       .from('assessments')
       .select('id, user_id')
       .eq('id', assessmentId)
       .single()
-    
+
     if (assessmentError || !assessment) {
       throw new Error('Assessment not found')
     }
-    
+
     if (assessment.user_id !== user.id) {
       throw new Error('You do not have permission to purchase this report')
     }

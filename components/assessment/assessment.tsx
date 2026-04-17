@@ -17,7 +17,7 @@ interface AssessmentProps {
 }
 
 export function Assessment({ isSuperAdmin = false }: AssessmentProps) {
-  const { currentQuestion, isComplete, completeAssessment, nextQuestion, setAnswer } = useAssessmentStore()
+  const { currentQuestion, isComplete, completeAssessment, nextQuestion, setAnswer, setAllAnswers } = useAssessmentStore()
   const [phase, setPhase] = useState<Phase>("idle")
   const [displayedQuestion, setDisplayedQuestion] = useState(currentQuestion)
   const [glowValue, setGlowValue] = useState<number | null>(null)
@@ -28,8 +28,6 @@ export function Assessment({ isSuperAdmin = false }: AssessmentProps) {
     if (filling) return
     setFilling(true)
 
-    // Pick a random archetype bias so scores feel like a real athlete profile
-    // Each category gets a base between 4–9, then each answer varies ±2
     const bases: Record<string, number> = {
       discipline: Math.floor(Math.random() * 6) + 4,
       ownership:  Math.floor(Math.random() * 6) + 4,
@@ -37,16 +35,18 @@ export function Assessment({ isSuperAdmin = false }: AssessmentProps) {
       sportsiq:   Math.floor(Math.random() * 6) + 4,
     }
 
+    // Build all 50 answers at once, then commit in a single store update
+    const allAnswers: Record<number, number> = {}
     questions.forEach((q) => {
       const base = bases[q.category]
-      const jitter = Math.floor(Math.random() * 5) - 2   // –2 to +2
-      const value = Math.min(10, Math.max(1, base + jitter))
-      setAnswer(q.id, value)
+      const jitter = Math.floor(Math.random() * 5) - 2
+      allAnswers[q.id] = Math.min(10, Math.max(1, base + jitter))
     })
 
+    setAllAnswers(allAnswers)
     setFilling(false)
     completeAssessment()
-  }, [filling, setAnswer, completeAssessment])
+  }, [filling, setAllAnswers, completeAssessment])
 
   const handleAnswerSelected = useCallback((value: number) => {
     if (phase !== "idle") return

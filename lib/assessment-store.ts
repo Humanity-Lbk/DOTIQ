@@ -6,6 +6,7 @@ interface AssessmentState {
   answers: Record<number, number>
   isComplete: boolean
   setAnswer: (questionId: number, value: number) => void
+  setAllAnswers: (answers: Record<number, number>) => void
   nextQuestion: () => void
   prevQuestion: () => void
   goToQuestion: (index: number) => void
@@ -26,6 +27,10 @@ export const useAssessmentStore = create<AssessmentState>((set, get) => ({
     set((state) => ({
       answers: { ...state.answers, [questionId]: value },
     }))
+  },
+
+  setAllAnswers: (newAnswers) => {
+    set({ answers: newAnswers })
   },
 
   nextQuestion: () => {
