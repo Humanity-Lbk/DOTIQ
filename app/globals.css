@@ -204,8 +204,7 @@
     page-break-inside: avoid;
   }
 
-  /* Strip all gradient backgrounds from hero */
-  header [class*="bg-gradient"],
+  /* Strip only the floating particle backgrounds, not the score circle */
   header .absolute[class*="bg-"] {
     background: transparent !important;
     display: none !important;
