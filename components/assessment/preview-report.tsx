@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAssessmentStore } from '@/lib/assessment-store'
 import { categories, questions, type Category } from '@/lib/assessment-data'
 import { TypewriterText } from '@/components/ui/typewriter-text'
+import { PurchaseModal } from '@/components/purchase/purchase-modal'
 
 function ScoreRing({ score, size = 200, strokeWidth = 8 }: { score: number; size?: number; strokeWidth?: number }) {
   const [animated, setAnimated] = useState(false)
@@ -151,6 +152,7 @@ interface PreviewReportProps {
 export function PreviewReport({ isGuest = false }: PreviewReportProps) {
   const { calculateScores, resetAssessment, answers } = useAssessmentStore()
   const [showVerify, setShowVerify] = useState(false)
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [assessmentId, setAssessmentId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -381,13 +383,14 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
                   Get detailed analysis and personalized development plans.
                 </p>
               </div>
-              <Link
-                href="/purchase"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:brightness-110 transition-all"
+              <button
+                onClick={() => setShowPurchaseModal(true)}
+                disabled={isGuest || !assessmentId}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:brightness-110 transition-all disabled:opacity-50"
               >
                 Unlock for $9.99
                 <span>→</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -430,6 +433,19 @@ export function PreviewReport({ isGuest = false }: PreviewReportProps) {
           View Dashboard
         </Link>
       </section>
+
+      {/* Purchase Modal */}
+      {showPurchaseModal && assessmentId && (
+        <PurchaseModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          assessmentId={assessmentId}
+          score={overallScore}
+          onPurchaseComplete={() => {
+            window.location.href = `/report/${assessmentId}`
+          }}
+        />
+      )}
 
       {/* Verification Modal */}
       {showVerify && (
