@@ -56,6 +56,8 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
     }
 
     console.log('[v0] Sending via Email API to:', to)
+    console.log('[v0] Email API URL:', apiUrl)
+    console.log('[v0] Email API payload:', JSON.stringify(payload, null, 2).substring(0, 500))
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -68,7 +70,8 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
 
     // Get response text first to handle non-JSON responses
     const responseText = await response.text()
-    console.log('[v0] Email API raw response:', responseText.substring(0, 200))
+    console.log('[v0] Email API response status:', response.status)
+    console.log('[v0] Email API raw response:', responseText.substring(0, 500))
     
     let data
     try {
@@ -82,10 +85,26 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
     }
 
     if (!response.ok) {
-      console.error('[v0] Email API error:', data)
+      console.error('[v0] Email API error - Status:', response.status, response.statusText)
+      console.error('[v0] Email API error - Data:', data)
+      
+      // More helpful error messages for common HTTP status codes
+      if (response.status === 405) {
+        return { 
+          success: false, 
+          error: `Email API error: 405 Method Not Allowed. Check that EMAIL_API_URL supports POST requests.` 
+        }
+      }
+      if (response.status === 401 || response.status === 403) {
+        return { 
+          success: false, 
+          error: `Email API error: ${response.status} Unauthorized. Check your EMAIL_API_KEY.` 
+        }
+      }
+      
       return { 
         success: false, 
-        error: data.error || data.message || 'Failed to send email via API' 
+        error: data.error || data.message || `Email API error: ${response.status} ${response.statusText}` 
       }
     }
 
