@@ -41,8 +41,10 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
       }
     })
 
-    // SMTP2Go expects specific format with sender, to array, html_body
+    // SMTP2Go expects api_key in the request body, not as a header
+    // Format must be: api[A-Za-z0-9-]{32}
     const payload = {
+      api_key: apiKey,
       to: [to],
       sender: `DOTIQ Reports <${fromEmail}>`,
       subject,
@@ -53,12 +55,12 @@ export async function sendEmail({ to, subject, html, attachments }: SendEmailOpt
 
     const apiUrl = 'https://api.smtp2go.com/v3/email/send'
     console.log('[v0] Sending via SMTP2Go API to:', to)
+    console.log('[v0] API key format check - starts with "api":', apiKey?.startsWith('api'))
 
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Smtp2go-Api-Key': apiKey, // SMTP2Go uses this header, not Bearer token
       },
       body: JSON.stringify(payload),
     })
